@@ -50,3 +50,10 @@ R = vec([1 2])
 LocalMaximumDensity(A, R)
 
 Note R is a vector of indices of vertices in A, 1-indexed.
+
+------
+Acknowledgement (for code)
+
+- Fork of https://github.com/nveldt/HypergraphFlowClustering
+- Currently using maxflow.jl, will use more
+- May use/modify HyperLocal.jl

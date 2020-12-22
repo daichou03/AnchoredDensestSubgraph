@@ -1,4 +1,4 @@
-README
+README - Last update: 20201223, daichou03
 
 Local Densest Subgraph
 

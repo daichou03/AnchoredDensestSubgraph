@@ -12,6 +12,7 @@ Install Julia
 
 Package to install:
 MatrixNetworks
+TODO: Need to check.
 
 Read graph file:
 For loading unweighted, undirected graph:

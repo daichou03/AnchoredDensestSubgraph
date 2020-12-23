@@ -27,15 +27,16 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
             F = FlowWithAlpha(B, alpha, sWeights)
-            if F.flowvalue >= sum(sWeights) - 1e-6 # TODO: Doubt the precision is related to 1/N
+            if F.flowvalue >= sum(sWeights) - 1e-6 # YD 20201223: No matter how small this tolerance is, alpha_top can't be trusted, but alpha_bottom can.
                 alpha_top = alpha
             else
                 alpha_bottom = alpha
             end
+            # println(alpha)
         end
         flow_alpha_minus = FlowWithAlpha(B, alpha_bottom, sWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
-        alpha_star = Float64(floor(alpha_top * subgraph_length) / subgraph_length)
+        alpha_star = Float64(floor((alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
 end
@@ -73,10 +74,11 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
             else
                 alpha_bottom = alpha
             end
+            # println(alpha)
         end
         flow_alpha_minus = FlowWithAlphaLocalDensity(B, R, alpha_bottom, sWeightsR)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
-        alpha_star = Float64(floor(alpha_top * subgraph_length) / subgraph_length)
+        alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end   
     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
 end
@@ -124,10 +126,11 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
             else
                 alpha_bottom = alpha
             end
+            # println(alpha)
         end
         flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(B, R, alpha_bottom, sWeightsR, rToOWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
-        alpha_star = Float64(floor(alpha_top * subgraph_length) / subgraph_length)
+        alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
 
     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
@@ -151,7 +154,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
     return F
 end
 
-function FlowWithAlphaStronglyLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
+# function FlowWithAlphaStronglyLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
 
 
 # ------

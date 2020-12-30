@@ -27,7 +27,7 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
             F = FlowWithAlpha(B, alpha, sWeights)
-            if F.flowvalue >= sum(sWeights) - 1e-6 # YD 20201223: No matter how small this tolerance is, alpha_top can't be trusted, but alpha_bottom can.
+            if F.flowvalue >= sum(sWeights) - 1e-6 # YD 20201223: tolerance doesn't matter much, just don't trust alpha_top
                 alpha_top = alpha
             else
                 alpha_bottom = alpha
@@ -57,6 +57,9 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     # sWeightsR = map(x -> sum(B[x,:]), R)
     sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
     density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+    if density_R < 1 # Case that we don't consider.
+        return GlobalMaximumDensity(B[R,R])
+    end
     alpha_bottom = density_R # Reachable
     alpha_top = length(R) # Not reachable
     flow_alpha_minus = 0
@@ -69,7 +72,7 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
             F = FlowWithAlphaLocalDensity(B, R, alpha, sWeightsR)
-            if F.flowvalue >= sum(sWeightsR) - 1e-6 # TODO: Doubt the precision is related to 1/N
+            if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
                 alpha_bottom = alpha
@@ -121,7 +124,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
             F = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha, sWeightsR, rToOWeights)
-            if F.flowvalue >= sum(sWeightsR) - 1e-6 # TODO: Doubt the precision is related to 1/N
+            if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
                 alpha_bottom = alpha
@@ -158,5 +161,5 @@ end
 
 
 # ------
-R=vec([1 2])
+# R=vec([1 2])
 # ------

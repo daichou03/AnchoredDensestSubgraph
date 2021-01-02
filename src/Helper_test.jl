@@ -5,6 +5,7 @@ using LinearAlgebra
 include("maxflow.jl")
 include("Helper_io.jl")
 include("Helper_yd.jl")
+include("Utils.jl")
 
 mutable struct rSeed
     seed::Int64
@@ -55,18 +56,18 @@ function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
     sum(B[S,S])
 end
 
-function GetSeedReport(B::SparseMatrixCSC, V::Int64)
-    adj = GetAdjacency(B, V)
-    inducedMD = GlobalMaximumDensity(B[adj,adj])
-    localMD = LocalMaximumDensity(B, adj)
-    rSeed(V, adj, GetDegree(B, V), GetVolume(B, adj), GetInducedVolume(B, adj), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
+function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
+    inducedMD = GlobalMaximumDensity(B[R,R])
+    localMD = LocalMaximumDensity(B, R)
+    rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
 end
 
-function GetLeaveHighestDegSeedReport(B::SparseMatrixCSC, V::Int64)
-    adj = GetLeaveHighestDegAdjacency(B, V)
-    inducedMD = GlobalMaximumDensity(B[adj,adj])
-    localMD = LocalMaximumDensity(B, adj)
-    rSeed(V, adj, GetDegree(B, V)-1, GetVolume(B, adj), GetInducedVolume(B, adj), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
+# Sampling by:
+# chosen vertex and all its neighbours
+
+function GetSeedReport(B::SparseMatrixCSC, V::Int64)
+    adj = GetAdjacency(B, V)
+    GetGenericSeedReport(B,V,adj)
 end
 
 function SearchForNonDegeneratingSeed(B::SparseMatrixCSC)
@@ -79,6 +80,14 @@ function SearchForNonDegeneratingSeed(B::SparseMatrixCSC)
         end
     end
     r
+end
+
+# Sampling by:
+# chosen vertex and all its neighbours but the one with highest degree
+
+function GetLeaveHighestDegSeedReport(B::SparseMatrixCSC, V::Int64)
+    adj = GetLeaveHighestDegAdjacency(B, V)
+    GetGenericSeedReport(B,V,adj)
 end
 
 function SearchForNonDegeneratingLeaveHighestDegSeed(B::SparseMatrixCSC, init::Int64)
@@ -96,6 +105,8 @@ end
 function SearchForNonDegeneratingLeaveHighestDegSeed(B::SparseMatrixCSC)
     SearchForNonDegeneratingLeaveHighestDegSeed(B, 1)
 end
+
+# Test if the seed vertices with higher degree have higher chance to be non-degenerating
 
 function GetOneHopHighestDegreeNeighbourList(B::SparseMatrixCSC)
     N = size(B,1)
@@ -123,5 +134,115 @@ function SearchWithOneHopHighestDegreeNeighbour(B::SparseMatrixCSC, NeighbourLis
     end
     r
 end
+
+# Sampling by:
+# starting with chosen/random vertex, sample a random connected component with fixed size
+
+# Starting with a chosen vertex, include a random neighbour of a random vertex in the set to the set until the size of the set reaches Size.
+function GetSampleUntilSize(B::SparseMatrixCSC, V::Int64, Size::Int64)
+    r = [V]
+    while length(r) < Size
+        next = 0
+        while next == 0 || next in r
+            seed = rand(r)
+            next = rand(GetAdjacency(B, seed, false))
+        end
+        append!(r, next)
+    end
+    return r
+end
+
+function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        seed = rand(1:N)
+        sample = GetSampleUntilSize(B,seed,Size)
+        rep = GetGenericSeedReport(B,seed,sample)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        if ShowSeed
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64)
+    RandomSampleUntilSize(B,Size,Tests,true)
+end
+
+# Start with 2.
+function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeUntil::Int64, Tests::Int64)
+    for size = 2:SizeUntil
+        print_rgb(255,255,128,string("Size = ", size, ": "))
+        RandomSampleUntilSize(B,size,Tests,false)
+    end
+end
+
+# Sampling by:
+# starting with chosen/random vertex, sample a random connected component with a minimum induced volume
+
+function GetSampleUntilInducedVolume(B::SparseMatrixCSC, V::Int64, Volume::Int64)
+    r = [V]
+    while GetInducedVolume(B, r) < Volume
+        next = 0
+        while next == 0 || next in r
+            seed = rand(r)
+            next = rand(GetAdjacency(B, seed, false))
+        end
+        append!(r, next)
+    end
+    return r
+end
+
+function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests::Int64, PrintRep::Bool)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        seed = rand(1:N)
+        sample = GetSampleUntilInducedVolume(B,seed,Volume)
+        rep = GetGenericSeedReport(B,seed,sample)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        if PrintRep
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests::Int64)
+    RandomSampleUntilInducedVolume(B,Volume,Tests,true)
+end
+
+# Start with 2.
+function RandomSampleDifferentInducedVolume(B::SparseMatrixCSC, VolumeUntil::Int64, Step::Int64, Tests::Int64)
+    volume = 2
+    while volume <= VolumeUntil
+        print_rgb(255,255,128,string("InducedVolume >= ", volume, ": "))
+        RandomSampleUntilInducedVolume(B,volume,Tests,false)
+        volume += Step
+    end
+end
+
 
 fbgov = readIN("../Example/fbgov.in")

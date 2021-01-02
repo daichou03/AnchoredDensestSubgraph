@@ -151,7 +151,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
 
     # Supernode = sink version
     FlowNet = [spzeros(1,1)     sparse(sWeightsR') spzeros(1,1);
-               spzeros(NProp,1) BProp             sparse(repeat([alpha], NProp) + rToOWeights);
+               spzeros(NProp,1) BProp              sparse(repeat([alpha], NProp) + rToOWeights);
                spzeros(1,NProp+2)]
     F = maxflow(FlowNet, 1, NProp+2)
     return F

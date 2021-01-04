@@ -25,17 +25,13 @@ function GetDegree(B::SparseMatrixCSC, V::Int64)
     sum(B[V,:])
 end
 
-function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool)
+function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
     N = size(B,1)
     L = map(z->z[1], filter(a->a[2]>0, collect(zip(1:N,B[V,:]))))
     if Self
         L = prepend!(L, V)
     end
     return L
-end
-
-function GetAdjacency(B::SparseMatrixCSC, V::Int64)
-    GetAdjacency(B, V, true)
 end
 
 function GetLeaveHighestDegAdjacency(B::SparseMatrixCSC, V::Int64)
@@ -60,7 +56,7 @@ end
 
 function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
     inducedMD = GlobalMaximumDensity(B[R,R])
-    localMD = LocalMaximumDensity(B, R)
+    localMD = ImprovedLocalMaximumDensity(B, R)
     rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
 end
 

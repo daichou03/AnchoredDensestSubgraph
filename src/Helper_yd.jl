@@ -90,7 +90,7 @@ function FlowWithAlphaLocalDensity(B::SparseMatrixCSC, R::Vector{Int64}, alpha::
     N = size(B,1)
 
     FlowNet = [spzeros(1,1) sparse(sWeightsR') spzeros(1,1);
-               spzeros(N,1) B                 sparse(repeat([alpha], N));
+               spzeros(N,1) B                  sparse(repeat([alpha], N));
                spzeros(1,N+2)]
     F = maxflow(FlowNet, 1, N+2)
     return F
@@ -109,6 +109,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     rToOMatrix = B[setdiff(1:N,overdensed), overdensed]
     rToOWeights = map(x -> sum(rToOMatrix[x,:]), 1:(N-length(overdensed)))
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
+    sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 
     density_R = GlobalMaximumDensity(B[R,R]).alpha_star
     alpha_bottom = density_R # Reachable
@@ -117,13 +118,13 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     alpha_star = 0
 
     # YD: Just merge the super node with sink. Also ignore any directed edges from it to regular nodes.
-    if FlowWithAlphaImprovedLocalDensity(B, R, alpha_bottom, sWeightsR, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
+    if FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_bottom, sWeightsRProp, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
         alpha_star = alpha_bottom
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(B, R, alpha_star - 1 / (N * (N+1)), sWeightsR, rToOWeights)
+        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_star - 1 / (N * (N+1)), sWeightsRProp, rToOWeights)
     else     
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
-            F = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha, sWeightsR, rToOWeights)
+            F = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha, sWeightsRProp, rToOWeights)
             if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
@@ -131,7 +132,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
             end
             # println(alpha)
         end
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(B, R, alpha_bottom, sWeightsR, rToOWeights)
+        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_bottom, sWeightsRProp, rToOWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end

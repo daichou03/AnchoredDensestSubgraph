@@ -2,6 +2,8 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
+using StatsBase # TODO: To install
+using Random
 include("maxflow.jl")
 include("Helper_io.jl")
 include("Helper_yd.jl")
@@ -152,7 +154,7 @@ function GetSampleUntilSize(B::SparseMatrixCSC, V::Int64, Size::Int64)
     return r
 end
 
-function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool)
+function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
     N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
@@ -177,13 +179,13 @@ function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, Sh
     return nonDegCount
 end
 
-function RandomSampleUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64)
-    RandomSampleUntilSize(B,Size,Tests,true)
-end
-
 # Start with 2.
 function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeUntil::Int64, Tests::Int64)
-    for size = 2:SizeUntil
+    RandomSampleDifferentSize(B, 2, SizeUntil, Tests)
+end
+
+function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, Tests::Int64)
+    for size = SizeFrom:SizeUntil
         print_rgb(255,255,128,string("Size = ", size, ": "))
         RandomSampleUntilSize(B,size,Tests,false)
     end
@@ -205,7 +207,7 @@ function GetSampleUntilInducedVolume(B::SparseMatrixCSC, V::Int64, Volume::Int64
     return r
 end
 
-function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests::Int64, PrintRep::Bool)
+function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests::Int64, PrintRep::Bool=false)
     N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
@@ -230,10 +232,6 @@ function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests
     return nonDegCount
 end
 
-function RandomSampleUntilInducedVolume(B::SparseMatrixCSC, Volume::Int64, Tests::Int64)
-    RandomSampleUntilInducedVolume(B,Volume,Tests,true)
-end
-
 # Start with 2.
 function RandomSampleDifferentInducedVolume(B::SparseMatrixCSC, VolumeUntil::Int64, Step::Int64, Tests::Int64)
     volume = 2
@@ -244,5 +242,84 @@ function RandomSampleDifferentInducedVolume(B::SparseMatrixCSC, VolumeUntil::Int
     end
 end
 
+# Sampling by:
+# Starting with GetSampleUntilSize, use random walking to change its components until its volume reaches a specified value.
+# For now, this function returns an R with |R| = Size and induced_volume(R) >= MinVolume.
+function GetSampleUntilDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, MaxReseed::Int64=-1, MinVolume::Int64)
+    if MinVolume > Size * (Size - 1)
+        error(string("MinVolume is ", MinVolume, " which is greater than a graph with Size ", Size, " can possibly have."))
+    end
+    while MaxReseed != 0
+        R = GetSampleUntilSize(B, V, Size)
+        retry = Size * 2 # TODO: number of retries reasonable? To see.
+        while retry > 0 && GetInducedVolume(B, R) < MinVolume
+            residualR = map(x -> Size - 1 - GetDegree(B[R,R], x), 1:Size) # For each vertex in r, the density it could possibly improve
+            v = sample(1:Size, Weights(residualR))
+            oldDegree = GetDegree(B[R,R], v)
+            if oldDegree > 0
+                soleNeighbour = rand(R[GetAdjacency(B[R,R], v, false)])
+            else
+                soleNeighbour = rand(R) # Any in R
+            end
+            Neighbours = shuffle(GetAdjacency(B, soleNeighbour))
+            RMinus = copy(R)
+            splice!(RMinus, v)
+            for i = Neighbours
+                newR = vcat(i, RMinus)
+                newDegree = GetDegree(B[newR, newR], 1)
+                if newDegree > oldDegree
+                    retry += 1 # retry decreases only if can't find an improvement in a loop
+                    R = newR
+                    break
+                end
+            end
+            retry -= 1
+            # println(string("retry remaining: ", retry, ", current induced volume: ", GetInducedVolume(B, R)))
+        end
+        if GetInducedVolume(B, R) >= MinVolume
+            return R
+        end
+        MaxReseed -= 1
+    end
+    error(string("Failed to find a subgraph with size ", Size, " and volume at least ", MinVolume, " in the given times of attempts. Either such subgraph does not exist or too rare for the purpose of sampling."))
+end
+
+function GetSampleUntilDensity(B::SparseMatrixCSC, Size::Int64, MinVolume::Int64)
+    GetSampleUntilDensity(B, rand(1:size(B,1)), Size, MinVolume)
+end
+
+function RandomSampleUntilDensity(B::SparseMatrixCSC, Size::Int64, MinVolume::Int64, Tests::Int64, ShowSeed::Bool=false)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        seed = rand(1:N)
+        sample = GetSampleUntilDensity(B,seed,Size,MinVolume)
+        rep = GetGenericSeedReport(B,seed,sample)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        if ShowSeed
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function RandomSampleUntilDifferentDensity(B::SparseMatrixCSC, Size::Int64, MinVolumeFrom::Int64, MinVolumeStep::Int64, MinVolumeTo::Int64, Tests::Int64, ShowSeed::Bool=false)
+    volume = MinVolumeFrom
+    while volume <= MinVolumeTo
+        print_rgb(255,255,128,string("Min Volume >= ", volume, ": "))
+        RandomSampleUntilDensity(B,Size,volume,Tests)
+        volume += MinVolumeStep
+    end
+end
 
 fbgov = readIN("../Example/fbgov.in")

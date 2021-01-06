@@ -22,7 +22,7 @@ Local Densest Subgraph
 > Pkg.rm("HDF5")
 > Pkg.add("HDF5")
 
-## Install Julia
+## Install 64-bit Julia
 
 ## Install packages
 In Julia:

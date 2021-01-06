@@ -30,6 +30,7 @@ In Julia:
 using Pkg
 Pkg.add("MatrixNetworks")
 Pkg.add("MAT")
+Pkg.add("StatsBase")
 ```
 * MatrixNetworks
 * TODO: Need to check.

@@ -34,6 +34,13 @@ Pkg.add("MAT")
 * MatrixNetworks
 * TODO: Need to check.
 
+## Testing
+Under HypergraphFlowClustering/src, enter julia.
+```julia
+include("Helper_yd.jl")
+include("Helper_test.jl")
+```
+
 Read graph file:
 For loading unweighted, undirected graph:
 

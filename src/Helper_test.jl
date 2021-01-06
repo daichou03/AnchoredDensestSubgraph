@@ -181,9 +181,15 @@ function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeUntil::Int64, Tests::
 end
 
 function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, Tests::Int64)
-    for size = SizeFrom:SizeUntil
+    RandomSampleDifferentSize(B, SizeFrom, SizeUntil, 1, Tests)
+end
+
+function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, SizeInterval::Int64, Tests::Int64)
+    size = SizeFrom
+    while size <= SizeUntil
         print_rgb(255,255,128,string("Size = ", size, ": "))
         RandomSampleUntilSize(B,size,Tests,false)
+        size += SizeInterval
     end
 end
 

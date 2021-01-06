@@ -241,7 +241,7 @@ end
 # Sampling by:
 # Starting with GetSampleUntilSize, use random walking to change its components until its volume reaches a specified value.
 # For now, this function returns an R with |R| = Size and induced_volume(R) >= MinVolume.
-function GetSampleUntilDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, MaxReseed::Int64=-1, MinVolume::Int64)
+function GetSampleUntilDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, MinVolume::Int64, MaxReseed::Int64=-1)
     if MinVolume > Size * (Size - 1)
         error(string("MinVolume is ", MinVolume, " which is greater than a graph with Size ", Size, " can possibly have."))
     end

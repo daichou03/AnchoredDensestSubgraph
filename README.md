@@ -6,13 +6,33 @@ Local Densest Subgraph
 
 ------
 
-Documentation
+# Getting Started
 
-Install Julia
+## Prerequisites
+(Linux) Install HDF5 if you don't already have.
 
-Package to install:
-MatrixNetworks
-TODO: Need to check.
+> Case 1 - Ubuntu: HDF5 not configured properly at the very start, uninstall, install a lower version to force update dependency, uninstall, then install the newest version again can fix.
+> `apt-get -u install hdf5-tools`
+> Still getting `UndefVarError: libhdf5 not defined`
+> In Julia:
+> using Pkg
+> Pkg.rm("HDF5")
+> Pkg.add(Pkg.PackageSpec(;name="HDF5",version="0.11.1"))
+> Pkg.build("HDF5")
+> Pkg.rm("HDF5")
+> Pkg.add("HDF5")
+
+## Install Julia
+
+## Install packages
+In Julia:
+```julia
+using Pkg
+Pkg.add("MatrixNetworks")
+Pkg.add("MAT")
+```
+* MatrixNetworks
+* TODO: Need to check.
 
 Read graph file:
 For loading unweighted, undirected graph:

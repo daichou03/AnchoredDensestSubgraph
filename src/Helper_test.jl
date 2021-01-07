@@ -56,7 +56,7 @@ end
 
 function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
     inducedMD = GlobalMaximumDensity(B[R,R])
-    localMD = ImprovedLocalMaximumDensity(B, R)
+    localMD = LocalMaximumDensity(B, R)
     rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
 end
 
@@ -321,6 +321,16 @@ function RandomSampleUntilDifferentDensity(B::SparseMatrixCSC, Size::Int64, MinV
         print_rgb(255,255,128,string("Min Volume >= ", volume, ": "))
         RandomSampleUntilDensity(B,Size,volume,Tests)
         volume += MinVolumeStep
+    end
+end
+
+function RandomSampleDifferentSizeClique(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, SizeInterval::Int64, Tests::Int64)
+    size = SizeFrom
+    while size <= SizeUntil
+        volume = size * (size - 1)
+        print_rgb(255,255,128,string("Size = ", size, ": "))
+        RandomSampleUntilDensity(B,size,volume,Tests)
+        size += SizeInterval
     end
 end
 

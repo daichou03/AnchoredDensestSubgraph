@@ -96,6 +96,7 @@ function FlowWithAlphaLocalDensity(B::SparseMatrixCSC, R::Vector{Int64}, alpha::
     return F
 end
 
+# YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
 # Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     N = size(B,1)

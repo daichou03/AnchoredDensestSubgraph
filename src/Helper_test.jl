@@ -324,10 +324,11 @@ function RandomSampleUntilDifferentDensity(B::SparseMatrixCSC, Size::Int64, MinV
     end
 end
 
-function RandomSampleDifferentSizeClique(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, SizeInterval::Int64, Tests::Int64)
+# Relative density = 1 -> Clique only.
+function RandomSampleDifferentSizeRelativeDensity(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, SizeInterval::Int64, RelativeDensity::Float64, Tests::Int64)
     size = SizeFrom
     while size <= SizeUntil
-        volume = size * (size - 1)
+        volume = floor(size * (size - 1) * RelativeDensity)
         print_rgb(255,255,128,string("Size = ", size, ": "))
         RandomSampleUntilDensity(B,size,volume,Tests)
         size += SizeInterval

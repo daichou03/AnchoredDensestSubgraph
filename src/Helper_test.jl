@@ -247,7 +247,7 @@ end
 # Sampling by:
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
 function GetSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
-    r = GetSampleUntilSize(B,V,Size)
+    r = GetSampleUntilSize(B, V, Size + Removes)
     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
     removes = sample(1:length(r), Weights(weights), Removes, replace=false)
     deleteat!(r, sort(removes))
@@ -256,10 +256,10 @@ end
 
 function BulkSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
     N = size(B, 1)
-    samples = zeros(Int64, (Tests, Size - Removes))
+    samples = zeros(Int64, (Tests, Size))
     for row in eachrow(samples)
         ret = GetSampleUntilSizeThenRemoveHighDensity(B,rand(1:N),Size,Removes,DensityWeightFactor)
-        for i in 1:(Size - Removes)
+        for i in 1:Size
             row[i] = ret[i]
         end
     end
@@ -273,8 +273,9 @@ end
 function RandomSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64, ShowSeed::Bool=false)
     N = size(B,1)
     nonDegCount = 0
-    samples = BulkSampleUntilSizeThenRemoveHighDensity(B,Size,Removes,DensityWeightFactor,Tests)
+    components = 0.0
     totalComponents = 0.0
+    samples = BulkSampleUntilSizeThenRemoveHighDensity(B,Size,Removes,DensityWeightFactor,Tests)
     for i = 1:Tests
         seed = rand(1:N)
         sample = samples[i,:]

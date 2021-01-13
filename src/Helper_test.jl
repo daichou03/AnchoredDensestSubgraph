@@ -255,6 +255,7 @@ function GetSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, S
 end
 
 function BulkSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    N = size(B, 1)
     samples = zeros(Int64, (Tests, Size - Removes))
     for row in eachrow(samples)
         ret = GetSampleUntilSizeThenRemoveHighDensity(B,rand(1:N),Size,Removes,DensityWeightFactor)

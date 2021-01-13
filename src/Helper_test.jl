@@ -34,6 +34,57 @@ function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
     return L
 end
 
+# Use Set to rewrite this.
+# YD 20210114: Depends on Size, get faster than V1 with larger size.
+# Compared with V1:
+# 120% time on |S| = 20 - 200
+# 91% time on |S| = 2000
+function GetSampleUntilSizeV2(B::SparseMatrixCSC, V::Int64, Size::Int64)
+    r = [V]
+    adj_set = Set(GetAdjacency(B, V, false))
+    size = 1
+    while size < Size && length(adj_set) > 0
+        next = rand(adj_set)
+        append!(r, next)
+        adj_set = setdiff(union(adj_set, Set(GetAdjacency(B, next, true))), Set([next]))
+        size += 1
+    end
+    return r
+end
+
+# Not very efficient on large.
+function DetectConnectedComponents(B::SparseMatrixCSC)
+    remaining = copy(B)
+    components = 0
+    while size(remaining, 1) > 0
+        explored = Set(GetAdjacency(remaining,1,true))
+        adj_set = setdiff(explored, Set([1]))
+        while length(adj_set) > 0
+            adj_set = setdiff(SetGetComponentAdjacency(remaining, collect(adj_set), false), explored)
+            explored = union(explored, adj_set)
+        end
+        # println(length(explored))
+        remaining_components = collect(setdiff(Set(1:size(remaining, 1)), explored))
+        remaining = remaining[remaining_components, remaining_components]
+        components += 1
+    end
+    return components
+end
+
+# Note there are |S| convertions from array to set, and 1 conversion from set to array.
+function GetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
+    return collect(SetGetComponentAdjacency(B,S,Self))
+end
+
+function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
+    N = size(B,1)
+    L = reduce(union, map(x->Set(GetAdjacency(B,x,true)), S))
+    if !Self
+        L = setdiff(L, Set(S))
+    end
+    return L
+end
+
 function GetLeaveHighestDegAdjacency(B::SparseMatrixCSC, V::Int64)
     L = GetAdjacency(B, V, false)
     highest_index = findmax(map(z->GetDegree(B,z), L))[2]
@@ -190,6 +241,71 @@ function RandomSampleDifferentSize(B::SparseMatrixCSC, SizeFrom::Int64, SizeUnti
         print_rgb(255,255,128,string("Size = ", size, ": "))
         RandomSampleUntilSize(B,size,Tests,false)
         size += SizeInterval
+    end
+end
+
+# Sampling by:
+# starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
+function GetSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
+    r = GetSampleUntilSize(B,V,Size)
+    weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
+    removes = sample(1:length(r), Weights(weights), Removes, replace=false)
+    deleteat!(r, sort(removes))
+    return r
+end
+
+function BulkSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    samples = zeros(Int64, (Tests, Size - Removes))
+    for row in eachrow(samples)
+        ret = GetSampleUntilSizeThenRemoveHighDensity(B,rand(1:N),Size,Removes,DensityWeightFactor)
+        for i in 1:(Size - Removes)
+            row[i] = ret[i]
+        end
+    end
+    return samples
+end
+
+# for i = 1:size(samples, 1)
+#     println(DetectConnectedComponents(B[samples[i,:], samples[i,:]]))
+# end
+
+function RandomSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64, ShowSeed::Bool=false)
+    N = size(B,1)
+    nonDegCount = 0
+    samples = BulkSampleUntilSizeThenRemoveHighDensity(B,Size,Removes,DensityWeightFactor,Tests)
+    totalComponents = 0.0
+    for i = 1:Tests
+        seed = rand(1:N)
+        sample = samples[i,:]
+        rep = GetGenericSeedReport(B,seed,sample)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        components = DetectConnectedComponents(B[sample,sample])
+        totalComponents += components
+        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        if ShowSeed
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+            println(string("Number of components: ", components))
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    print_rgb(128,128,255,string("Average number of connected components: ", components / Tests))
+    println("")
+    return nonDegCount
+end
+
+function RandomSampleUntilSizeThenRemoveHighDensityDifferentRemoves(B::SparseMatrixCSC, Size::Int64, RemovesFrom::Int64, RemovesStep::Int64, RemovesTo::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    removes = RemovesFrom
+    while removes <= RemovesTo
+        print_rgb(255,255,128,string("Removes = ", removes, ": "))
+        RandomSampleUntilSizeThenRemoveHighDensity(B,Size,removes,DensityWeightFactor,Tests,false)
+        removes += RemovesStep
     end
 end
 

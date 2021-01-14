@@ -297,7 +297,7 @@ function RandomSampleUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::In
         end
     end
     print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
-    print_rgb(128,128,255,string(", average number of connected components: ", components / Tests))
+    print_rgb(128,128,255,string(", average number of connected components: ", totalComponents / Tests))
     println("")
     return nonDegCount
 end

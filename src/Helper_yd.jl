@@ -86,6 +86,55 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
 end
 
+# 20200116: attempt to improve performance.
+function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64})
+    N = size(B,1)
+    # Weight for source edges
+    # sWeightsR = map(x -> sum(B[x,:]), R)
+    sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
+    density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+    if density_R < 1 # Case that we don't consider.
+        return GlobalMaximumDensity(B[R,R])
+    end
+    alpha_bottom = density_R # Reachable
+    alpha_top = length(R) # Not reachable
+    flow_alpha_minus = 0
+    alpha_star = 0
+
+    FlowNetTemp = [spzeros(1,1) sparse(sWeightsR') spzeros(1,1);
+                   spzeros(N,1) B                  sparse(repeat([1], N));
+                   spzeros(1,N+2)]
+
+    if FlowWithAlphaLocalDensityV2(FlowNetTemp, alpha_bottom).flowvalue >= sum(sWeightsR) - 1e-6
+        alpha_star = alpha_bottom
+        flow_alpha_minus = FlowWithAlphaLocalDensityV2(FlowNetTemp, alpha_star - 1 / (N * (N+1)))
+    else
+        while alpha_top - alpha_bottom >= 1 / (N * (N+1))
+            alpha = (alpha_bottom + alpha_top) / 2
+            F = FlowWithAlphaLocalDensityV2(FlowNetTemp, alpha)
+            if F.flowvalue >= sum(sWeightsR) - 1e-6
+                alpha_top = alpha
+            else
+                alpha_bottom = alpha
+            end
+            # println(alpha)
+        end
+        flow_alpha_minus = FlowWithAlphaLocalDensityV2(FlowNetTemp, alpha_bottom)
+        subgraph_length = length(flow_alpha_minus.source_nodes) - 1
+        alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
+    end   
+    return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
+end
+
+function FlowWithAlphaLocalDensityV2(FlowNet::SparseMatrixCSC, alpha::Float64)
+    N = size(FlowNet,1) - 2
+    for i = 2:N+1
+        FlowNet[i, N+2] = alpha
+    end
+    F = maxflow(FlowNet, 1, N+2)
+    return F
+end
+
 function FlowWithAlphaLocalDensity(B::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64})
     N = size(B,1)
 

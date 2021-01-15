@@ -52,8 +52,61 @@ function GetSampleUntilSizeV2(B::SparseMatrixCSC, V::Int64, Size::Int64)
     return r
 end
 
-# Not very efficient on large.
-function DetectConnectedComponents(B::SparseMatrixCSC)
+# Connected components
+
+# Not very efficient on large?
+# Returns the Set of the connected component that #1 vertex is in.
+function ExtractConnectedComponent(B::SparseMatrixCSC)
+    explored = Set(GetAdjacency(B,1,true))
+    adj_set = setdiff(explored, Set([1]))
+    while length(adj_set) > 0
+        adj_set = setdiff(SetGetComponentAdjacency(B, collect(adj_set), false), explored)
+        explored = union(explored, adj_set)
+    end
+    return explored
+end
+
+# Returns the number of connected components.
+# If ReturnLargestCCIndex, returns the largest connected component's index INSTEAD (I know this is bad code, not necessary to make it better for now).
+# Also if want to know the largest CC's index, definitely can stop early.
+function DetectConnectedComponents(B::SparseMatrixCSC, ReturnLargestCCIndex::Bool=false, ShowLengthOfComponents::Bool=false)
+    remaining = copy(B)
+    components = 0
+    largestCCIndex = 1
+    largestCC = 0
+    while size(remaining, 1) > 0
+        nextCC = ExtractConnectedComponent(remaining)
+        remaining_components = collect(setdiff(Set(1:size(remaining, 1)), nextCC))
+        remaining = remaining[remaining_components, remaining_components]
+        components += 1
+        if components == 1 || length(largestCC) < length(nextCC)
+            largestCC = nextCC
+            largestCCIndex = components
+        end
+        if ShowLengthOfComponents
+            println(string("Length of connected component #", components, ": ", length(nextCC)))
+        end
+    end
+    if ReturnLargestCCIndex
+        return largestCCIndex
+    else
+        return components
+    end
+end
+
+function RetrieveLargestConnectedComponent(B::SparseMatrixCSC)
+    largestCCIndex = DetectConnectedComponents(B, true, false)
+    remaining = copy(B)
+    for i = 1:largestCCIndex-1
+        nextCC = ExtractConnectedComponent(remaining)
+        remaining_components = collect(setdiff(Set(1:size(remaining, 1)), nextCC))
+        remaining = remaining[remaining_components, remaining_components]
+    end
+    nextCC = collect(ExtractConnectedComponent(remaining))
+    return B[nextCC,nextCC]
+end
+
+function DetectConnectedComponents(B::SparseMatrixCSC, ShowLengthOfComponents::Bool=false)
     remaining = copy(B)
     components = 0
     while size(remaining, 1) > 0
@@ -63,10 +116,12 @@ function DetectConnectedComponents(B::SparseMatrixCSC)
             adj_set = setdiff(SetGetComponentAdjacency(remaining, collect(adj_set), false), explored)
             explored = union(explored, adj_set)
         end
-        # println(length(explored))
         remaining_components = collect(setdiff(Set(1:size(remaining, 1)), explored))
         remaining = remaining[remaining_components, remaining_components]
         components += 1
+        if ShowLengthOfComponents
+            println(string("Length of connected component #", components, ": ", length(explored)))
+        end
     end
     return components
 end
@@ -82,13 +137,6 @@ function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bo
     if !Self
         L = setdiff(L, Set(S))
     end
-    return L
-end
-
-function GetLeaveHighestDegAdjacency(B::SparseMatrixCSC, V::Int64)
-    L = GetAdjacency(B, V, false)
-    highest_index = findmax(map(z->GetDegree(B,z), L))[2]
-    L[highest_index] = V # Remove the one with highest index and replace it with the seed
     return L
 end
 
@@ -134,15 +182,42 @@ end
 # Sampling by:
 # chosen vertex and all its neighbours but the one with highest degree
 
+function GetLeaveHighestDegAdjacency(B::SparseMatrixCSC, V::Int64)
+    L = GetAdjacency(B, V, false)
+    highest_index = findmax(map(z->GetDegree(B,z), L))[2]
+    L[highest_index] = V # Remove the one with highest index and replace it with the seed
+    return L
+end
+
 function GetLeaveHighestDegSeedReport(B::SparseMatrixCSC, V::Int64)
     adj = GetLeaveHighestDegAdjacency(B, V)
     GetGenericSeedReport(B,V,adj)
 end
 
-function SearchForNonDegeneratingLeaveHighestDegSeed(B::SparseMatrixCSC, init::Int64)
+function SearchForNonDegeneratingLeaveHighestDegSeed(B::SparseMatrixCSC, init::Int64=1)
     r = Vector{Int64}()
     for i = init:size(B,1)
         rep = GetLeaveHighestDegSeedReport(B,i)
+        if rep.local_density - rep.induced_maximum_density > 1e-6
+            println(string(i, " is a non-degenerate seed."))
+            push!(r,i)
+        end
+    end
+    r
+end
+
+# Sampling by:
+# chosen all its neighbours of a vertex (excluding itself).
+
+function GetSeedExcludingSelfReport(B::SparseMatrixCSC, V::Int64)
+    adj = GetAdjacency(B, V, false)
+    GetGenericSeedReport(B,V,adj)
+end
+
+function SearchForNonDegeneratingSeedExcludingSelf(B::SparseMatrixCSC, init::Int64=1)
+    r = Vector{Int64}()
+    for i = init:size(B,1)
+        rep = GetSeedExcludingSelfReport(B,i)
         if rep.local_density - rep.induced_maximum_density > 1e-6
             println(string(i, " is a non-degenerate seed."))
             push!(r,i)

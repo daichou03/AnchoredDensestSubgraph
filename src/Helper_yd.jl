@@ -86,8 +86,8 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
 end
 
-# 20200116: attempt to improve performance.
-function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64})
+# 20200116: attempt to improve performance. Test shows that the performance doesn't improve much tho.
+function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
@@ -117,7 +117,9 @@ function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64})
             else
                 alpha_bottom = alpha
             end
-            # println(alpha)
+            if ShowTrace
+                println(string("Current alpha: ", alpha))
+            end
         end
         flow_alpha_minus = FlowWithAlphaLocalDensityV2(FlowNetTemp, alpha_bottom)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1

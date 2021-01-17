@@ -528,4 +528,5 @@ function RandomSampleDifferentSizeRelativeDensity(B::SparseMatrixCSC, SizeFrom::
     end
 end
 
-fbgov = readIN("../Example/fbgov.in")
+# fbgov = readIN("../Example/fbgov.in")
+eucore = RetrieveLargestConnectedComponent(readIN("../Example/email-Eu-core.in"))

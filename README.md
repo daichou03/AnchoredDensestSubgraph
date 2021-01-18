@@ -38,8 +38,7 @@ Pkg.add("StatsBase")
 ## Testing
 Under HypergraphFlowClustering/src, enter julia.
 ```julia
-include("Helper_yd.jl")
-include("Helper_test.jl")
+include("Test_yd.jl")
 ```
 
 Read graph file:

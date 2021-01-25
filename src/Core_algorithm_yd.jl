@@ -39,7 +39,7 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64(floor((alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
-    return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
+    return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
 function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Float64})
@@ -51,63 +51,17 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Floa
     return F
 end
 
-# R: The INDICES of R in B.
-# function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
-#     N = size(B,1)
-#     # Weight for source edges
-#     # sWeightsR = map(x -> sum(B[x,:]), R)
-#     sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
-#     density_R = GlobalMaximumDensity(B[R,R]).alpha_star
-#     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-#         return GlobalMaximumDensity(B[R,R])
-#     end
-#     alpha_bottom = density_R # Reachable
-#     alpha_top = length(R) # Not reachable
-#     flow_alpha_minus = 0
-#     alpha_star = 0
-
-#     if FlowWithAlphaLocalDensity(B, R, alpha_bottom, sWeightsR).flowvalue >= sum(sWeightsR) - 1e-6
-#         alpha_star = alpha_bottom
-#         flow_alpha_minus = FlowWithAlphaLocalDensity(B, R, alpha_star - 1 / (N * (N+1)), sWeightsR)
-#     else
-#         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
-#             alpha = (alpha_bottom + alpha_top) / 2
-#             F = FlowWithAlphaLocalDensity(B, R, alpha, sWeightsR)
-#             if F.flowvalue >= sum(sWeightsR) - 1e-6
-#                 alpha_top = alpha
-#             else
-#                 alpha_bottom = alpha
-#             end
-#             # println(alpha)
-#         end
-#         flow_alpha_minus = FlowWithAlphaLocalDensity(B, R, alpha_bottom, sWeightsR)
-#         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
-#         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
-#     end   
-#     return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
-# end
-
-# function FlowWithAlphaLocalDensity(B::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64})
-#     N = size(B,1)
-
-#     FlowNet = [spzeros(1,1) sparse(sWeightsR') spzeros(1,1);
-#                spzeros(N,1) B                  sparse(repeat([alpha], N));
-#                spzeros(1,N+2)]
-#     F = maxflow(FlowNet, 1, N+2)
-#     return F
-# end
-
 # 20200116: attempt to improve performance. Test shows that the performance doesn't improve much tho.
 function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
     sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
-    density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+    density_R = GlobalMaximumDensity(B[R,R]).alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return GlobalMaximumDensity(B[R,R])
     end
-    alpha_bottom = density_R # Reachable
+    alpha_bottom = density_R # Reachable (degenerate case)
     alpha_top = length(R) # Not reachable
     flow_alpha_minus = 0
     alpha_star = 0
@@ -136,7 +90,7 @@ function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end   
-    return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
+    return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
 function FlowWithAlphaLocalDensityV2(FlowNet::SparseMatrixCSC, alpha::Float64)
@@ -190,7 +144,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
 
-    return densestSubgraph(alpha_star, flow_alpha_minus.source_nodes)
+    return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
 function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
@@ -212,6 +166,10 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
 end
 
 # function StronglyLocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+#     L = GetComponentAdjacency(B, R)
+#     density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+#     S = LocalMaximumDensityV2(B, B[L,L])
+#     if S.
 
 # function FlowWithAlphaStronglyLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
 

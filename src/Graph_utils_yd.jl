@@ -154,3 +154,9 @@ end
 function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
     sum(B[S,S])
 end
+
+function PopSourceForFlowNetworkResult(S::Vector{Int64})
+    S_ret = copy(S)
+    popfirst!(S_ret)
+    return map(x->x-1, S_ret)
+end

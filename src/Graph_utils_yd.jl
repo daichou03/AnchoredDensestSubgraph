@@ -4,9 +4,9 @@ using MatrixNetworks
 using LinearAlgebra
 using StatsBase # TODO: To install
 using Random
+using Base
 include("maxflow.jl")
 include("Helper_io.jl")
-include("Core_algorithm_yd.jl")
 
 #------------
 # Graph Utils
@@ -140,12 +140,17 @@ function GetAllDegrees(B::SparseMatrixCSC)
     collect(zip(1:N, map(v->GetDegree(B,v), 1:N)))
 end
 
-function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
-    sum(B[S,S])
+function GetAllDegreesFile(B::SparseMatrixCSC, FileName::String)
+    io = open(FileName, "w")
+    for i = 1:size(B,1)
+        deg = GetDegree(B,i)
+        wtf = string(deg, "\n")
+        println(wtf)
+        write(io, wtf)
+    end
+    close(io)
 end
 
-function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
-    inducedMD = GlobalMaximumDensity(B[R,R])
-    localMD = LocalMaximumDensity(B, R)
-    rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
+function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
+    sum(B[S,S])
 end

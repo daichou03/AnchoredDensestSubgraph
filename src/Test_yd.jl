@@ -4,10 +4,12 @@ using MatrixNetworks
 using LinearAlgebra
 using StatsBase # TODO: To install
 using Random
+using Base
 include("maxflow.jl")
 include("Helper_io.jl")
-include("Core_algorithm_yd.jl")
 include("Graph_utils_yd.jl")
+include("Core_algorithm_yd.jl")
+include("Test_utils_yd.jl")
 include("Utils.jl")
 
 mutable struct rSeed
@@ -103,6 +105,16 @@ function SearchForNonDegeneratingLeaveHighestDegSeed(B::SparseMatrixCSC, init::I
     r
 end
 
+function SearchForNonDegeneratingLeaveHighestDegSeedFile(B::SparseMatrixCSC, filename::String, init::Int64=1)
+    io = open(filename, "w")
+    for i = init:size(B,1)
+        rep = GetLeaveHighestDegSeedReport(B,i)
+        result = rep.local_density - rep.induced_maximum_density > 1e-6
+        write(io, string("Seed ID = ", i, ": ", result ? "1" : "0", "\n"))
+    end
+    close(io)
+end
+
 # Sampling by:
 # chosen all its neighbours of a vertex (excluding itself).
 
@@ -121,6 +133,35 @@ function SearchForNonDegeneratingSeedExcludingSelf(B::SparseMatrixCSC, init::Int
         end
     end
     r
+end
+
+function SearchForNonDegeneratingSeedExcludingSelfFile(B::SparseMatrixCSC, filename::String, init::Int64=1)
+    io = open(filename, "w")
+    for i = init:size(B,1)
+        rep = GetSeedExcludingSelfReport(B,i)
+        result = rep.local_density - rep.induced_maximum_density > 1e-6
+        write(io, string("Seed ID = ", i, ": ", result ? "1" : "0", "\n"))
+    end
+    close(io)
+end
+
+function ReportAllDSRatioSizeOnSeedExcludingSelf(B::SparseMatrixCSC, filename::String, init::Int64=1)
+    io = open(filename, "w")
+    write(io,"ID,Densest_ratio,ADS_non_degenerate,Density_R\n")
+    for i = init:size(B,1)
+        R = GetAdjacency(B,i,false)
+        RGraph = B[R,R]
+        ratio = GetDensestSubgraphRatioSize(RGraph)
+        rep = GetSeedExcludingSelfReport(B,i)
+        non_degenerate = rep.local_density - rep.induced_maximum_density > 1e-6
+        densityR = GlobalMaximumDensity(RGraph).alpha_star
+        write(io, string(i)) # ID
+        write(io, string(",", ratio)) # Ratio (Densest subgraph's size of R relative to |R|)
+        write(io, string(",", non_degenerate)) # Non-degeneracy
+        write(io, string(",", densityR)) # R's own densest subgraph's density
+        write(io, "\n")
+    end
+    close(io)
 end
 
 #---------------------------------------------
@@ -397,5 +438,36 @@ function TestDegeneracyOnDifferentSizeWithMinimumRelativeDensity(B::SparseMatrix
     end
 end
 
-# fbgov = readIN("../Example/fbgov.in")
+# -------------
+# Special Tests
+# -------------
+
+# Check if the ads of R is the same as ds(R) over G.
+function CheckIdenticalAfterTakingDensestSubgraphOfR(B::SparseMatrixCSC, R::Vector{Int64}, printADS::Bool=false)
+    dsR = GlobalMaximumDensity(B[R,R]).source_nodes
+    popfirst!(dsR)
+    dsR = map(x->x-1, dsR)
+    dsR = R[dsR] # Now dsR is the densest subgraph of R
+    adsR = LocalMaximumDensityV2(B,R)
+    ads_dsR = LocalMaximumDensityV2(B,dsR)
+    if printADS
+        println(string("ADS of R: ", adsR))
+        println(string("ADS of the densest subgraph of R", ads_dsR))
+    end
+    return adsR.source_nodes == ads_dsR.source_nodes
+end
+
+function CheckIdenticalAfterTakingDensestSubgraphOfRForAllNeighbourExcludingSelf(B::SparseMatrixCSC, init::Int64=1)
+    for i = init:size(B,1)
+        if !CheckIdenticalAfterTakingDensestSubgraphOfR(B, GetAdjacency(B, i, false))
+            println(string("On Seed = ", i, " found the ADS being different"))
+        end
+    end
+end
+
+# -----------------
+# Preload some data
+# -----------------
+
+fbgov = readIN("../Example/fbgov.in")
 eucore = RetrieveLargestConnectedComponent(readIN("../Example/email-Eu-core.in"))

@@ -438,6 +438,52 @@ function TestDegeneracyOnDifferentSizeWithMinimumRelativeDensity(B::SparseMatrix
     end
 end
 
+# Sampling by:
+# Starting with some R, possibly random walking.
+# Take its densest subgraph, then remove one with lowest degree.
+# The purpose is that that may have a high chance of producing non-degenerating R.
+function GetConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, V::Int64, Size::Int64)
+    r = GetRandomWalkUntilSize(B, V, Size)
+    r = r[GlobalMaximumDensity(B[r, r]).source_nodes]
+    lowest_deg_index = findmin(map(z->GetDegree(B,z), r))[2]
+    deleteat!(r, lowest_deg_index)
+    return r
+end
+
+function TestDegeneracyOnConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        seed = rand(1:N)
+        sample = GetConcentratedRandomWalkLeaveLowestDensityOut(B,seed,Size)
+        rep = GetGenericSeedReport(B,seed,sample)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        if ShowSeed
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function TestDegeneracyOnConcentratedRandomWalkLeaveLowestDensityOutDifferentSize(B::SparseMatrixCSC, SizeFrom::Int64, SizeUntil::Int64, SizeInterval::Int64, Tests::Int64)
+    size = SizeFrom
+    while size <= SizeUntil
+        print_rgb(255,255,128,string("Size = ", size, ": "))
+        TestDegeneracyOnConcentratedRandomWalkLeaveLowestDensityOut(B,size,Tests,false)
+        size += SizeInterval
+    end
+end
+
 # -------------
 # Special Tests
 # -------------

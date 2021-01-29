@@ -61,7 +61,7 @@ function GetOneHopHighestDegreeNeighbourList(B::SparseMatrixCSC)
 end
 
 # Same as SearchForNonDegeneratingSeedAndNeighbours, but only seeds that are highest degree neighbour of some nodes
-function SearchFOrNonDegeneratingSeedAndNeighboursOneHopHighestDegreeOnly(B::SparseMatrixCSC, NeighbourList::Vector{Int64})
+function SearchForNonDegeneratingSeedAndNeighboursOneHopHighestDegreeOnly(B::SparseMatrixCSC, NeighbourList::Vector{Int64})
     N = size(B,1)
     UniqueList = sort(unique(NeighbourList))
     Len = length(UniqueList)

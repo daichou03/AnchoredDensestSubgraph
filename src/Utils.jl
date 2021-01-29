@@ -2,3 +2,22 @@
 function print_rgb(r, g, b, t)
     print("\e[1m\e[38;2;$r;$g;$b;249m",t)
 end
+
+# Assuming B is A's subset, find the array of indices of B's elements in A.
+# NOTE: This function assumes A, B are SORTED!
+# Thus performance is O(|B|).
+function orderedSubsetIndices(A, B)
+    indices = fill(-1, length(B))
+    indA = 1
+    indB = 1
+    while indA <= length(A) && indB <= length(B)
+        if A[indA] == B[indB]
+            indices[indB] = indA
+            indB += 1
+        end
+        indA += 1
+    end
+    return indices
+end
+
+

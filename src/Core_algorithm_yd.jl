@@ -6,6 +6,7 @@ using Base
 include("maxflow.jl") # TODO: Credit
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
+include("Utils.jl")
 
 mutable struct densestSubgraph
     alpha_star::Float64 # The minimum alpha value that can saturate all source edges
@@ -165,11 +166,26 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
     return F
 end
 
-# function StronglyLocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
-#     L = GetComponentAdjacency(B, R)
-#     density_R = GlobalMaximumDensity(B[R,R]).alpha_star
-#     S = LocalMaximumDensityV2(B, B[L,L])
-#     if S.
+function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+    #density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+    Expanded = Int64[]
+    Frontier = R
+    alpha = 0
+    S = Int64[]
+    SUnion = Int64[]
+    while !isempty(Frontier)
+        Expanded = union(Expanded, Frontier)
+        L = sort(GetComponentAdjacency(B, Expanded, true))
+        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, R))
+        alpha = result_S.alpha_star
+        S = map(x->L[x], result_S.source_nodes)
+        SUnion = union(SUnion, S)
+        Frontier = setdiff(S, Expanded)
+    end
+    return densestSubgraph(alpha, S)
+end
+
+
 
 # function FlowWithAlphaStronglyLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
 

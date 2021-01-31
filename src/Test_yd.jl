@@ -517,3 +517,4 @@ end
 
 fbgov = readIN("../Example/fbgov.in")
 eucore = RetrieveLargestConnectedComponent(readIN("../Example/email-Eu-core.in"))
+# epinion = RetrieveLargestConnectedComponent(readIN("../Example/soc-Epinions1.in"))

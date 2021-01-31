@@ -20,4 +20,6 @@ function orderedSubsetIndices(A, B)
     return indices
 end
 
+# https://stackoverflow.com/questions/25678112/insert-item-into-a-sorted-list-with-julia-with-and-without-duplicates
+insert_and_dedup!(v::Vector, x) = (splice!(v, searchsorted(v,x), [x]); v)
 

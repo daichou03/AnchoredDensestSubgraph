@@ -12,7 +12,7 @@ include("Core_algorithm_yd.jl")
 
 function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
     inducedMD = GlobalMaximumDensity(B[R,R])
-    localMD = LocalMaximumDensityV2(B, R)
+    localMD = StronglyLocalMaximumDensity(B, R)
     rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
 end
 

@@ -16,11 +16,11 @@ function GetDegree(B::SparseMatrixCSC, V::Int64)
     sum(B[V,:])
 end
 
+# YD 20200201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
 function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
-    N = size(B,1)
-    L = map(z->z[1], filter(a->a[2]>0, collect(zip(1:N,B[V,:]))))
+    L = SparseArrays.nonzeroinds(B[V,:])
     if Self
-        L = prepend!(L, V)
+        L = insert_and_dedup!(L, V) # Keep this list sorted
     end
     return L
 end
@@ -47,15 +47,36 @@ end
 
 # Not very efficient on large?
 # Returns the Set of the connected component that #1 vertex is in.
+# function ExtractConnectedComponent(B::SparseMatrixCSC)
+#     explored = Set(GetAdjacency(B,1,true))
+#     adj_set = setdiff(explored, Set([1]))
+#     while length(adj_set) > 0
+#         adj_set = setdiff(SetGetComponentAdjacency(B, collect(adj_set), false), explored)
+#         explored = union(explored, adj_set)
+#     end
+#     return explored
+# end
+
 function ExtractConnectedComponent(B::SparseMatrixCSC)
-    explored = Set(GetAdjacency(B,1,true))
-    adj_set = setdiff(explored, Set([1]))
-    while length(adj_set) > 0
-        adj_set = setdiff(SetGetComponentAdjacency(B, collect(adj_set), false), explored)
-        explored = union(explored, adj_set)
+    explored = GetAdjacency(B,1,true)
+    adj = setdiff(explored, [1])
+    while length(adj) > 0
+        adj = setdiff(GetComponentAdjacency(B, adj, false), explored)
+        explored = union(explored, adj)
     end
     return explored
 end
+
+# 20210201: Not faster...
+# function ExtractConnectedComponentV2(B::SparseMatrixCSC)
+#     frontier = [1]
+#     explored = [1]
+#     while !isempty(frontier)
+#         frontier = union(frontier, setdiff(GetAdjacency(B, frontier[1], false), explored))
+#         append!(explored, popfirst!(frontier))
+#     end
+#     return explored
+# end
 
 # Returns the number of connected components.
 # If ReturnLargestCCIndex, returns the largest connected component's index INSTEAD (I know this is bad code, not necessary to make it better for now).

@@ -38,10 +38,12 @@ end
 
 function SearchForNonDegeneratingSeedAndNeighbours(B::SparseMatrixCSC)
     r = Vector{Int64}()
+    non_deg_count = 0
     for i = 1:size(B,1)
         rep = GetSeedAndNeighbours(B,i)
         if rep.local_density - rep.induced_maximum_density > 1e-6
-            println(string(i, " is a non-degenerate seed."))
+            non_deg_count += 1
+            println(string(i, " is a non-degenerate seed, ", non_deg_count, " / ", i, " non-degenerate seed found so far."))
             push!(r,i)
         end
     end
@@ -125,10 +127,12 @@ end
 
 function SearchForNonDegeneratingSeedExcludingSelf(B::SparseMatrixCSC, init::Int64=1)
     r = Vector{Int64}()
+    non_deg_count = 0
     for i = init:size(B,1)
         rep = GetSeedExcludingSelfReport(B,i)
         if rep.local_density - rep.induced_maximum_density > 1e-6
-            println(string(i, " is a non-degenerate seed."))
+            non_deg_count += 1
+            println(string(i, " is a non-degenerate seed, ", non_deg_count, " / ", i, " non-degenerate seed found so far."))
             push!(r,i)
         end
     end

@@ -167,7 +167,6 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
 end
 
 function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
-    #density_R = GlobalMaximumDensity(B[R,R]).alpha_star
     Expanded = Int64[]
     Frontier = R
     alpha = 0
@@ -184,12 +183,3 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowT
     end
     return densestSubgraph(alpha, S)
 end
-
-
-
-# function FlowWithAlphaStronglyLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Float64}, rToOWeights::Vector{Float64})
-
-
-# ------
-# R=vec([1 2])
-# ------

@@ -191,13 +191,6 @@ function SearchForNonDegeneratingRandomClusterExcludingSelf(B::SparseMatrixCSC, 
             if nonDeg
                 println(string("Found one non-degenerating case with R = ", R, ", currently ", nonDegCount, " / ", i, " non-degenerate sets found so far."))
             end
-            # if nonDeg
-            #     print_rgb(255,64,128,text)
-            #     println()
-            # else
-            #     print_rgb(255,255,255,text)
-            #     println()
-            # end
         end
     end
     print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))

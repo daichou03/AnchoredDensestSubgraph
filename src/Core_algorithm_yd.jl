@@ -168,14 +168,15 @@ end
 
 function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
     Expanded = Int64[]
-    Frontier = R
+    RSorted = sort(R)
+    Frontier = RSorted
     alpha = 0
     S = Int64[]
     SUnion = Int64[]
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(GetComponentAdjacency(B, Expanded, true))
-        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, R))
+        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, RSorted))
         alpha = result_S.alpha_star
         S = map(x->L[x], result_S.source_nodes)
         SUnion = union(SUnion, S)

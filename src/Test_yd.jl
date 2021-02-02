@@ -36,10 +36,10 @@ function GetSeedAndNeighbours(B::SparseMatrixCSC, V::Int64)
     GetGenericSeedReport(B,V,adj)
 end
 
-function SearchForNonDegeneratingSeedAndNeighbours(B::SparseMatrixCSC)
+function SearchForNonDegeneratingSeedAndNeighbours(B::SparseMatrixCSC, init::Int64=1)
     r = Vector{Int64}()
     non_deg_count = 0
-    for i = 1:size(B,1)
+    for i = init:size(B,1)
         rep = GetSeedAndNeighbours(B,i)
         if rep.local_density - rep.induced_maximum_density > 1e-6
             non_deg_count += 1

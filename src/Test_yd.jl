@@ -198,6 +198,15 @@ function SearchForNonDegeneratingRandomClusterExcludingSelf(B::SparseMatrixCSC, 
     return nonDegCount
 end
 
+function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentClusterSize(B::SparseMatrixCSC, clusterSizeFrom::Int64, clusterSizeStep::Int64, clusterSizeTo::Int64, Tests::Int64)
+    clusterSize = clusterSizeFrom
+    while clusterSize <= clusterSizeTo
+        print_rgb(255,255,128,string("Cluster size = ", clusterSize, ": "))
+        SearchForNonDegeneratingRandomClusterExcludingSelf(B,clusterSize,Tests,false)
+        clusterSize += clusterSizeStep
+    end
+end
+
 #---------------------------------------------
 # Degeneracy test on R based on random walking
 #---------------------------------------------

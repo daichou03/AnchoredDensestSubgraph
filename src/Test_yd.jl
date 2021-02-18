@@ -258,6 +258,7 @@ end
 
 # https://www-complexnetworks.lip6.fr/~latapy/Publis/communities.pdf
 # Computing communities in large networks using random walks
+# Start with a number of starting nodes to walk "simultaneously" until Size is reached.
 function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::Int64)
     r = copy(R)
     walk = copy(R)
@@ -275,6 +276,10 @@ function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::
         end
     end
     return r
+end
+
+function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64)
+    GetStepRandomWalkUntilSize(B, GetRandomAdjacency(B, 5), Size)
 end
 
 function TestDegeneracyOnRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)

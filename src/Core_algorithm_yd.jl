@@ -13,7 +13,7 @@ mutable struct densestSubgraph
     source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
 end
 
-function GlobalMaximumDensity(B::SparseMatrixCSC)
+function GlobalMaximumDensity(B::SparseMatrixCSC, showTrace::Bool = false)
     N = size(B,1)
     # Weight for source edges
     sWeights = map(x -> sum(B[x,:]), 1:N)
@@ -34,7 +34,9 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
             else
                 alpha_bottom = alpha
             end
-            # println(alpha)
+            if showTrace
+                println(alpha)
+            end
         end
         flow_alpha_minus = FlowWithAlpha(B, alpha_bottom, sWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
@@ -53,14 +55,15 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Floa
 end
 
 # 20200116: attempt to improve performance. Test shows that the performance doesn't improve much tho.
-function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+# globalMD = GlobalMaximumDensity(B[R,R])
+function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, globalMD::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
     sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
-    density_R = GlobalMaximumDensity(B[R,R]).alpha_star # Density of the densest subgraph of R
+    density_R = globalMD.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return GlobalMaximumDensity(B[R,R])
+        return globalMD
     end
     alpha_bottom = density_R # Reachable (degenerate case)
     alpha_top = length(R) # Not reachable
@@ -105,7 +108,7 @@ end
 
 # YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
 # Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
+function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalMD::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
@@ -119,7 +122,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
     sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 
-    density_R = GlobalMaximumDensity(B[R,R]).alpha_star
+    density_R = globalMD.alpha_star
     alpha_bottom = density_R # Reachable
     alpha_top = length(R) # Not reachable
     flow_alpha_minus = 0
@@ -166,7 +169,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
     return F
 end
 
-function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalMD::densestSubgraph, ShowTrace::Bool=false)
     Expanded = Int64[]
     RSorted = sort(R)
     Frontier = RSorted
@@ -175,8 +178,8 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowT
     SUnion = Int64[]
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
-        L = sort(GetComponentAdjacency(B, Expanded, true))
-        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, RSorted))
+        L = sort(GetComponentAdjacency(B, Expanded, true)) # GetComponentAdjacency is too slow with large Expanded which is now a bottleneck.
+        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, RSorted), globalMD)
         alpha = result_S.alpha_star
         S = map(x->L[x], result_S.source_nodes)
         SUnion = union(SUnion, S)

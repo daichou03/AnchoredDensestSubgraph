@@ -25,6 +25,21 @@ function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
     return L
 end
 
+# Imitating a user try to submit a list of people including themselves and some of their friends (neigbhours), of #Size people in total (including themselves).
+# If the user don't have that many friends, submit all their friends + self instead.
+function GetRandomAdjacency(B::SparseMatrixCSC, V::Int64, Size::Int64)
+    L = GetAdjacency(B, V, false)
+    if length(L) >= Size
+        L = sample(L, Size - 1, replace=false, ordered=true)
+    end
+    L = insert_and_dedup!(L, V)
+    return L
+end
+
+function GetRandomAdjacency(B::SparseMatrixCSC, Size::Int64)
+    return GetRandomAdjacency(B, rand(Size(B, 1)), Size)
+end
+
 # Use Set to rewrite this.
 # YD 20210114: Depends on Size, get faster than V1 with larger size.
 # Compared with V1:
@@ -145,7 +160,11 @@ end
 
 function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
     N = size(B,1)
-    L = reduce(union, map(x->Set(GetAdjacency(B,x,true)), S))
+    if Self
+        L = reduce(union, map(x->Set(GetAdjacency(B,x,true)), S))
+    else
+        L = reduce(union, map(x->Set(GetAdjacency(B,x,false)), S))
+    end
     if !Self
         L = setdiff(L, Set(S))
     end

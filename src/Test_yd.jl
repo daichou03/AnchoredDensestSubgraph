@@ -228,6 +228,55 @@ function GetRandomWalkUntilSize(B::SparseMatrixCSC, V::Int64, Size::Int64)
     return r
 end
 
+function GetChainRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64, retry::Bool=true)
+    V = rand(1:size(B,1))
+    r = [V]
+    chain_ind = [1]
+    len = 1
+    while len < Size
+        current_node = r[last(chain_ind)]
+        next_poll = setdiff(GetAdjacency(B, current_node, false), r) # insert other filters here
+        if length(next_poll) > 0
+            next_node = rand(next_poll)            
+            len += 1
+            append!(r, next_node)
+            append!(chain_ind, len)
+        else
+            pop!(chain_ind)
+            # println(string("a backtrack occurred at length = ", len))
+            if length(chain_ind) == 0
+                if retry
+                    return GetStepRandomWalkUntilSize(B, Size, true)
+                else
+                    error(string("Failed to finish a random walk with the target size = ", Size, " in one attempt. Current sequence: ", r))
+                end
+            end
+        end
+    end
+    return r
+end
+
+# https://www-complexnetworks.lip6.fr/~latapy/Publis/communities.pdf
+# Computing communities in large networks using random walks
+function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::Int64)
+    r = copy(R)
+    walk = copy(R)
+    len = length(R)
+    while len < Size
+        for i = 1:length(walk)
+            walk[i] = rand(GetAdjacency(B, walk[i], false))
+            if !(walk[i] in r)
+                append!(r, walk[i])
+                len += 1
+                if len >= Size
+                    return r
+                end
+            end
+        end
+    end
+    return r
+end
+
 function TestDegeneracyOnRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
     N = size(B,1)
     nonDegCount = 0

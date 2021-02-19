@@ -353,17 +353,13 @@ function BulkRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::
     N = size(B, 1)
     samples = zeros(Int64, (Tests, Size))
     for row in eachrow(samples)
-        ret = GetRandomWalkUntilSizeThenRemoveHighDensity(B,rand(1:N),Size,Removes,DensityWeightFactor)
+        ret = GetStepRandomWalkUntilSizeThenRemoveHighDensity(B,Size,Removes,DensityWeightFactor)
         for i in 1:Size
             row[i] = ret[i]
         end
     end
     return samples
 end
-
-# for i = 1:size(samples, 1)
-#     println(DetectConnectedComponents(B[samples[i,:], samples[i,:]]))
-# end
 
 function TestDegeneracyOnRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64, ShowSeed::Bool=false)
     N = size(B,1)

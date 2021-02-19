@@ -260,9 +260,13 @@ end
 # Computing communities in large networks using random walks
 # Start with a number of starting nodes to walk "simultaneously" until Size is reached.
 function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::Int64)
-    r = copy(R)
-    walk = copy(R)
-    len = length(R)
+    R_sorted = R
+    r = copy(R_sorted)
+    walk = copy(R_sorted)
+    len = length(R_sorted)
+    if len > Size
+        return sample(r, Size, replace=false, ordered=true)
+    end
     while len < Size
         for i = 1:length(walk)
             walk[i] = rand(GetAdjacency(B, walk[i], false))
@@ -327,8 +331,18 @@ end
 # Sampling by:
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
 # Note that Size = final |R|, so if Size = 200 and Removes = 100, will get an R with |R| = 300 first then remove 100 nodes from it.
-function GetRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
-    r = GetRandomWalkUntilSize(B, V, Size + Removes)
+
+# function GetRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
+#     r = GetRandomWalkUntilSize(B, V, Size + Removes)
+#     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
+#     removes = sample(1:length(r), Weights(weights), Removes, replace=false)
+#     deleteat!(r, sort(removes))
+#     return r
+# end
+
+# Use StepRandomWalk.
+function GetStepRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
+    r = GetStepRandomWalkUntilSize(B, Size + Removes)
     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
     removes = sample(1:length(r), Weights(weights), Removes, replace=false)
     deleteat!(r, sort(removes))

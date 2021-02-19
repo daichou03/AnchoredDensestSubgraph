@@ -250,6 +250,14 @@ function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentRemoveProp(B
     end
 end
 
+function SearchForNonDegeneratingRandomClusterExcludingSelfGroupClusterSizeDifferentRemoveProp(B::SparseMatrixCSC, removePropFrom::Float64, removePropStep::Float64, removePropTo::Float64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    for clusterSize = [2,4,8,16,32]
+        print_rgb(255,224,192,string("Cluster Size: ", clusterSize))
+        println("")
+        SearchForNonDegeneratingRandomClusterExcludingSelfDifferentRemoveProp(B, clusterSize, removePropFrom, removePropStep, removePropTo, DensityWeightFactor, Tests)
+    end
+end
+
 
 # Sampling by:
 # choose all neighbours of a cluster of vertices, including themselves, then remove a random % of vertices only from neighours.

@@ -169,7 +169,7 @@ function ReportAllDSRatioSizeOnSeedExcludingSelf(B::SparseMatrixCSC, filename::S
 end
 
 # Sampling by:
-# chosen all neighbours of a cluster of vertices (excluding themselves).
+# choose all neighbours of a cluster of vertices (excluding themselves).
 
 function GetClusterExcludingSelfReport(B::SparseMatrixCSC, R::Vector{Int64})
     adj = GetComponentAdjacency(B, R, false)
@@ -203,6 +203,46 @@ function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentClusterSize(
         print_rgb(255,255,128,string("Cluster size = ", clusterSize, ": "))
         SearchForNonDegeneratingRandomClusterExcludingSelf(B,clusterSize,Tests,false)
         clusterSize += clusterSizeStep
+    end
+end
+
+# Sampling by:
+# choose all neighbours of a cluster of vertices (excluding themselves) like the previous, then remove a random % of vertices.
+function GetClusterExcludingSelfThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
+    adj = GetComponentAdjacency(B, R, false)
+    weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj])) #
+    removes = sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
+    deleteat!(adj, sort(removes))
+    GetGenericSeedReport(B,DUMMY_SEED,adj)
+end
+
+# Cluster based on random walking.
+function SearchForNonDegeneratingRandomClusterExcludingSelfThenRemove(B::SparseMatrixCSC, clusterSize::Int64, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64, ShowSeed::Bool=false)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        R = GetStepRandomWalkUntilSize(B,clusterSize)
+        rep = GetClusterExcludingSelfThenRemoveReport(B,R,RemoveProp,DensityWeightFactor)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", rep)
+        if ShowSeed            
+            if nonDeg
+                println(string("Found one non-degenerating case with R = ", R, ", currently ", nonDegCount, " / ", i, " non-degenerate sets found so far."))
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentRemoveProp(B::SparseMatrixCSC, clusterSize::Int64, removePropFrom::Float64, removePropStep::Float64, removePropTo::Float64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    removeProp = removePropFrom
+    while removeProp <= removePropTo
+        print_rgb(255,255,128,string("Remove proportion = ", removeProp, ": "))
+        SearchForNonDegeneratingRandomClusterExcludingSelfThenRemove(B,clusterSize,removeProp,DensityWeightFactor,Tests,false)
+        removeProp += removePropStep
     end
 end
 
@@ -328,9 +368,7 @@ end
 
 # Sampling by:
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
-# Note that Size = final |R|, so if Size = 200 and Removes = 100, will get an R with |R| = 300 first then remove 100 nodes from it.
-
-# Use StepRandomWalk.
+#
 function GetStepRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
     r = GetStepRandomWalkUntilSize(B, Size + Removes)
     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
@@ -607,6 +645,7 @@ end
 # Preload some data
 # -----------------
 
-fbgov = readIN("../Example/fbgov.in")
+println("Loading test datasets...")
+lastfm = RetrieveLargestConnectedComponent(readIN("../Example/lastfm_asia_edges.in"))
 eucore = RetrieveLargestConnectedComponent(readIN("../Example/email-Eu-core.in"))
 # epinion = RetrieveLargestConnectedComponent(readIN("../Example/soc-Epinions1.in"))

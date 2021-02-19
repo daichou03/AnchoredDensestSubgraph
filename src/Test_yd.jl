@@ -171,9 +171,9 @@ end
 # Sampling by:
 # chosen all neighbours of a cluster of vertices (excluding themselves).
 
-function GetClusterExcludingSelfReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
+function GetClusterExcludingSelfReport(B::SparseMatrixCSC, R::Vector{Int64})
     adj = GetComponentAdjacency(B, R, false)
-    GetGenericSeedReport(B,V,adj)
+    GetGenericSeedReport(B,DUMMY_SEED,adj)
 end
 
 # Cluster based on random walking.
@@ -181,9 +181,8 @@ function SearchForNonDegeneratingRandomClusterExcludingSelf(B::SparseMatrixCSC, 
     N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
-        seed = rand(1:N)
-        R = GetRandomWalkUntilSize(B,seed,clusterSize)
-        rep = GetClusterExcludingSelfReport(B,seed,R)
+        R = GetStepRandomWalkUntilSize(B,clusterSize)
+        rep = GetClusterExcludingSelfReport(B,R)
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         text = string("Test ", i, ": ", rep)
@@ -215,7 +214,8 @@ end
 # starting with chosen/random vertex, sample a random connected component with fixed size
 
 # Starting with a chosen vertex, include a random neighbour of a random vertex in the set to the set until the size of the set reaches Size.
-function GetRandomWalkUntilSize(B::SparseMatrixCSC, V::Int64, Size::Int64)
+# Name this kind of "random walk" as hive random walk for now.
+function GetHiveRandomWalkUntilSize(B::SparseMatrixCSC, V::Int64, Size::Int64)
     r = [V]
     while length(r) < Size
         next = 0
@@ -287,12 +287,10 @@ function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64)
 end
 
 function TestDegeneracyOnRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
-    N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
-        seed = rand(1:N)
-        sample = GetRandomWalkUntilSize(B,seed,Size)
-        rep = GetGenericSeedReport(B,seed,sample)
+        sample = GetStepRandomWalkUntilSize(B,Size)
+        rep = GetGenericSeedReport(B,DUMMY_SEED,sample)
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         text = string("Test ", i, ": ", rep)
@@ -332,14 +330,6 @@ end
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
 # Note that Size = final |R|, so if Size = 200 and Removes = 100, will get an R with |R| = 300 first then remove 100 nodes from it.
 
-# function GetRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
-#     r = GetRandomWalkUntilSize(B, V, Size + Removes)
-#     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
-#     removes = sample(1:length(r), Weights(weights), Removes, replace=false)
-#     deleteat!(r, sort(removes))
-#     return r
-# end
-
 # Use StepRandomWalk.
 function GetStepRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
     r = GetStepRandomWalkUntilSize(B, Size + Removes)
@@ -368,9 +358,8 @@ function TestDegeneracyOnRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatri
     totalComponents = 0.0
     samples = BulkRandomWalkUntilSizeThenRemoveHighDensity(B,Size,Removes,DensityWeightFactor,Tests)
     for i = 1:Tests
-        seed = rand(1:N)
         sample = samples[i,:]
-        rep = GetGenericSeedReport(B,seed,sample)
+        rep = GetGenericSeedReport(B,DUMMY_SEED,sample)
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         components = DetectConnectedComponents(B[sample,sample])
@@ -457,12 +446,12 @@ end
 # R with a fixed Size and must meet a minimum volume.
 # Doing this by starting with GetSampleUntilSize (random walk), then using local search to change its components until its volume reaches (greater than or equal to) the required value.
 # For now, this function returns an R with |R| = Size and induced_volume(R) >= MinVolume.
-function GetFixedSizeWithMinimumDensity(B::SparseMatrixCSC, V::Int64, Size::Int64, MinVolume::Int64, MaxReseed::Int64=-1)
+function GetFixedSizeWithMinimumDensity(B::SparseMatrixCSC, Size::Int64, MinVolume::Int64, MaxReseed::Int64=-1)
     if MinVolume > Size * (Size - 1)
         error(string("MinVolume is ", MinVolume, " which is greater than a graph with Size ", Size, " can possibly have."))
     end
     while MaxReseed != 0
-        R = GetRandomWalkUntilSize(B, V, Size)
+        R = GetStepRandomWalkUntilSize(B, Size)
         retry = Size * 2 # TODO: number of retries reasonable? To see.
         while retry > 0 && GetInducedVolume(B, R) < MinVolume
             residualR = map(x -> Size - 1 - GetDegree(B[R,R], x), 1:Size) # For each vertex in r, the density it could possibly improve
@@ -497,16 +486,14 @@ function GetFixedSizeWithMinimumDensity(B::SparseMatrixCSC, V::Int64, Size::Int6
 end
 
 function GetFixedSizeWithMinimumDensity(B::SparseMatrixCSC, Size::Int64, MinVolume::Int64)
-    GetFixedSizeWithMinimumDensity(B, rand(1:size(B,1)), Size, MinVolume)
+    GetFixedSizeWithMinimumDensity(B, Size, MinVolume)
 end
 
 function TestDegeneracyOnFixedSizeWithMinimumDensity(B::SparseMatrixCSC, Size::Int64, MinVolume::Int64, Tests::Int64, ShowSeed::Bool=false)
-    N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
-        seed = rand(1:N)
-        sample = GetFixedSizeWithMinimumDensity(B,seed,Size,MinVolume)
-        rep = GetGenericSeedReport(B,seed,sample)
+        sample = GetFixedSizeWithMinimumDensity(B,Size,MinVolume)
+        rep = GetGenericSeedReport(B,DUMMY_SEED,sample)
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
@@ -549,8 +536,8 @@ end
 # Starting with some R, possibly random walking.
 # Take its densest subgraph, then remove one with lowest degree.
 # The purpose is that that may have a high chance of producing non-degenerating R.
-function GetConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, V::Int64, Size::Int64)
-    r = GetRandomWalkUntilSize(B, V, Size)
+function GetConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, Size::Int64)
+    r = GetStepRandomWalkUntilSize(B, Size)
     r = r[GlobalMaximumDensity(B[r, r]).source_nodes]
     lowest_deg_index = findmin(map(z->GetDegree(B,z), r))[2]
     deleteat!(r, lowest_deg_index)
@@ -558,12 +545,10 @@ function GetConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, V::I
 end
 
 function TestDegeneracyOnConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
-    N = size(B,1)
     nonDegCount = 0
     for i = 1:Tests
-        seed = rand(1:N)
-        sample = GetConcentratedRandomWalkLeaveLowestDensityOut(B,seed,Size)
-        rep = GetGenericSeedReport(B,seed,sample)
+        sample = GetConcentratedRandomWalkLeaveLowestDensityOut(B,Size)
+        rep = GetGenericSeedReport(B,DUMMY_SEED,sample)
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))

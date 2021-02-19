@@ -10,10 +10,14 @@ include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 
+const DUMMY_SEED = -1
+
+# V does not need to be relevant - in which case assign it to be something <= 0 to indicate this.
 function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
     inducedMD = GlobalMaximumDensity(B[R,R])
     localMD = StronglyLocalMaximumDensity(B, R)
-    rSeed(V, R, GetDegree(B, V), GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
+    degree = V <= 0 ? -1 : GetDegree(B, V)
+    rSeed(V, R, degree, GetVolume(B, R), GetInducedVolume(B, R), inducedMD.alpha_star, length(inducedMD.source_nodes)-1, localMD.alpha_star, length(localMD.source_nodes)-1)
 end
 
 #----------------------------

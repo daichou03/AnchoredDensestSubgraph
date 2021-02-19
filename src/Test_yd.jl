@@ -80,6 +80,7 @@ function SearchForNonDegeneratingSeedAndNeighboursOneHopHighestDegreeOnly(B::Spa
     r
 end
 
+
 # Sampling by:
 # chosen vertex and all its neighbours but the one with highest degree
 
@@ -116,6 +117,7 @@ function SearchForNonDegeneratingLeaveHighestDegSeedFile(B::SparseMatrixCSC, fil
     end
     close(io)
 end
+
 
 # Sampling by:
 # chosen all its neighbours of a vertex (excluding itself).
@@ -168,6 +170,7 @@ function ReportAllDSRatioSizeOnSeedExcludingSelf(B::SparseMatrixCSC, filename::S
     close(io)
 end
 
+
 # Sampling by:
 # choose all neighbours of a cluster of vertices (excluding themselves).
 
@@ -206,11 +209,12 @@ function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentClusterSize(
     end
 end
 
+
 # Sampling by:
 # choose all neighbours of a cluster of vertices (excluding themselves) like the previous, then remove a random % of vertices.
 function GetClusterExcludingSelfThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
     adj = GetComponentAdjacency(B, R, false)
-    weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj])) #
+    weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj]))
     removes = sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
     deleteat!(adj, sort(removes))
     GetGenericSeedReport(B,DUMMY_SEED,adj)
@@ -242,6 +246,47 @@ function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentRemoveProp(B
     while removeProp <= removePropTo
         print_rgb(255,255,128,string("Remove proportion = ", removeProp, ": "))
         SearchForNonDegeneratingRandomClusterExcludingSelfThenRemove(B,clusterSize,removeProp,DensityWeightFactor,Tests,false)
+        removeProp += removePropStep
+    end
+end
+
+
+# Sampling by:
+# choose all neighbours of a cluster of vertices, including themselves, then remove a random % of vertices only from neighours.
+function GetClusterNeighbourThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
+    adj = GetComponentAdjacency(B, R, false)
+    weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj])) #
+    removes = sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
+    deleteat!(adj, sort(removes))
+    GetGenericSeedReport(B,DUMMY_SEED,union(adj,R))
+end
+
+# Cluster based on random walking.
+function SearchForNonDegeneratingRandomClusterNeighbourThenRemove(B::SparseMatrixCSC, clusterSize::Int64, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64, ShowSeed::Bool=false)
+    N = size(B,1)
+    nonDegCount = 0
+    for i = 1:Tests
+        R = GetStepRandomWalkUntilSize(B,clusterSize)
+        rep = GetClusterNeighbourThenRemoveReport(B,R,RemoveProp,DensityWeightFactor)
+        nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
+        nonDegCount += (nonDeg ? 1 : 0)
+        text = string("Test ", i, ": ", rep)
+        if ShowSeed            
+            if nonDeg
+                println(string("Found one non-degenerating case with R = ", R, ", currently ", nonDegCount, " / ", i, " non-degenerate sets found so far."))
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function SearchForNonDegeneratingRandomClusterNeighbourDifferentRemoveProp(B::SparseMatrixCSC, clusterSize::Int64, removePropFrom::Float64, removePropStep::Float64, removePropTo::Float64, DensityWeightFactor::Union{Int64,Float64}, Tests::Int64)
+    removeProp = removePropFrom
+    while removeProp <= removePropTo
+        print_rgb(255,255,128,string("Remove proportion = ", removeProp, ": "))
+        SearchForNonDegeneratingRandomClusterNeighbourThenRemove(B,clusterSize,removeProp,DensityWeightFactor,Tests,false)
         removeProp += removePropStep
     end
 end

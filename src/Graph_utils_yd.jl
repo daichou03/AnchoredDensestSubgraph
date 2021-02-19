@@ -154,18 +154,17 @@ function DetectConnectedComponents(B::SparseMatrixCSC, ShowLengthOfComponents::B
 end
 
 # Note there are |S| convertions from array to set, and 1 conversion from set to array.
+# 20210219: Slow on large sets.
 function GetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
     return collect(SetGetComponentAdjacency(B,S,Self))
 end
 
 function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
     N = size(B,1)
+    L = reduce(union, map(x->Set(GetAdjacency(B,x,false)), S))
     if Self
-        L = reduce(union, map(x->Set(GetAdjacency(B,x,true)), S))
+        L = union(L, Set(S))
     else
-        L = reduce(union, map(x->Set(GetAdjacency(B,x,false)), S))
-    end
-    if !Self
         L = setdiff(L, Set(S))
     end
     return L

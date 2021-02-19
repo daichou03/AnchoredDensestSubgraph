@@ -363,9 +363,9 @@ function TestDegeneracyOnRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatri
         nonDeg = rep.local_density - rep.induced_maximum_density > 1e-6
         nonDegCount += (nonDeg ? 1 : 0)
         components = DetectConnectedComponents(B[sample,sample])
-        totalComponents += components
-        text = string("Test ", i, ": ", GetGenericSeedReport(B,seed,sample))
+        totalComponents += components       
         if ShowSeed
+            text = string("Test ", i, ": ", rep)
             if nonDeg
                 print_rgb(255,64,128,text)
                 println()

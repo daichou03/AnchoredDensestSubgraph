@@ -37,7 +37,7 @@ function GetRandomAdjacency(B::SparseMatrixCSC, V::Int64, Size::Int64)
 end
 
 function GetRandomAdjacency(B::SparseMatrixCSC, Size::Int64)
-    return GetRandomAdjacency(B, rand(Size(B, 1)), Size)
+    return GetRandomAdjacency(B, rand(1:size(B, 1)), Size)
 end
 
 # Use Set to rewrite this.

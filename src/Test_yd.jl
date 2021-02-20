@@ -491,7 +491,7 @@ function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, Targe
                 retries += 1
                 if retries >= MaxRetriesMultiplier * length(R)
                     if ReportTrapped
-                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", step, " hops with R = ", R, ", need to allow one more step."))
+                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with R = ", R, ", need to allow one more step."))
                     end
                     return GenerateSmallRandomWalksSet(B, R, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
                 end

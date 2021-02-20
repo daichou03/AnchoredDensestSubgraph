@@ -475,7 +475,7 @@ function BulkGenerateCloseNeighboursSet(B::SparseMatrixCSC, Size::Int64, Tests::
     return samples
 end
 
-function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, TargetSize::Int64, step::Int64=2, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
+function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, TargetSize::Int64, MaxStep::Int64=2, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
     if length(R) > TargetSize
         return sample(R, TargetSize, replace=false, ordered=true)
     end    
@@ -484,7 +484,7 @@ function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, Targe
     current = rand(R)
     retries = 0
     while length(r) < TargetSize
-        if step < 2
+        if step < MaxStep
             step += 1
             current = rand(GetAdjacency(B, current, false))
             if current in r
@@ -493,7 +493,7 @@ function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, Targe
                     if ReportTrapped
                         println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", step, " hops with R = ", R, ", need to allow one more step."))
                     end
-                    return GenerateSmallRandomWalksSet(B, R, TargetSize, step+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
+                    return GenerateSmallRandomWalksSet(B, R, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
                 end
             else
                 retries = 0

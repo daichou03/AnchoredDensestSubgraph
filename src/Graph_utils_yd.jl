@@ -126,11 +126,11 @@ function RetrieveLargestConnectedComponent(B::SparseMatrixCSC)
     remaining = copy(B)
     for i = 1:largestCCIndex-1
         nextCC = ExtractConnectedComponent(remaining)
-        remaining_components = collect(setdiff(Set(1:size(remaining, 1)), nextCC))
+        remaining_components = setdiff(1:size(remaining, 1), nextCC)
         remaining = remaining[remaining_components, remaining_components]
     end
-    nextCC = collect(ExtractConnectedComponent(remaining))
-    return B[nextCC,nextCC]
+    nextCC = ExtractConnectedComponent(remaining)
+    return remaining[nextCC,nextCC]
 end
 
 function DetectConnectedComponents(B::SparseMatrixCSC, ShowLengthOfComponents::Bool=false)

@@ -24,6 +24,16 @@ mutable struct rSeed
     local_densest_graph_size::Int64
 end
 
+mutable struct rSeedV2
+    seed::Int64
+    adj::Vector{Int64}
+    degree::Float64
+    volume::Float64
+    induced_volume::Float64
+    inducedDS::densestSubgraph
+    localDS::densestSubgraph
+end
+
 #--------------------------------------------------------
 # Degeneracy test on R based on seed + neighbouring nodes
 #--------------------------------------------------------
@@ -209,7 +219,6 @@ function SearchForNonDegeneratingRandomClusterExcludingSelfDifferentClusterSize(
     end
 end
 
-
 # Sampling by:
 # choose all neighbours of a cluster of vertices (excluding themselves) like the previous, then remove a random % of vertices.
 function GetClusterExcludingSelfThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
@@ -353,7 +362,7 @@ end
 # Computing communities in large networks using random walks
 # Start with a number of starting nodes to walk "simultaneously" until Size is reached.
 function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::Int64)
-    R_sorted = R
+    R_sorted = sort(R)
     r = copy(R_sorted)
     walk = copy(R_sorted)
     len = length(R_sorted)
@@ -418,6 +427,126 @@ end
 function TestDegeneracyOnRandomWalkUntilDifferentSize(B::SparseMatrixCSC, SizeUntil::Int64, Tests::Int64)
     TestDegeneracyOnRandomWalkUntilDifferentSize(B, 2, SizeUntil, Tests)
 end
+
+# --->
+# Sampling by:
+# Starting with a small set of "user input" - including a vertex and some of its up to 2-hop neighbours,
+# adding new vertices to it by 2 step random walk each time from a random vertex from the original user input until a desired input size is reached.
+
+# Start with a random vertex and then include some of its 2-hop neighbours
+# Start over if it fails to find any new point in consecutive MaxRetries steps.
+function GenerateCloseNeighboursSet(B::SparseMatrixCSC, Size::Int64, TwoHopRate::Float64=0.5, MaxRetries::Int64=10)
+    V = rand(1:size(B,1))
+    r = [V]
+    retries = 0
+    current = V
+    while length(r) < Size
+        if current == V
+            next = rand(GetAdjacency(B, current, false))
+            current = next
+        elseif rand() <= TwoHopRate
+            next = rand(GetAdjacency(B, current, false))
+            current = V 
+        else
+            current = V
+            continue
+        end
+        if next in r
+            retries += 1
+            if retries >= MaxRetries
+                return GenerateCloseNeighboursSet(B, Size, TwoHopRate, MaxRetries)
+            end
+        else
+            retries = 0
+            append!(r, next)
+        end
+    end
+    return r
+end
+
+function BulkGenerateCloseNeighboursSet(B::SparseMatrixCSC, Size::Int64, Tests::Int64, TwoHopRate::Float64=0.5, MaxRetries::Int64=10)
+    samples = zeros(Int64, (Tests, Size))
+    for row in eachrow(samples)
+        ret = GenerateCloseNeighboursSet(B, Size, TwoHopRate, MaxRetries)
+        for i in 1:Size
+            row[i] = ret[i]
+        end
+    end
+    return samples
+end
+
+function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, TargetSize::Int64)
+    if length(R) > TargetSize
+        return sample(R, TargetSize, replace=false, ordered=true)
+    end    
+    r = copy(R)
+    step = 1
+    current = rand(R)
+    while length(r) < TargetSize
+        if step < 3
+            step += 1
+            current = rand(GetAdjacency(B, current, false))
+            if !(current in r)
+                append!(r, current)
+                if length(r) >= TargetSize
+                    return r
+                end
+            end
+        else
+            step = 1
+            current = rand(R)
+        end
+    end
+    return r
+end
+
+function BulkGenerateSmallRandomWalksTestSet(B::SparseMatrixCSC, samples::Array{Int64,2}, TargetSize::Int64)
+    tests = zeros(Int64, (size(samples, 1), TargetSize))
+    for i = 1:size(samples, 1)
+        ret = GenerateSmallRandomWalksSet(B, samples[i,:], TargetSize)
+        for j = 1:TargetSize
+            tests[i,j] = ret[j]
+        end
+    end
+    return tests
+end
+
+function TestDegeneracyOnSmallRandomWalksTestSet(B::SparseMatrixCSC, tests::Array{Int64,2}, ShowSeed::Bool=false)
+    nonDegCount = 0
+    for i = 1:size(tests,1)
+        R = tests[i,:]
+        rep = GetGenericSeedReportV2(B,DUMMY_SEED,R)
+        nonDeg = length(setdiff(rep.localDS.source_nodes, rep.inducedDS.source_nodes)) > 0
+        nonDegCount += (nonDeg ? 1 : 0)     
+        if ShowSeed
+            text = string("Test ", i, ": ", rep)
+            if nonDeg
+                print_rgb(255,64,128,text)
+                println()
+            else
+                print_rgb(255,255,255,text)
+                println()
+            end
+        end
+    end
+    print_rgb(128,128,255,string("Non-degenerating R count: ", nonDegCount))
+    println("")
+    return nonDegCount
+end
+
+function TestDegeneracyOnSmallRandomWalksTestSetDifferentInputSize(B::SparseMatrixCSC, Tests::Int64, closeNeighbourSizes::Vector{Int64}=[2,4,8,16,32], smallRandomWalkSizes::Vector{Int64}=[8,16,32,64,128])
+    println(string(Tests, " tests each."))
+    println()
+    for i = 1:length(closeNeighbourSizes)
+        print_rgb(255,64,128,string("Test on close neighbour size = ", closeNeighbourSizes[i], ", target anchor set size = ", smallRandomWalkSizes[i], ":"))
+        println()
+        samples = BulkGenerateCloseNeighboursSet(B, closeNeighbourSizes[i], Tests)
+        anchors = BulkGenerateSmallRandomWalksTestSet(B, samples, smallRandomWalkSizes[i])
+        TestDegeneracyOnSmallRandomWalksTestSet(B, anchors)
+    end
+end
+
+# --> 
 
 # Sampling by:
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.

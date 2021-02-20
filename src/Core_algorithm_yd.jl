@@ -53,14 +53,14 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Floa
 end
 
 # 20200116: attempt to improve performance. Test shows that the performance doesn't improve much tho.
-function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, inducedMD::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
     sWeightsR = map(x -> (x in R) ? sum(B[x,:]) : Float64(0), 1:N)
-    density_R = GlobalMaximumDensity(B[R,R]).alpha_star # Density of the densest subgraph of R
+    density_R = inducedMD.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return GlobalMaximumDensity(B[R,R])
+        return inducedMD
     end
     alpha_bottom = density_R # Reachable (degenerate case)
     alpha_top = length(R) # Not reachable
@@ -94,6 +94,11 @@ function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
+function LocalMaximumDensityV2(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+    inducedMD = GlobalMaximumDensity(B[R,R])
+    return LocalMaximumDensityV2(B, R, inducedMD, ShowTrace)
+end
+
 function FlowWithAlphaLocalDensityV2(FlowNet::SparseMatrixCSC, alpha::Float64)
     N = size(FlowNet,1) - 2
     for i = 2:N+1
@@ -105,6 +110,7 @@ end
 
 # YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
 # Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
+# TODO: inducedMD change
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
     N = size(B,1)
     # Weight for source edges
@@ -166,7 +172,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
     return F
 end
 
-function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedMD::densestSubgraph, ShowTrace::Bool=false)
     Expanded = Int64[]
     RSorted = sort(R)
     Frontier = RSorted
@@ -177,11 +183,16 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowT
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
-        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, RSorted))
+        result_S = LocalMaximumDensityV2(B[L,L], orderedSubsetIndices(L, RSorted), inducedMD)
         alpha = result_S.alpha_star
         S = map(x->L[x], result_S.source_nodes)
         SUnion = union(SUnion, S)
         Frontier = setdiff(S, Expanded)
     end
     return densestSubgraph(alpha, S)
+end
+
+function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+    inducedMD = GlobalMaximumDensity(B[R,R])
+    return StronglyLocalMaximumDensity(B, R, inducedMD, ShowTrace)
 end

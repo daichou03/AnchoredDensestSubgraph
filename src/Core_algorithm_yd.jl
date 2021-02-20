@@ -3,7 +3,6 @@ using MAT
 using MatrixNetworks
 using LinearAlgebra
 using Base
-using Laplacians # https://github.com/danspielman/Laplacians.jl
 include("maxflow.jl") # TODO: Credit
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
@@ -19,7 +18,7 @@ end
 function GlobalMaximumDensity(B::SparseMatrixCSC)
     N = size(B,1)
     # Weight for source edges
-    sWeights = map(x -> Laplacians.deg(B,x), 1:N)
+    sWeights = map(x -> GetDegree(B,x), 1:N)
     alpha_bottom = sum(sWeights) / N # Reachable
     alpha_top = maximum(sWeights) # Reachable only if alpha_bottom = alpha_top, i.e. the entire graph is a clique
     flow_alpha_minus = 0
@@ -60,7 +59,7 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
-    sWeightsR = map(x -> (x in R) ? Laplacians.deg(B,x) : 0, 1:N)
+    sWeightsR = map(x -> (x in R) ? GetDegree(B,x) : 0, 1:N)
     density_R = inducedDS.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return R[inducedDS]
@@ -114,7 +113,7 @@ end
 # YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
 # Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
 
-# globalDegree = map(x -> Laplacians.deg(B,x), 1:size(B,1)).
+# globalDegree = map(x -> GetDegree(B,x), 1:size(B,1)).
 # Calculating globalDegree is pretty slow. Since it is a global value and we only need to calculate it once per graph,
 # it is required to precalculate this and pass it as a parameter.
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, inducedDS::densestSubgraph)
@@ -125,7 +124,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globa
 
     overdensed = filter(x -> x > 0, map(pair -> (pair[2] >= 2*volume_R ? pair[1] : 0), zip(1:N, globalDegree)))
     rToOMatrix = B[setdiff(1:N,overdensed), overdensed]
-    rToOWeights = map(x -> Laplacians.deg(rToOMatrix, x), 1:(N-length(overdensed)))
+    rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
     sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 
@@ -161,6 +160,15 @@ end
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64})
     inducedDS = GlobalMaximumDensity(B[R,R])
     return ImprovedLocalMaximumDensity(B, R, globalDegree, inducedDS)
+end
+
+function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
+    globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+    println("WARNING: if you plan to use the graph multiple times, better pre-calculate:")
+    println("globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))")
+    println("and call ImprovedLocalMaximumDensity(B, R, globalDegree) instead to avoid recalculating globalDegree each time.")
+    println("--------------------------------")
+    return ImprovedLocalMaximumDensity(B, R, globalDegree)
 end
 
 function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})

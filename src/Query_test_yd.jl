@@ -9,12 +9,11 @@ include("maxflow.jl")
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
+include("Test_utils_yd.jl")
+include("Utils.jl")
 
-#----------------------------
-# Densest subgraph size ratio
-#----------------------------
-
-function GetDensestSubgraphRatioSize(R::SparseMatrixCSC)
-    N = size(R, 1)
-    return length(GlobalMaximumDensity(R).source_nodes) / N
+mutable struct rMinimalSeed
+    R::Vector{Int64}
+    inducedDS::densestSubgraph
+    localDS::densestSubgraph
 end

@@ -12,9 +12,28 @@ include("Helper_io.jl")
 # Graph Utils
 #------------
 
-function GetDegree(B::SparseMatrixCSC, V::Int64)
-    sum(B[V,:])
+# ----------------------------------
+# Laplacians package functions start
+# ----------------------------------
+# Credit:
+# https://github.com/danspielman/Laplacians.jl/blob/master/src/graphUtils.jl
+# To heavy to load the entire package, copy the specific function here instead.
+
+# Unweighted degree.
+GetDegree(mat::SparseMatrixCSC{Tv,Ti}, v::Ti) where {Tv,Ti} = mat.colptr[v+1]-mat.colptr[v]
+
+# Weighted degree.
+function GetWeightedDegree(mat::SparseMatrixCSC{Tv,Ti}, v::Ti) where {Tv,Ti}
+    sum = 0
+    for i in 1:deg(mat,v)
+        sum = sum + weighti(mat,v,i)
+    end
+    return sum
 end
+
+# --------------------------------
+# Laplacians package functions end
+# --------------------------------
 
 # YD 20200201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
 function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
@@ -171,7 +190,7 @@ function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bo
 end
 
 function GetVolume(B::SparseMatrixCSC, S::Vector{Int64})
-    sum(map(v->GetDegree(B,v), S))
+    sum(map(v->GetWeightedDegree(B,v), S))
 end
 
 function GetAllDegrees(B::SparseMatrixCSC)
@@ -191,7 +210,8 @@ function GetAllDegreesFile(B::SparseMatrixCSC, FileName::String)
 end
 
 function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
-    sum(B[S,S])
+    N = size(S,1)
+    sum(map(v->GetWeightedDegree(B[S,S],v), 1:N))
 end
 
 function PopSourceForFlowNetworkResult(S::Vector{Int64})

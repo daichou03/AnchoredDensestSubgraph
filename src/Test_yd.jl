@@ -511,20 +511,20 @@ function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, Targe
 end
 
 function BulkGenerateSmallRandomWalksTestSet(B::SparseMatrixCSC, samples::Array{Int64,2}, TargetSize::Int64)
-    tests = zeros(Int64, (size(samples, 1), TargetSize))
+    anchors = zeros(Int64, (size(samples, 1), TargetSize))
     for i = 1:size(samples, 1)
         ret = GenerateSmallRandomWalksSet(B, samples[i,:], TargetSize)
         for j = 1:TargetSize
             tests[i,j] = ret[j]
         end
     end
-    return tests
+    return anchors
 end
 
-function TestDegeneracyOnSmallRandomWalksTestSet(B::SparseMatrixCSC, tests::Array{Int64,2}, ShowSeed::Bool=false)
+function TestDegeneracyOnSmallRandomWalksTestSet(B::SparseMatrixCSC, anchors::Array{Int64,2}, ShowSeed::Bool=false)
     nonDegCount = 0
-    for i = 1:size(tests,1)
-        R = tests[i,:]
+    for i = 1:size(anchors,1)
+        R = anchors[i,:]
         rep = GetGenericSeedReportV2(B,DUMMY_SEED,R)
         nonDeg = length(setdiff(rep.localDS.source_nodes, rep.inducedDS.source_nodes)) > 0
         nonDegCount += (nonDeg ? 1 : 0)     
@@ -532,9 +532,6 @@ function TestDegeneracyOnSmallRandomWalksTestSet(B::SparseMatrixCSC, tests::Arra
             text = string("Test ", i, ": ", rep)
             if nonDeg
                 print_rgb(255,64,128,text)
-                println()
-            else
-                print_rgb(255,255,255,text)
                 println()
             end
         end

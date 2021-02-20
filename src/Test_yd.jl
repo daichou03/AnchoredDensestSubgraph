@@ -813,8 +813,8 @@ function CheckIdenticalAfterTakingDensestSubgraphOfR(B::SparseMatrixCSC, R::Vect
     popfirst!(dsR)
     dsR = map(x->x-1, dsR)
     dsR = R[dsR] # Now dsR is the densest subgraph of R
-    adsR = LocalMaximumDensityV2(B,R)
-    ads_dsR = LocalMaximumDensityV2(B,dsR)
+    adsR = LocalMaximumDensity(B,R)
+    ads_dsR = LocalMaximumDensity(B,dsR)
     if printADS
         println(string("ADS of R: ", adsR))
         println(string("ADS of the densest subgraph of R", ads_dsR))

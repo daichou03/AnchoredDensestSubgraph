@@ -157,6 +157,7 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
     timed_reports = @timed ProcessQueryOnReferenceSet(B, anchors)
     # Write data points to file
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", TargetSize, "-", Repeats, "-", Steps)
+    mkpath("../DataPoints")
     io = open(string("../DataPoints/",filename), "w")
     for i = 1:Tests
         dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_local[1][i])
@@ -164,6 +165,7 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
     end
     close(io)
     # Write time/memory reports to file
+    mkpath("../PerformanceReports")
     io = open(string("../PerformanceReports/",filename), "w")
     write(io, string(timed_local[2],",",timed_improved_local[2],",",timed_strongly_local[2],"\n"))
     write(io, string(timed_local[3],",",timed_improved_local[3],",",timed_strongly_local[3],"\n"))
@@ -171,13 +173,21 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
     return (timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
 end
 
+function BulkPerformQueryAllDatasets(Tests::Int64)
+    dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
+    for ds_name in dataset_names
+        dataset = readIN(string(ds_name, ".in"))
+        PerformQueryAllAlgorithms(ds, Tests, ds_name)
+    end
+end
+
 # -----------------
 # Preload some data
 # -----------------
 
 println("Loading test datasets...")
-lastfm = RetrieveLargestConnectedComponent(readIN("lastfm.in"))
-eucore = RetrieveLargestConnectedComponent(readIN("eucore.in"))
+lastfm = readIN("lastfm.in")
+eucore = readIN("eucore.in")
 
 println("Warming up each core algorithm...")
 lobster = readIN("lobster.in", "../Example/")

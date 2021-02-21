@@ -54,5 +54,8 @@ function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Ex
     close(io)
 end
 
+# In general, for new data, load it, take its largest connected component, and then output it back to /Example_SCC/ for later use.
+# Example:
+
 # epinion = RetrieveLargestConnectedComponent(readIN("soc-Epinions1.in"), "../Example/")
 # exportIN(epinion, "epinion.in")

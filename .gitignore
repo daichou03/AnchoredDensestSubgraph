@@ -1,2 +1,4 @@
 *.lnk
 com-orkut.ungraph.*
+PerformanceReports/*
+DataPoints/*

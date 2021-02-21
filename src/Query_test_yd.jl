@@ -139,8 +139,11 @@ function RetrieveDataPointsFromReport(R::Vector{Int64}, inducedDS::densestSubgra
     return dataPoint(R_size, R_induced_DS_size, ADS_size, expansion_size)
 end
 
+function DataPointToString(dp::dataPoint)
+    return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size)
+end
 
-function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
+function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, TargetSize)
     anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
@@ -152,11 +155,20 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, MaxHops::In
     
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     timed_reports = @timed ProcessQueryOnReferenceSet(B, anchors)
-    data_points = Any[]
-    for i = 1:length(Tests)
-        push!(data_points, RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_local[1][i]))
+    # Write data points to file
+    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", TargetSize, "-", Repeats, "-", Steps)
+    io = open(string("../DataPoints/",filename), "w")
+    for i = 1:Tests
+        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_local[1][i])
+        write(io, string(DataPointToString(dataPoint),"\n"))
     end
-    return (data_points,timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
+    close(io)
+    # Write time/memory reports to file
+    io = open(string("../PerformanceReports/",filename), "w")
+    write(io, string(timed_local[2],",",timed_improved_local[2],",",timed_strongly_local[2],"\n"))
+    write(io, string(timed_local[3],",",timed_improved_local[3],",",timed_strongly_local[3],"\n"))
+    close(io)
+    return (timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
 end
 
 # -----------------

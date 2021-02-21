@@ -59,3 +59,5 @@ end
 
 # epinion = RetrieveLargestConnectedComponent(readIN("soc-Epinions1.in"), "../Example/")
 # exportIN(epinion, "epinion.in")
+
+# exportIN(RetrieveLargestConnectedComponent(readIN("com-orkut.ungraph.in", "../Example/"), "../Example/"), "orkut.in")

@@ -123,11 +123,8 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globa
     volume_R = sum(sWeightsR)
 
     overdensed = filter(x -> x > 0, map(pair -> (pair[2] >= 2*volume_R ? pair[1] : 0), zip(1:N, globalDegree)))
-    rToOWeights = zeros(Int64, N-length(overdensed))
-    if length(overdensed) > 0
-        rToOMatrix = B[setdiff(1:N,overdensed), overdensed]
-        rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
-    end
+    rToOMatrix = B[overdensed, setdiff(1:N,overdensed)]
+    rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
     sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 

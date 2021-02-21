@@ -18,8 +18,8 @@ using LinearAlgebra
 # 3 5
 # 4 5
 
-function readIN(filename::AbstractString)
-    f = open(filename)
+function readIN(FileName::AbstractString, Directory::String="../Example_SCC/")
+    f = open(string(Directory,FileName))
     header = readline(f)
     headerparts = split(header)
     nedges = parse(Int,headerparts[2])
@@ -39,3 +39,20 @@ function readIN(filename::AbstractString)
                parse(Int,headerparts[1]))
     return A
 end
+
+function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")
+    io = open(string(Directory,FileName), "w")
+    N = size(B,1)
+    write(io, string(size(B,1)," ",Int64(nnz(B)/2),"\n"))
+    for i = 1:N
+        indices = B[i,:].nzind
+        indices = indices[searchsortedfirst(indices, i) : length(indices)]
+        for j = 1:length(indices)
+            write(io, string(i," ",indices[j],"\n"))
+        end
+    end
+    close(io)
+end
+
+# epinion = RetrieveLargestConnectedComponent(readIN("soc-Epinions1.in"), "../Example/")
+# exportIN(epinion, "epinion.in")

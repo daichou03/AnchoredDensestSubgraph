@@ -852,6 +852,5 @@ end
 # -----------------
 
 println("Loading test datasets...")
-lastfm = RetrieveLargestConnectedComponent(readIN("../Example/lastfm_asia_edges.in"))
-eucore = RetrieveLargestConnectedComponent(readIN("../Example/email-Eu-core.in"))
-# epinion = RetrieveLargestConnectedComponent(readIN("../Example/soc-Epinions1.in"))
+lastfm = RetrieveLargestConnectedComponent(readIN("lastfm.in"))
+eucore = RetrieveLargestConnectedComponent(readIN("eucore.in"))

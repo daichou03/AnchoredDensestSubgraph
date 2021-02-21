@@ -176,8 +176,9 @@ end
 function BulkPerformQueryAllDatasets(Tests::Int64)
     dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
     for ds_name in dataset_names
+        println(string("Performing Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAllAlgorithms(ds, Tests, ds_name)
+        PerformQueryAllAlgorithms(dataset, Tests, ds_name)
     end
 end
 

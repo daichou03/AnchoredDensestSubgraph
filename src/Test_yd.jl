@@ -854,3 +854,15 @@ end
 println("Loading test datasets...")
 lastfm = RetrieveLargestConnectedComponent(readIN("lastfm.in"))
 eucore = RetrieveLargestConnectedComponent(readIN("eucore.in"))
+
+println("Warming up each core algorithm...")
+lobster = readIN("lobster.in", "../Example/")
+# R = GetHiveRandomWalkUntilSize(eucore, 111, 32)
+# globalDegree = map(x -> GetDegree(eucore,x), 1:size(eucore,1))
+
+GlobalMaximumDensity(lobster)
+LocalMaximumDensity(lobster, [1,2])
+ImprovedLocalMaximumDensity(lobster, [1,2], [3,3,4,4,2])
+StronglyLocalMaximumDensity(lobster, [1,2])
+
+println("Done.")

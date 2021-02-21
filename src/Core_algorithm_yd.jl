@@ -119,12 +119,15 @@ end
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, inducedDS::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
-    sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0.0, 1:N)
+    sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0, 1:N)
     volume_R = sum(sWeightsR)
 
     overdensed = filter(x -> x > 0, map(pair -> (pair[2] >= 2*volume_R ? pair[1] : 0), zip(1:N, globalDegree)))
-    rToOMatrix = B[setdiff(1:N,overdensed), overdensed]
-    rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
+    rToOWeights = zeros(Int64, N-length(overdensed))
+    if length(overdensed) > 0
+        rToOMatrix = B[setdiff(1:N,overdensed), overdensed]
+        rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
+    end
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
     sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 

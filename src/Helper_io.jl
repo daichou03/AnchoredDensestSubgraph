@@ -18,26 +18,33 @@ using LinearAlgebra
 # 3 5
 # 4 5
 
-function readIN(FileName::AbstractString, Directory::String="../Example_SCC/")
+function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String="../Example_SCC/")
     f = open(string(Directory,FileName))
-    header = readline(f)
-    headerparts = split(header)
-    nedges = parse(Int,headerparts[2])
-    ei = zeros(Int64,nedges*2)
+    header = split(readline(f))
+    nedges = parse(Int,header[2])
+    ei = zeros(Int64, nedges*2)
     ej = zeros(Int64, nedges*2)
+    count = 0
     @inbounds for i = 1:nedges
         curline = readline(f)
-        parts = split(curline)
-        ei[2*i-1] = parse(Int, parts[1])
-        ej[2*i-1] = parse(Int, parts[2])
-        ei[2*i] = parse(Int, parts[2])
-        ej[2*i] = parse(Int, parts[1])
+        if Chance >= 1 || Chance >= rand()
+            count += 1
+            parts = split(curline)
+            ei[2*count-1] = parse(Int, parts[1])
+            ej[2*count-1] = parse(Int, parts[2])
+            ei[2*count] = parse(Int, parts[2])
+            ej[2*count] = parse(Int, parts[1])
+        end
     end
     close(f)
-    A = sparse(ei, ej, ones(Float64, nedges*2),
-               parse(Int,headerparts[1]), 
-               parse(Int,headerparts[1]))
+    A = sparse(ei[1:count*2], ej[1:count*2], ones(Float64, count*2),
+               parse(Int,header[1]), 
+               parse(Int,header[1]))
     return A
+end
+
+function readIN(FileName::AbstractString, Directory::String="../Example_SCC/")
+    return readIN(FileName, 1.0, Directory)
 end
 
 function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")
@@ -54,10 +61,29 @@ function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Ex
     close(io)
 end
 
+# Generate multiple graphs, each one has half edge as the previous.
+function exportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
+    iter = 0
+    while iter < Iteration
+        iter += 1
+        println(string("Iteration: ", iter))
+        g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
+        exportIN(g, string(GraphName, "-H", iter, ".in"))
+    end
+end
+
+function BulkGenerateSubsetGraph(dataset_names::Array{String,1}, Iteration::Integer=5)
+    for ds_name in dataset_names
+        exportHalfEdgeGraphs(ds_name, Iteration)
+    end
+end
+
+
+
 # In general, for new data, load it, take its largest connected component, and then output it back to /Example_SCC/ for later use.
 # Example:
 
 # epinion = RetrieveLargestConnectedComponent(readIN("soc-Epinions1.in"), "../Example/")
 # exportIN(epinion, "epinion.in")
 
-# exportIN(RetrieveLargestConnectedComponent(readIN("com-orkut.ungraph.in", "../Example/"), "../Example/"), "orkut.in")
+# exportIN(RetrieveLargestConnectedComponent(readIN("CA-AstroPh.in", "../Example/")), "astroph.in")

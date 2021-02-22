@@ -570,8 +570,6 @@ function TestDegeneracyOnSmallRandomWalksTestSetDifferentInputSize(B::SparseMatr
     end
 end
 
-# --> 
-
 # Sampling by:
 # starting with GetSampleUntilSize, then randomly removing some high degree nodes. That may lead to disjoint sets of nodes.
 #

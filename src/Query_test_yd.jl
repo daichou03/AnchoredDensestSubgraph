@@ -249,15 +249,12 @@ end
 # Preload some data
 # -----------------
 
-println("Loading test datasets...")
-lastfm = readIN("lastfm.in")
-eucore = readIN("eucore.in")
+# println("Loading test datasets...")
+# lastfm = readIN("lastfm.in")
+# eucore = readIN("eucore.in")
 
 println("Warming up each core algorithm...")
-lobster = readIN("lobster.in", "../Example/")
-# R = GetHiveRandomWalkUntilSize(eucore, 111, 32)
-# globalDegree = map(x -> GetDegree(eucore,x), 1:size(eucore,1))
-
+lobster = readIN("lobster.in", 1.0, "../Example/")
 GlobalMaximumDensity(lobster)
 LocalMaximumDensity(lobster, [1,2])
 ImprovedLocalMaximumDensity(lobster, [1,2], [3,3,4,4,2])

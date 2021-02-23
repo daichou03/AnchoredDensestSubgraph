@@ -245,19 +245,19 @@ function BulkPerformQueryAnchorSizeTest(Tests::Int64)
     end
 end
 
-# -----------------
-# Preload some data
-# -----------------
+# -----------
+# Preparation
+# -----------
 
 # println("Loading test datasets...")
 # lastfm = readIN("lastfm.in")
 # eucore = readIN("eucore.in")
 
 println("Warming up each core algorithm...")
-lobster = readIN("lobster.in", 1.0, "../Example/")
-GlobalMaximumDensity(lobster)
-LocalMaximumDensity(lobster, [1,2])
-ImprovedLocalMaximumDensity(lobster, [1,2], [3,3,4,4,2])
-StronglyLocalMaximumDensity(lobster, [1,2])
+sample_graph = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5) # lobster.in
+GlobalMaximumDensity(sample_graph)
+LocalMaximumDensity(sample_graph, [1,2])
+ImprovedLocalMaximumDensity(sample_graph, [1,2], [3,3,4,4,2])
+StronglyLocalMaximumDensity(sample_graph, [1,2])
 
 println("Done.")

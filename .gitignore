@@ -1,6 +1,6 @@
 *.lnk
-com-orkut.ungraph.*
+Example/*
+Example_preprocessed/*
+Example_SCC/*
 PerformanceReports/*
 DataPoints/*
-Example_SCC/*
-Example/*

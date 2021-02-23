@@ -78,6 +78,10 @@ function GetSampleUntilSizeV2(B::SparseMatrixCSC, V::Int64, Size::Int64)
 end
 
 # Connected components
+# The implementations below are not performant.
+# Use Laplacians package - refer:
+# https://github.com/danspielman/Laplacians.jl/blob/bbc21749131b5c6452e2fa5b4733f84129d4ab09/src/graphAlgs.jl#L157
+# Note: loading the package itself takes some time.
 
 # Not very efficient on large?
 # Returns the Set of the connected component that #1 vertex is in.

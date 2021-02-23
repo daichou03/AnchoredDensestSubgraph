@@ -44,7 +44,7 @@ include("Test_yd.jl")
 Read graph file:
 For loading unweighted, undirected graph:
 
-A = readIN("lobster.in")
+A = readIN("lobster.in", "../Example_small")
 
 - The first line is the number of vertices and the number of edges respectively
 - The remaining lines should be the edge list, vertices are 1-indexed.

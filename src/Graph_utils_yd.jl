@@ -144,6 +144,7 @@ function DetectConnectedComponents(B::SparseMatrixCSC, ReturnLargestCCIndex::Boo
     end
 end
 
+# Laplacians.biggestComp
 function RetrieveLargestConnectedComponent(B::SparseMatrixCSC)
     largestCCIndex = DetectConnectedComponents(B, true, false)
     remaining = copy(B)

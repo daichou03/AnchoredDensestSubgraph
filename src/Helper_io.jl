@@ -67,6 +67,7 @@ function exportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
     while iter < Iteration
         iter += 1
         println(string("Iteration: ", iter))
+        # g = Laplacians.biggestComp(readIN(string(GraphName, ".in"), 0.5^iter))
         g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
         exportIN(g, string(GraphName, "-H", iter, ".in"))
     end

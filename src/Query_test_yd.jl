@@ -225,16 +225,16 @@ end
 chosen_dataset_names = ["eucore","lastfm","deezer","epinion"]
 full_dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
 
-function BulkPerformQueryAllDatasets(Tests::Int64)
-    for ds_name in full_dataset_names
+function BulkPerformQueryAllDatasets(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
         println(string("Performing Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
         PerformQueryAllAlgorithms(dataset, Tests, ds_name)
     end
 end
 
-function BulkPerformQueryAnchorSizeTest(Tests::Int64)
-    for ds_name in chosen_dataset_names
+function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
         println(string("Performing Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
         PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)

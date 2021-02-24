@@ -222,10 +222,13 @@ end
 # Complete Query
 # --------------
 
-chosen_dataset_names = ["eucore","lastfm","deezer","epinion"]
-full_dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
+# all_test_dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
+# ["amazon, condmat, grqc"]
+# anchor_size_test_dataset_names = ["eucore","lastfm","deezer","epinion"]
+# anchor_size_test_dataset_names = ["livemocha","catster"]
+# half_edge_dataset_names = ["eucore","epinion","livemocha","catster"]
 
-function BulkPerformQueryAllDatasets(dataset_names::Array{String,1}, Tests::Int64)
+function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
@@ -242,6 +245,20 @@ function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::I
         PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 8, 32, 2)
         PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 16, 64, 2)
         PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 32, 128, 2)
+    end
+end
+
+# This assumes the half edge graph data file of the original exists.
+# It does not perform tests on the original graph, only the half edge ones.
+function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, Iteration::Integer=5)
+    for ds_name in dataset_names
+        println(string("Performing Half Edge Test Query for: ", ds_name))
+        for iter = 1:Iteration
+            println(string("Iteration: ", iter))
+            ds_name_half_edge = string(ds_name, "-H", iter)
+            dataset = readIN(string(ds_name_half_edge, ".in"))
+            PerformQueryAllAlgorithms(dataset, Tests, ds_name_half_edge)
+        end
     end
 end
 

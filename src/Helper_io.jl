@@ -62,7 +62,7 @@ function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Ex
 end
 
 # Generate multiple graphs, each one has half edge as the previous.
-function exportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
+function ExportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
     iter = 0
     while iter < Iteration
         iter += 1
@@ -73,9 +73,9 @@ function exportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
     end
 end
 
-function BulkGenerateSubsetGraph(dataset_names::Array{String,1}, Iteration::Integer=5)
+function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1}, Iteration::Integer=5)
     for ds_name in dataset_names
-        exportHalfEdgeGraphs(ds_name, Iteration)
+        ExportHalfEdgeGraphs(ds_name, Iteration)
     end
 end
 
@@ -87,4 +87,4 @@ end
 # epinion = RetrieveLargestConnectedComponent(readIN("soc-Epinions1.in"), "../Example/")
 # exportIN(epinion, "epinion.in")
 
-# exportIN(RetrieveLargestConnectedComponent(readIN("CA-AstroPh.in", "../Example/")), "astroph.in")
+# exportIN(RetrieveLargestConnectedComponent(readIN("gowalla_edges.in", "../Example_preprocessed/")), "gowalla.in")

@@ -226,7 +226,7 @@ end
 # ["amazon, condmat, grqc"]
 # anchor_size_test_dataset_names = ["eucore","lastfm","deezer","epinion"]
 # anchor_size_test_dataset_names = ["livemocha","catster"]
-# half_edge_dataset_names = ["eucore","epinion","livemocha","catster"]
+# chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
 
 function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names

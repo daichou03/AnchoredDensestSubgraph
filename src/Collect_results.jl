@@ -30,7 +30,11 @@ function OutputIntegratedReport(ReportFiles::Array{String,1}, OutputDir::String,
     mkpath(dir)
     io_write = open(string(dir,"fig.txt"), "w")
     for report in ReportFiles
+        if length(split(report, "-")) != 6 # Not a exclusive check, the error string itself is more explanatory.
+            error(string("Unexpected report file name format: ", report, ", expected report file name format example: data-1000-2-8-3-2"))
+        end
         report_name = split(report, "-")[1]
+        tests = parse(Int64, split(report, "-")[2])
         io_read = open(string(PERFORMANCE_REPORTS_DIR, report))
         line = ""
         for i = 1:ReportGenreIndex
@@ -38,9 +42,7 @@ function OutputIntegratedReport(ReportFiles::Array{String,1}, OutputDir::String,
         end
         close(io_read)
         nums = split(line, ",")
-        if ReportGenreIndex == 2
-            nums = map(x->string(parse(Int64, x) ÷ 1048576), nums) # bytes to megabytes
-        end       
+        nums = map(x->string(parse(Float64, x) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)), nums) # For size report, bytes to megabytes
         write(io_write, string(report_name, sep, join(nums, sep), "\n"))
     end
     close(io_write)
@@ -56,6 +58,8 @@ function OutputIntegratedReportsByAlgorithm(ReportFileGroups::Array{Array{String
             report_name = split(fileGroup[1], "-")[1]
             line_print = ""
             for report in fileGroup
+                tests_index = split(report, "-")[2][1:1] == "H" ? 3 : 2
+                tests = parse(Int64, split(report, "-")[tests_index])
                 io_read = open(string(PERFORMANCE_REPORTS_DIR, report))
                 line = ""
                 for i = 1:ReportGenreIndex
@@ -63,9 +67,7 @@ function OutputIntegratedReportsByAlgorithm(ReportFileGroups::Array{Array{String
                 end
                 close(io_read)
                 num = split(line, ",")[alg]
-                if ReportGenreIndex == 2
-                    num = string(parse(Int64, num) ÷ 1048576) # bytes to megabytes
-                end
+                num = string(parse(Float64, num) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)) # For size report, bytes to megabytes
                 if line_print != ""
                     line_print = string(line_print, sep)
                 end

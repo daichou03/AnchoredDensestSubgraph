@@ -4,6 +4,10 @@ chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
 report_genre = ["time", "size"]
 algorithm_names = ["ads", "iads", "slads"]
 
+# ---------------------------------------------------------------
+# Produce data for gnuplot from output files out of Query_test_yd
+# ---------------------------------------------------------------
+
 function GetBaselineReportFiles()
     allReps = readdir(PERFORMANCE_REPORTS_DIR)
     files = filter(x->length(split(x,"-")) == 6, allReps)
@@ -79,9 +83,39 @@ function OutputIntegratedReportsByAlgorithm(ReportFileGroups::Array{Array{String
     end
 end
 
-OutputIntegratedReport(GetBaselineReportFiles(), "baseline", 1)
-OutputIntegratedReport(GetBaselineReportFiles(), "baseline", 2)
-OutputIntegratedReportsByAlgorithm(GetAnchorSizeReportFileGroups(), "anchorsize", 1)
-OutputIntegratedReportsByAlgorithm(GetAnchorSizeReportFileGroups(), "anchorsize", 2)
-OutputIntegratedReportsByAlgorithm(GetHalfEdgeReportFileGroups(), "halfedge", 1)
-OutputIntegratedReportsByAlgorithm(GetHalfEdgeReportFileGroups(), "halfedge", 2)
+# -----------
+# Other stats
+# -----------
+
+function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
+    sep = (" ")
+    reportFiles = GetBaselineReportFiles()
+    for report in reportFiles
+        if length(split(report, "-")) != 6 # Not a exclusive check, the error string itself is more explanatory.
+            error(string("Unexpected report file name format: ", report, ", expected report file name format example: data-1000-2-8-3-2"))
+        end
+        report_name = split(report, "-")[1]
+        tests = parse(Int64, split(report, "-")[2])
+        io_read = open(string(PERFORMANCE_REPORTS_DIR, report))
+        line = ""
+        for i = 1:ReportGenreIndex
+            line = readline(io_read)
+        end
+        close(io_read)
+        nums = map(x->parse(Float64, x), split(line, ","))
+        println(string(report_name, " ", nums[2] / nums[3]))
+    end
+end
+
+# ------------
+# Do the thing
+# ------------
+
+function DoCollectResults()
+    OutputIntegratedReport(GetBaselineReportFiles(), "baseline", 1)
+    OutputIntegratedReport(GetBaselineReportFiles(), "baseline", 2)
+    OutputIntegratedReportsByAlgorithm(GetAnchorSizeReportFileGroups(), "anchorsize", 1)
+    OutputIntegratedReportsByAlgorithm(GetAnchorSizeReportFileGroups(), "anchorsize", 2)
+    OutputIntegratedReportsByAlgorithm(GetHalfEdgeReportFileGroups(), "halfedge", 1)
+    OutputIntegratedReportsByAlgorithm(GetHalfEdgeReportFileGroups(), "halfedge", 2)
+end

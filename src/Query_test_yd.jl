@@ -197,6 +197,7 @@ function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int6
     anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, MaxRetriesMultiplier)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+    orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
     timed_local = @timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)
     timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)

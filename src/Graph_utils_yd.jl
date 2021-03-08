@@ -224,3 +224,8 @@ function PopSourceForFlowNetworkResult(S::Vector{Int64})
     popfirst!(S_ret)
     return map(x->x-1, S_ret)
 end
+
+function GetOrderByDegreeGraphIndices(B::SparseMatrixCSC)
+    globalDegreeZip = collect(zip(1:size(B,1), map(x -> GetDegree(B,x), 1:size(B,1))))
+    orderedIndices = sort(globalDegreeZip, by=x->x[2])
+end

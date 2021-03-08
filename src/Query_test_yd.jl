@@ -125,11 +125,11 @@ function ProcessLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, i
     return localDS_set
 end
 
-function ProcessImprovedLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree)
+function ProcessImprovedLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     localDS_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = ImprovedLocalMaximumDensity(B,R,globalDegree,inducedDS_set[i])
+        localDS = ImprovedLocalMaximumDensity(B,R,globalDegree,orderByDegreeIndices,inducedDS_set[i])
         push!(localDS_set, localDS)
     end
     return localDS_set
@@ -168,9 +168,10 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
     anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+    orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
     timed_local = @timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)
-    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree)
+    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
     timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)
     # Write data points to file
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", Repeats, "-", Steps)
@@ -198,7 +199,7 @@ function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int6
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
 
     timed_local = @timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)
-    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree)
+    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
     timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)
     # Write data points to file
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, "-AnchorSizeTest")
@@ -274,7 +275,7 @@ println("Warming up each core algorithm...")
 sample_graph = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5) # lobster.in
 GlobalMaximumDensity(sample_graph)
 LocalMaximumDensity(sample_graph, [1,2])
-ImprovedLocalMaximumDensity(sample_graph, [1,2], [3,3,4,4,2])
+ImprovedLocalMaximumDensity(sample_graph, [1,2], [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
 StronglyLocalMaximumDensity(sample_graph, [1,2])
 
 println("Done.")

@@ -54,7 +54,7 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int6
     return F
 end
 
-# 20200116: attempt to improve performance. Test shows that the performance doesn't improve much tho.
+# inducedDS = GlobalMaximumDensity(B[R,R])
 function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
@@ -113,16 +113,27 @@ end
 # YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
 # Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
 
-# globalDegree = map(x -> GetDegree(B,x), 1:size(B,1)).
-# Calculating globalDegree is pretty slow. Since it is a global value and we only need to calculate it once per graph,
-# it is required to precalculate this and pass it as a parameter.
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, inducedDS::densestSubgraph)
+# globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+# orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
+# inducedDS = GlobalMaximumDensity(B[R,R])
+function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
     sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0, 1:N)
     volume_R = sum(sWeightsR)
-
-    overdensed = filter(x -> x > 0, map(pair -> (pair[2] >= 2*volume_R ? pair[1] : 0), zip(1:N, globalDegree)))
+    # Binary search overdensed
+    overdensed_ind_low = 1
+    overdensed_ind_high = N + 1
+    overdensed_ind_curr = overdensed_ind_low
+    while overdensed_ind_low < overdensed_ind_high
+        overdensed_ind_curr = (overdensed_ind_low + overdensed_ind_high) ÷ 2
+        if orderByDegreeIndices[overdensed_ind_curr][2] >= volume_R
+            overdensed_ind_high = overdensed_ind_curr
+        else
+            overdensed_ind_low = overdensed_ind_curr + 1
+        end
+    end
+    overdensed = map(x->x[1], orderByDegreeIndices[overdensed_ind_curr:N])
     rToOMatrix = B[overdensed, setdiff(1:N,overdensed)]
     rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
@@ -157,18 +168,9 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globa
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64})
+function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     inducedDS = GlobalMaximumDensity(B[R,R])
-    return ImprovedLocalMaximumDensity(B, R, globalDegree, inducedDS)
-end
-
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64})
-    globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
-    println("WARNING: if you plan to use the graph multiple times, better pre-calculate:")
-    println("globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))")
-    println("and call ImprovedLocalMaximumDensity(B, R, globalDegree) instead to avoid recalculating globalDegree each time.")
-    println("--------------------------------")
-    return ImprovedLocalMaximumDensity(B, R, globalDegree)
+    return ImprovedLocalMaximumDensity(B, R, globalDegree, orderByDegreeIndices, inducedDS)
 end
 
 function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})
@@ -189,6 +191,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
     return F
 end
 
+# inducedDS = GlobalMaximumDensity(B[R,R])
 function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     Expanded = Int64[]
     RSorted = sort(R)

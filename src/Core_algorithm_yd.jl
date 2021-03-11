@@ -110,30 +110,17 @@ function FlowWithAlphaLocalDensity(FlowNet::SparseMatrixCSC, alpha::Float64)
     return F
 end
 
-# YD 20210108: Currently much slower than vanilla, based on SearchForNonDegeneratingSeed(fbgov), need to improve.
-# Compared to LocalMaximumDensity, merge all overdensed nodes that deg(v) >= 2*vol(R) to a super node based on these nodes will never be in local densest subgraph.
-
+# globalDegree and orderByDegreeIndices are information global to B. Pre-calculate them as below:
 # globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
 # orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
+
 # inducedDS = GlobalMaximumDensity(B[R,R])
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
     sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0, 1:N)
     volume_R = sum(sWeightsR)
-    # Binary search overdensed
-    overdensed_ind_low = 1
-    overdensed_ind_high = N + 1
-    overdensed_ind_curr = overdensed_ind_low
-    while overdensed_ind_low < overdensed_ind_high
-        overdensed_ind_curr = (overdensed_ind_low + overdensed_ind_high) ÷ 2
-        if orderByDegreeIndices[overdensed_ind_curr][2] >= volume_R
-            overdensed_ind_high = overdensed_ind_curr
-        else
-            overdensed_ind_low = overdensed_ind_curr + 1
-        end
-    end
-    overdensed = map(x->x[1], orderByDegreeIndices[overdensed_ind_curr:N])
+    overdensed = GetOverdensedNodes(N, orderByDegreeIndices, volume_R)
     rToOMatrix = B[overdensed, setdiff(1:N,overdensed)]
     rToOWeights = map(x -> GetDegree(rToOMatrix, x), 1:(N-length(overdensed)))
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
@@ -171,6 +158,22 @@ end
 function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     inducedDS = GlobalMaximumDensity(B[R,R])
     return ImprovedLocalMaximumDensity(B, R, globalDegree, orderByDegreeIndices, inducedDS)
+end
+
+function GetOverdensedNodes(N::Int64, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, volume_R::Union{Int64,Float64})
+    overdensed_ind_low = 1
+    overdensed_ind_high = N + 1
+    overdensed_ind_curr = overdensed_ind_low
+    while overdensed_ind_low < overdensed_ind_high
+        overdensed_ind_curr = (overdensed_ind_low + overdensed_ind_high) ÷ 2
+        if orderByDegreeIndices[overdensed_ind_curr][2] >= volume_R
+            overdensed_ind_high = overdensed_ind_curr
+        else
+            overdensed_ind_low = overdensed_ind_curr + 1
+        end
+    end
+    overdensed = map(x->x[1], orderByDegreeIndices[overdensed_ind_curr:N])
+    # println(string("Overdensed nodes: ", length(overdensed), " / ", N))
 end
 
 function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})

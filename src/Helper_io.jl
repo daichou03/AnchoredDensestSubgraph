@@ -80,7 +80,7 @@ function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1}, Iteration::Int
     end
 end
 
-"lastfm","deezer","orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","catster","hamster","douban","gowalla","douban","gowalla","gowalla","douban","gowalla"
+#"lastfm","deezer","orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","catster","hamster","douban","gowalla","douban","gowalla","gowalla","douban","gowalla"
 
 
 # In general, for new data, load it, take its largest connected component, and then output it back to /Example_SCC/ for later use.

@@ -299,6 +299,9 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
     end
 end
 
+#,"orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","hamster","douban","gowalla"
+
+
 # -----------
 # Preparation
 # -----------

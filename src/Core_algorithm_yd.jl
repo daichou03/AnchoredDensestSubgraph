@@ -62,7 +62,7 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
     sWeightsR = map(x -> (x in R) ? GetDegree(B,x) : 0, 1:N)
     density_R = inducedDS.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return R[inducedDS]
+        return inducedDS
     end
     alpha_bottom = density_R # Reachable (degenerate case)
     alpha_top = length(R) # Not reachable

@@ -70,25 +70,50 @@ end
 # Reference set from user set
 # ---------------------------
 
+# Set an upper bound for node to be taken by degree.
+# c_max: the maximum degree in C
+# N: #nodes of the entire graph
+# We cap the degree of nodes to be taken in R by c_max * X,
+# Where X is smaller if c_max is close to N, and larger if c_max is small, with a bound (min_scale, max_scale).
+# Otherwise, X = log(N / c_max) / log(log_scale).
+mutable struct rNodeDegreeCap
+    min_scale::Float64
+    log_scale::Float64
+    max_scale::Float64
+end
+
+DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(1.0, 2.0, 10.0)
+NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(Inf, 1.0, Inf)
+
+function GetRNodeDegreeCap(c_max::Int64, N::Int64, RNodeDegreeCap::rNodeDegreeCap)
+    scale = min(RNodeDegreeCap.max_scale, (max(RNodeDegreeCap.min_scale, log(RNodeDegreeCap.log_scale, N / c_max))))
+    return floor(Int64, scale * c_max)
+end
+
 # Baseline: fixed walks
-function GenerateReferenceSetFixedWalks(B::SparseMatrixCSC, C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
+function GenerateReferenceSetFixedWalks(B::SparseMatrixCSC, C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS,
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
     r = copy(C)
+    rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
     for v in C
         for i = 1:Repeats
             current = v
             for step = 1:Steps
                 current = rand(GetAdjacency(B, current, false))
-                r = union(r, current)
+                if GetDegree(B, current) <= rDegreeCap
+                    r = union(r, current)
+                end
             end
         end
     end
     return r
 end
 
-function BulkGenerateReferenceSetFixedWalks(B::SparseMatrixCSC, user_inputs::Array{Any,1}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
+function BulkGenerateReferenceSetFixedWalks(B::SparseMatrixCSC, user_inputs::Array{Any,1}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS,
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
     anchors = Any[]
     for i = 1:length(user_inputs)
-        r = GenerateReferenceSetFixedWalks(B, user_inputs[i], Repeats, Steps)
+        r = GenerateReferenceSetFixedWalks(B, user_inputs[i], Repeats, Steps, RNodeDegreeCap)
         push!(anchors, r)
     end
     return anchors
@@ -96,15 +121,49 @@ end
 
 # Fixed target anchor size
 
-# Stub to call Test_yd.XXX.
-function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, Steps::Int64, MaxRetriesMultiplier::Int64=5)
-    return GenerateSmallRandomWalksSet(B, C, TargetSize, Steps, MaxRetriesMultiplier)
+# Copy from Test_yd.GenerateSmallRandomWalksSet with changes.
+function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, MaxStep::Int64,
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
+    if length(R) > TargetSize
+        return sample(R, TargetSize, replace=false, ordered=true)
+    end    
+    r = copy(R)
+    rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
+    step = 0
+    current = rand(R)
+    retries = 0
+    while length(r) < TargetSize
+        if step < MaxStep
+            step += 1
+            current = rand(GetAdjacency(B, current, false))
+            if (current in r) || (GetDegree(B, current) > rDegreeCap)
+                retries += 1
+                if retries >= MaxRetriesMultiplier * length(R)
+                    if ReportTrapped
+                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with R = ", R, ", need to allow one more step."))
+                    end
+                    return GenerateSmallRandomWalksSet(B, R, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
+                end
+            else
+                retries = 0
+                append!(r, current)
+                if length(r) >= TargetSize
+                    return r
+                end
+            end
+        else
+            step = 0
+            current = rand(R)
+        end
+    end
+    return r
 end
 
-function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Array{Any,1}, TargetSize::Int64, Steps::Int64, MaxRetriesMultiplier::Int64=5)
+function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Array{Any,1}, TargetSize::Int64, MaxStep::Int64,
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     anchors = Any[]
     for i = 1:length(user_inputs)
-        r = GenerateReferenceSetTargetSize(B, user_inputs[i], TargetSize, Steps, MaxRetriesMultiplier)
+        r = GenerateReferenceSetTargetSize(B, user_inputs[i], TargetSize, MaxStep, RNodeDegreeCap, MaxRetriesMultiplier)
         push!(anchors, r)
     end
     return anchors
@@ -163,9 +222,9 @@ function DataPointToString(dp::dataPoint)
 end
 
 # Baseline query
-function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64=DEF_USER_MAX_HOPS, UserTargetSize::Int64=DEF_USER_TARGET_SIZE, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
+function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64=DEF_USER_MAX_HOPS, UserTargetSize::Int64=DEF_USER_TARGET_SIZE, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps)
+    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps, rNodeDegreeCap)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
     orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
@@ -192,9 +251,9 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
 end
 
 # Query for fixed anchor size
-function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64, MaxRetriesMultiplier::Int64=5)
+function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, MaxRetriesMultiplier)
+    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
     orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
@@ -220,9 +279,9 @@ function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int6
     return (timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
 end
 
-function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64, MaxRetriesMultiplier::Int64=5)
+function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, MaxRetriesMultiplier)
+    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
 
     timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)

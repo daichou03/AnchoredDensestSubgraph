@@ -50,7 +50,7 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int6
     FlowNet = [spzeros(1,1) sparse(sWeights') spzeros(1,1);
                spzeros(N,1) B                 sparse(repeat([alpha], N));
                spzeros(1,N+2)]
-    F = maxflow(FlowNet, 1, N+2)
+    F = maxflowPR(FlowNet, 1, N+2)
     return F
 end
 
@@ -106,7 +106,7 @@ function FlowWithAlphaLocalDensity(FlowNet::SparseMatrixCSC, alpha::Float64)
     for i = 2:N+1
         FlowNet[i, N+2] = alpha
     end
-    F = maxflow(FlowNet, 1, N+2)
+    F = maxflowPR(FlowNet, 1, N+2)
     return F
 end
 
@@ -184,13 +184,13 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int
 #               spzeros(NProp,1) BProp               sparse(rToOWeights') sparse(repeat([alpha], NProp));
 #               spzeros(1,1)     sparse(oToRWeights) spzeros(1,1)         infValue;
 #               spzeros(1,NProp+3)]
-#    F = maxflow(FlowNet, 1, NProp+3)
+#    F = maxflowPR(FlowNet, 1, NProp+3)
 
     # Supernode = sink version
     FlowNet = [spzeros(1,1)     sparse(sWeightsR') spzeros(1,1);
                spzeros(NProp,1) BProp              sparse(repeat([alpha], NProp) + rToOWeights);
                spzeros(1,NProp+2)]
-    F = maxflow(FlowNet, 1, NProp+2)
+    F = maxflowPR(FlowNet, 1, NProp+2)
     return F
 end
 

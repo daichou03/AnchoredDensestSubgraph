@@ -83,19 +83,16 @@ end
 # https://github.com/danspielman/Laplacians.jl/blob/bbc21749131b5c6452e2fa5b4733f84129d4ab09/src/graphAlgs.jl#L157
 # Note: loading the package itself takes some time.
 
-# Not very efficient on large?
-# Returns the Set of the connected component that #1 vertex is in.
-# function ExtractConnectedComponent(B::SparseMatrixCSC)
-#     explored = Set(GetAdjacency(B,1,true))
-#     adj_set = setdiff(explored, Set([1]))
-#     while length(adj_set) > 0
-#         adj_set = setdiff(SetGetComponentAdjacency(B, collect(adj_set), false), explored)
-#         explored = union(explored, adj_set)
-#     end
-#     return explored
-# end
-
 function ExtractConnectedComponent(B::SparseMatrixCSC)
+    if @isdefined biggestComp
+        biggestComp(B) # using Laplacians
+    else
+        YDExtractConnectedComponent(B)
+    end
+end
+
+function YDExtractConnectedComponent(B::SparseMatrixCSC)
+    println("WARNING: This LCC algorithm is not optimised and takes forever for large graphs! Use Laplacians.biggestComp() instead.")
     explored = GetAdjacency(B,1,true)
     adj = setdiff(explored, [1])
     while length(adj) > 0
@@ -104,17 +101,6 @@ function ExtractConnectedComponent(B::SparseMatrixCSC)
     end
     return explored
 end
-
-# 20210201: Not faster...
-# function ExtractConnectedComponentV2(B::SparseMatrixCSC)
-#     frontier = [1]
-#     explored = [1]
-#     while !isempty(frontier)
-#         frontier = union(frontier, setdiff(GetAdjacency(B, frontier[1], false), explored))
-#         append!(explored, popfirst!(frontier))
-#     end
-#     return explored
-# end
 
 # Returns the number of connected components.
 # If ReturnLargestCCIndex, returns the largest connected component's index INSTEAD (I know this is bad code, not necessary to make it better for now).

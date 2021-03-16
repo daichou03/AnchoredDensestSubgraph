@@ -17,6 +17,11 @@ end
 """
 maxflow
 
+YD 20210317: Renamed from maxflow to maxflowPR (for Push Relabel) to avoid name conflicts from Laplacians package.
+Laplacians package can be used to replace some inefficient homebrew functions, for example, ExtractConnectedComponent.
+To use them, manually "using Laplacians" and replace the stub function to call the Laplacians counterpart.
+Go to these functions for details.
+
 Given a sparse matrix A representing a weighted and possibly directed graph,
 a source node s, and a sink node t, return the maximum s-t flow.
 
@@ -25,7 +30,7 @@ flowtol = tolerance parameter for whether there is still capacity available on
 
 Returns F, which is of type stFlow.
 """
-function maxflow(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowtol::Union{Float64,Int}= 1e-6)
+function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowtol::Union{Float64,Int}= 1e-6)
 
     if flowtol >= .1
         println("flowtol is a tolerance parameter for rounding small residual capacity edges to zero, and should be much smaller than $flowtol. Changing it to default value 1e-6")
@@ -93,7 +98,7 @@ are given by vectors svec and tvec.
 
 This code sets s as the first node, and t as the last node.
 """
-function maxflow(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Float64},tvec::Vector{Float64}, flowtol::Union{Float64,Int}= 1e-6)
+function maxflowPR(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Float64},tvec::Vector{Float64}, flowtol::Union{Float64,Int}= 1e-6)
 
     if flowtol >= .1
         println("flowtol is a tolerance parameter for rounding small residual capacity edges to zero, and should be much smaller than $flowtol. Changing it to default value 1e-6")
@@ -131,8 +136,8 @@ function maxflow(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Float64},t
     F = stFlow(value,value,source_nodes,C,FlowMat,1,N)
 end
 
-maxflow(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Int64},tvec::Vector{Int64},flowtol::Union{Float64,Int}= 1e-6) =
-    maxflow(A,float(svec),float(tvec),flowtol)
+maxflowPR(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Int64},tvec::Vector{Int64},flowtol::Union{Float64,Int}= 1e-6) =
+    maxflowPR(A,float(svec),float(tvec),flowtol)
 
 
 flow(F::stFlow) =

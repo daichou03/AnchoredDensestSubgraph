@@ -115,7 +115,7 @@ function HLC_Step(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},Rbar::Vecto
         sVec[R] .= alpha*d[R]
         sVec[Rstrong] .= N^2
         tVec[Rbar] .= alpha*epsilon*d[Rbar]
-        F = maxflow(A,sVec,tVec,0)
+        F = maxflowPR(A,sVec,tVec,0)
         Src = source_nodes_min(F)[2:end].-1
         S = intersect(1:n,Src)
 

@@ -124,13 +124,13 @@ end
 # Copy from Test_yd.GenerateSmallRandomWalksSet with changes.
 function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, MaxStep::Int64,
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
-    if length(R) > TargetSize
-        return sample(R, TargetSize, replace=false, ordered=true)
+    if length(C) > TargetSize
+        return sample(C, TargetSize, replace=false, ordered=true)
     end    
-    r = copy(R)
+    r = copy(C)
     rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
     step = 0
-    current = rand(R)
+    current = rand(C)
     retries = 0
     while length(r) < TargetSize
         if step < MaxStep
@@ -138,11 +138,11 @@ function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, Ta
             current = rand(GetAdjacency(B, current, false))
             if (current in r) || (GetDegree(B, current) > rDegreeCap)
                 retries += 1
-                if retries >= MaxRetriesMultiplier * length(R)
+                if retries >= MaxRetriesMultiplier * length(C)
                     if ReportTrapped
-                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with R = ", R, ", need to allow one more step."))
+                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with C = ", C, ", need to allow one more step."))
                     end
-                    return GenerateSmallRandomWalksSet(B, R, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
+                    return GenerateSmallRandomWalksSet(B, C, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
                 end
             else
                 retries = 0
@@ -153,7 +153,7 @@ function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, Ta
             end
         else
             step = 0
-            current = rand(R)
+            current = rand(C)
         end
     end
     return r
@@ -348,6 +348,18 @@ function BulkPerformQuerySLADSAnchorSizeTest(dataset_names::Array{String,1}, Tes
     end
 end
 
+function BulkPerformQuerySmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
+        println(string("Performing Small Anchor Size Test Query for: ", ds_name))
+        dataset = readIN(string(ds_name, ".in"))
+        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
+        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
+        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
+        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
+        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+    end
+end
+
 # This assumes the half edge graph data file of the original exists.
 # It does not perform tests on the original graph, only the half edge ones.
 function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, Iteration::Integer=5)
@@ -363,6 +375,7 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
 end
 
 #,"orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","hamster","douban","gowalla"
+# ["eucore", "hepph", "livemocha", "youtube"]
 
 
 # -----------

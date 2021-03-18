@@ -33,6 +33,11 @@ DEF_USER_TARGET_SIZE = 8
 DEF_ANCHOR_REPEATS = 3
 DEF_AHCHOR_STEPS = 2
 
+ALG_MASK_ADS = 1
+ALG_MASK_IADS = 2
+ALG_MASK_SLADS = 3
+ALL_ALGORITHMS = [true, true, true]
+
 # --------------
 # User input set
 # --------------
@@ -222,89 +227,104 @@ function DataPointToString(dp::dataPoint)
     return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size)
 end
 
-# Baseline query
-function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64=DEF_USER_MAX_HOPS, UserTargetSize::Int64=DEF_USER_TARGET_SIZE,
-            Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
-    user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps, RNodeDegreeCap)
+function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, AlgorithmMask::Vector{Bool})
     inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
     orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
-    timed_local = @timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)
-    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
-    timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)
+    performances = []
+    for alg_index in 1:length(AlgorithmMask)
+        if AlgorithmMask[alg_index]
+            if alg_index == ALG_MASK_ADS
+                append!(performances, [@timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)])
+            elseif alg_index == ALG_MASK_IADS
+                append!(performances, [@timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
+            else
+                append!(performances, [@timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)])
+            end
+        else
+            append!(performances, [[0,0,0]])
+        end
+    end
+    return (performances, inducedDS_set)
+end
+
+function GetSoleAlgorithmIndex(AlgorithmMask::Vector{Bool})
+    for alg_index in 1:length(AlgorithmMask)
+        if AlgorithmMask[alg_index]
+            return alg_index
+        end
+    end
+    error("No algorithm is chosen!")
+end
+
+function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMask::Vector{Bool}, performances::Array{Any,1},
+        anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
     # Write data points to file
-    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", Repeats, "-", Steps)
     mkpath("../DataPoints")
     io = open(string("../DataPoints/",filename), "w")
     for i = 1:Tests
-        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_local[1][i])
+        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[GetSoleAlgorithmIndex(AlgorithmMask)][1][i])
         write(io, string(DataPointToString(dataPoint),"\n"))
     end
     close(io)
     # Write time/memory reports to file
     mkpath("../PerformanceReports")
     io = open(string("../PerformanceReports/",filename), "w")
-    write(io, string(timed_local[2],",",timed_improved_local[2],",",timed_strongly_local[2],"\n"))
-    write(io, string(timed_local[3],",",timed_improved_local[3],",",timed_strongly_local[3],"\n"))
+    ret = []
+    for index = 2:3
+        str = ""
+        for alg_index in 1:length(AlgorithmMask)
+            if AlgorithmMask[alg_index]
+                append!(ret, performances[alg_index][index])
+                if str == ""
+                    str = string(performances[alg_index][index])
+                else
+                    str = string(str, ",", performances[alg_index][index])
+                end
+            end
+        end
+        write(io, string(str,"\n"))
+    end
     close(io)
-    return (timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
+    return ret
+end
+
+# Baseline query
+function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName::String,
+        AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS, FileNameSuffix::String="",
+        MaxHops::Int64=DEF_USER_MAX_HOPS, UserTargetSize::Int64=DEF_USER_TARGET_SIZE,
+        Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS,
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
+    user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
+    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps, RNodeDegreeCap)
+    (performances, inducedDS_set) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
+    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", Repeats, "-", Steps, FileNameSuffix)
+    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set)
 end
 
 # Query for fixed anchor size
-function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
-            AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
+function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String,
+        MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64,
+        AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS, FileNameSuffix::String="-AnchorSizeTest",
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
     anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
-    inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
-    globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
-    orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
-
-    timed_local = @timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)
-    timed_improved_local = @timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
-    timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)
-    # Write data points to file
-    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, "-AnchorSizeTest")
-    mkpath("../DataPoints")
-    io = open(string("../DataPoints/",filename), "w")
-    for i = 1:Tests
-        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_local[1][i])
-        write(io, string(DataPointToString(dataPoint),"\n"))
-    end
-    close(io)
-    # Write time/memory reports to file
-    mkpath("../PerformanceReports")
-    io = open(string("../PerformanceReports/",filename), "w")
-    write(io, string(timed_local[2],",",timed_improved_local[2],",",timed_strongly_local[2],"\n"))
-    write(io, string(timed_local[3],",",timed_improved_local[3],",",timed_strongly_local[3],"\n"))
-    close(io)
-    return (timed_local[2],timed_improved_local[2],timed_strongly_local[2],timed_local[3],timed_improved_local[3],timed_strongly_local[3])
+    (performances, inducedDS_set) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
+    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, FileNameSuffix)
+    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set)
 end
 
 function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
             AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
-    user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
-    inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
+    return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
+        [false, false, true], "-SLADS-AnchorSizeTest", RNodeDegreeCap, MaxRetriesMultiplier)
+end
 
-    timed_strongly_local = @timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)
-    # Write data points to file
-    filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, "-SLADS-AnchorSizeTest")
-    mkpath("../DataPoints")
-    io = open(string("../DataPoints/",filename), "w")
-    for i = 1:Tests
-        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], timed_strongly_local[1][i])
-        write(io, string(DataPointToString(dataPoint),"\n"))
-    end
-    close(io)
-    # Write time/memory reports to file
-    mkpath("../PerformanceReports")
-    io = open(string("../PerformanceReports/",filename), "w")
-    write(io, string(timed_strongly_local[2],"\n"))
-    write(io, string(timed_strongly_local[3],"\n"))
-    close(io)
-    return (timed_strongly_local[2],timed_strongly_local[3])
+function PerformQueryIADSSmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
+        AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
+    return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
+        [true, true, false], "-SmallIADS-AnchorSizeTest", RNodeDegreeCap, MaxRetriesMultiplier)
 end
 # --------------
 # Complete Query
@@ -348,15 +368,15 @@ function BulkPerformQuerySLADSAnchorSizeTest(dataset_names::Array{String,1}, Tes
     end
 end
 
-function BulkPerformQuerySmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
+function BulkPerformQueryIADSSmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Small Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
     end
 end
 

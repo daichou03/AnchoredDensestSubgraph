@@ -395,7 +395,8 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
 end
 
 #,"orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","hamster","douban","gowalla"
-# ["eucore", "hepph", "livemocha", "youtube"]
+# IADS tests:
+# ["eucore", "grqc", "hepph", "github", "livemocha", "dblp", "youtube"]
 
 
 # -----------

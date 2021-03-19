@@ -84,15 +84,6 @@ end
 # Note: loading the package itself takes some time.
 
 function ExtractConnectedComponent(B::SparseMatrixCSC)
-    if @isdefined biggestComp
-        biggestComp(B) # using Laplacians
-    else
-        YDExtractConnectedComponent(B)
-    end
-end
-
-function YDExtractConnectedComponent(B::SparseMatrixCSC)
-    println("WARNING: This LCC algorithm is not optimised and takes forever for large graphs! Use Laplacians.biggestComp() instead.")
     explored = GetAdjacency(B,1,true)
     adj = setdiff(explored, [1])
     while length(adj) > 0
@@ -132,6 +123,15 @@ end
 
 # Laplacians.biggestComp
 function RetrieveLargestConnectedComponent(B::SparseMatrixCSC)
+    if @isdefined biggestComp
+        biggestComp(B) # using Laplacians
+    else
+        YDRetrieveLargestConnectedComponent(B)
+    end
+end
+
+function YDRetrieveLargestConnectedComponent(B::SparseMatrixCSC)
+    println("WARNING: This LCC algorithm is not optimised and takes forever for large graphs! Use Laplacians.biggestComp() instead.")
     largestCCIndex = DetectConnectedComponents(B, true, false)
     remaining = copy(B)
     for i = 1:largestCCIndex-1

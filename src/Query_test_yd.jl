@@ -24,6 +24,7 @@ mutable struct dataPoint
     R_induced_DS_size::Int64
     ADS_size::Int64
     expansion_size::Int64
+    IADS_overdensed_nodes::Int64
 end
 
 # ----------
@@ -215,16 +216,16 @@ function RetrieveDataPointsFromReport(report::rMinimalSeed)
     return RetrieveDataPointsFromReport(report.R, report.induceDS, report.localDS)
 end
 
-function RetrieveDataPointsFromReport(R::Vector{Int64}, inducedDS::densestSubgraph, localDS::densestSubgraph)
+function RetrieveDataPointsFromReport(R::Vector{Int64}, inducedDS::densestSubgraph, localDS::densestSubgraph, IADS_overdensed_nodes::Int64=0)
     R_size = length(R)
     R_induced_DS_size = length(inducedDS.source_nodes)
     ADS_size = length(localDS.source_nodes)
     expansion_size = length(setdiff(localDS.source_nodes, R))
-    return dataPoint(R_size, R_induced_DS_size, ADS_size, expansion_size)
+    return dataPoint(R_size, R_induced_DS_size, ADS_size, expansion_size, IADS_overdensed_nodes)
 end
 
 function DataPointToString(dp::dataPoint)
-    return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size)
+    return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size, ",", dp.IADS_overdensed_nodes)
 end
 
 function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, AlgorithmMask::Vector{Bool})
@@ -246,7 +247,7 @@ function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, Algorith
             append!(performances, [[0,0,0]])
         end
     end
-    return (performances, inducedDS_set)
+    return (performances, inducedDS_set, globalDegree, orderByDegreeIndices)
 end
 
 function GetSoleAlgorithmIndex(AlgorithmMask::Vector{Bool})
@@ -259,12 +260,20 @@ function GetSoleAlgorithmIndex(AlgorithmMask::Vector{Bool})
 end
 
 function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMask::Vector{Bool}, performances::Array{Any,1},
-        anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
+        anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     # Write data points to file
     mkpath("../DataPoints")
     io = open(string("../DataPoints/",filename), "w")
+    N = length(globalDegree)
     for i = 1:Tests
-        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[GetSoleAlgorithmIndex(AlgorithmMask)][1][i])
+        overdensed = 0
+        if AlgorithmMask[ALG_MASK_IADS]
+            # Also record #overdensed nodes for IADS
+            sWeightsR = map(x -> (x in anchors[i]) ? globalDegree[x] : 0, 1:N)
+            volume_R = sum(sWeightsR)
+            overdensed = length(GetOverdensedNodes(N, orderByDegreeIndices, volume_R))
+        end
+        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[GetSoleAlgorithmIndex(AlgorithmMask)][1][i], overdensed)
         write(io, string(DataPointToString(dataPoint),"\n"))
     end
     close(io)
@@ -298,9 +307,9 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
     anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs, Repeats, Steps, RNodeDegreeCap)
-    (performances, inducedDS_set) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
+    (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", Repeats, "-", Steps, FileNameSuffix)
-    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set)
+    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
 end
 
 # Query for fixed anchor size
@@ -310,9 +319,9 @@ function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int6
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
     anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
-    (performances, inducedDS_set) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
+    (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, FileNameSuffix)
-    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set)
+    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
 end
 
 function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,

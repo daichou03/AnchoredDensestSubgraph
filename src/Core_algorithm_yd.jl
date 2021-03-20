@@ -115,7 +115,8 @@ end
 # orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
 # inducedDS = GlobalMaximumDensity(B[R,R])
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
+function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
+        globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
     sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0, 1:N)
@@ -133,13 +134,13 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globa
     alpha_star = 0
 
     # YD: Just merge the super node with sink. Also ignore any directed edges from it to regular nodes.
-    if FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_bottom, sWeightsRProp, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
+    if FlowWithAlphaImprovedLocalDensity(BProp, alpha_bottom, sWeightsRProp, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
         alpha_star = alpha_bottom
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_star - 1 / (N * (N+1)), sWeightsRProp, rToOWeights)
+        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, alpha_star - 1 / (N * (N+1)), sWeightsRProp, rToOWeights)
     else
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
-            F = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha, sWeightsRProp, rToOWeights)
+            F = FlowWithAlphaImprovedLocalDensity(BProp, alpha, sWeightsRProp, rToOWeights)
             if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
@@ -147,7 +148,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globa
             end
             # println(alpha)
         end
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, R, alpha_bottom, sWeightsRProp, rToOWeights)
+        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, alpha_bottom, sWeightsRProp, rToOWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
@@ -176,7 +177,7 @@ function GetOverdensedNodes(N::Int64, orderByDegreeIndices::Array{Tuple{Int64,In
     # println(string("Overdensed nodes: ", length(overdensed), " / ", N))
 end
 
-function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, R::Vector{Int64}, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})
+function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})
     NProp = size(BProp,1)
 
 #    Supernode version

@@ -120,6 +120,10 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
     N = size(B,1)
     # Weight for source edges
     sWeightsR = map(x -> (x in R) ? globalDegree[x] : 0, 1:N)
+    density_R = inducedDS.alpha_star # Density of the densest subgraph of R
+    if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
+        return inducedDS
+    end
     volume_R = sum(sWeightsR)
     overdensed = GetOverdensedNodes(N, orderByDegreeIndices, volume_R)
     rToOMatrix = B[overdensed, setdiff(1:N,overdensed)]
@@ -127,7 +131,6 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
     BProp = B[setdiff(1:N,overdensed), setdiff(1:N,overdensed)]
     sWeightsRProp = sWeightsR[setdiff(1:N,overdensed)]
 
-    density_R = inducedDS.alpha_star
     alpha_bottom = density_R # Reachable
     alpha_top = length(R) # Not reachable
     flow_alpha_minus = 0
@@ -197,6 +200,9 @@ end
 
 # inducedDS = GlobalMaximumDensity(B[R,R])
 function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
+    if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
+        return inducedDS
+    end
     Expanded = Int64[]
     RSorted = sort(R)
     Frontier = RSorted

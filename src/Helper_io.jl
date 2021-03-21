@@ -69,6 +69,7 @@ function ExportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
         iter += 1
         println(string("Iteration: ", iter))
         g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
+        # println(string("Subgraph size = ", size(g, 1), ", now exporting..."))
         exportIN(g, string(GraphName, "-H", iter, ".in"))
     end
 end

@@ -2,6 +2,7 @@ using Base
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/"
 PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
+DATA_POINTS_DIR = "../DataPoints/"
 chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
 report_genre = ["time", "size"]
 algorithm_names = ["ads", "iads", "slads"]
@@ -138,7 +139,7 @@ end
 
 function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
     sep = (" ")
-    reportFiles = GetBaselineReportFiles()
+    reportFiles = GetBaselineReportFiles("/")
     for report in reportFiles
         if length(split(report, "-")) != 6 # Not a exclusive check, the error string itself is more explanatory.
             error(string("Unexpected report file name format: ", report, ", expected report file name format example: data-1000-2-8-3-2"))
@@ -154,6 +155,39 @@ function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
         nums = map(x->parse(Float64, x), split(line, ","))
         println(string(report_name, " ", nums[2] / nums[3]))
     end
+end
+
+# -----------------------------------
+# Integrate Data Points for SmallIADS
+# -----------------------------------
+
+function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
+    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
+    files = map(x->split(x,"-"), fileNames)
+    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, DataPointSubDir)
+    mkpath(dir)
+    io_write = open(string(dir,"overdensedR.txt"), "w")
+    for i in 1:length(fileNames)
+        dataName = files[i][1]
+        tests = parse(Int64, files[i][2])
+        Rsize = parse(Int64, files[i][5])
+        # read from data point files
+        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
+        overdensed_sum = 0
+        for j = 1:tests
+            overdensed_sum += parse(Int64, split(readline(io_read_dp), ",")[5])
+        end
+        close(io_read_dp)
+        # read from performance reports (assuming same sub folder and file name)
+        io_read_pr = open(string(PERFORMANCE_REPORTS_DIR, DataPointSubDir, fileNames[i]))
+        line = split(readline(io_read_pr), ",")
+        IADS_performance_gain = parse(Float64, line[2]) / parse(Float64, line[1])
+        close(io_read_pr)
+        overdensed_mean = overdensed_sum / tests
+        line_print = string(dataName, " ", Rsize, " ", overdensed_mean, " ", IADS_performance_gain)
+        write(io_write, string(line_print, "\n"))
+    end
+    close(io_write)
 end
 
 # ------------

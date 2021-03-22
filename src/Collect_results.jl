@@ -102,9 +102,10 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
     close(io_write)
 end
 
-function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, OutputDir::String, ReportGenreIndex::Integer)
+function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, OutputDir::String, ReportGenreIndex::Integer,
+    Algorithms::Vector{Int64}=[1,2,3])
     sep = (" ")
-    for alg = 1:3
+    for alg in Algorithms
         dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", algorithm_names[alg], "_", report_genre[ReportGenreIndex], "/")
         mkpath(dir)
         io_write = open(string(dir,"fig.txt"), "w")

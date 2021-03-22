@@ -391,15 +391,21 @@ end
 
 # This assumes the half edge graph data file of the original exists.
 # It does not perform tests on the original graph, only the half edge ones.
-function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, Iteration::Integer=5, GraphSizeThreshold::Integer=32,
+function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, TestOriginal::Bool=false, Iteration::Integer=5, GraphSizeThreshold::Integer=32,
         AlgorithmMask::Vector{Bool}=[false, false, true])
     for ds_name in dataset_names
         println(string("Performing Half Edge Test Query for: ", ds_name))
+        if TestOriginal
+            println(string("Original:"))
+            filename = ds_name, ".in"
+            dataset = readIN(string(ds_name, ".in"))
+            PerformQueryAllAlgorithms(dataset, Tests, ds_name, AlgorithmMask)
+        end
         for iter = 1:Iteration
             println(string("Iteration: ", iter))
             ds_name_half_edge = string(ds_name, "-H", iter)
             filename = ds_name_half_edge, ".in"
-            dataset = readIN(string(ds_name_half_edge, ".in"))            
+            dataset = readIN(string(ds_name_half_edge, ".in"))
             if size(dataset, 1) < GraphSizeThreshold
                 println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
                 break

@@ -83,7 +83,7 @@ end
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.
 
-function ConvertDBLPCitationToIN(FileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/", OutputDirectory::String="../CaseStudy/IN/")
+function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/", OutputDirectory::String="../CaseStudy/IN/")
     io_read = open(string(RawDirectory,FileName))
     N = parse(Int64, readline(io_read))
     M = 0
@@ -105,7 +105,7 @@ function ConvertDBLPCitationToIN(FileName::AbstractString, RawDirectory::String=
     end
     close(io_read)
     # Write
-    io_write = open(string(OutputDirectory,FileName), "w")
+    io_write = open(string(OutputDirectory,OutputFileName), "w")
     write(io_write, string(N, " ", M, "\n"))
     for i = 1:M
         write(io_write, string(v1[i], " ", v2[i], "\n"))

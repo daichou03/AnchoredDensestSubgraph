@@ -94,7 +94,7 @@ function ConvertDBLPCitationToIN(FileName::AbstractString, RawDirectory::String=
         line = readline(io_read)
         if startswith(line, "#index")
             node1 = parse(Int64, line[7:length(line)]) + 1
-        else if startswith(line, "#%")
+        elseif startswith(line, "#%")
             node2 = parse(Int64, line[3:length(line)]) + 1
             if node1 != node2
                 M += 1

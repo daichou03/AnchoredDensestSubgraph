@@ -327,13 +327,13 @@ end
 function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
             AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
-        [false, false, true], "-SLADS-AnchorSizeTest", RNodeDegreeCap, MaxRetriesMultiplier)
+        [false, false, true], "-AnchorSizeTest-SLADS", RNodeDegreeCap, MaxRetriesMultiplier)
 end
 
 function PerformQueryIADSSmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
         AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
-        [true, true, false], "-SmallIADS-AnchorSizeTest", RNodeDegreeCap, MaxRetriesMultiplier)
+        [true, true, false], "-AnchorSizeTest-SmallIADS", RNodeDegreeCap, MaxRetriesMultiplier)
 end
 # --------------
 # Complete Query

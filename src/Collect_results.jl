@@ -5,7 +5,7 @@ PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
 DATA_POINTS_DIR = "../DataPoints/"
 chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
 report_genre = ["time", "size"]
-algorithm_names = ["ads", "iads", "slads"]
+ALL_ALGORITHM_NAMES = ["ads", "iads", "slads"]
 
 # Produce data for gnuplot from output files out of Query_test_yd.
 
@@ -29,7 +29,7 @@ end
 # eucore-1000-2-8-32-2-AnchorSizeTest
 function GetAnchorSizeReportFileGroups(ReportSubDir::String)
     files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
-    files = filter(x->(length(x) == 7) && x[7] == "AnchorSizeTest", files)
+    files = filter(x->(length(x) >= 7) && x[7] == "AnchorSizeTest", files)
     datasetNames = unique!(map(x->x[1],files))
     fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
     fileGroups = map(fileGroup->sort(fileGroup, by=x->parse(Int64, x[5])), fileGroups)
@@ -67,7 +67,7 @@ end
 # eucore-1000-2-8-3-2
 function GetHalfEdgeReportFileGroups(ReportSubDir::String)
     files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
-    files = filter(x->((length(x) == 7) && x[2][1:1] == "H") || (length(x) == 6), files)
+    files = filter(x->((length(x) >= 7) && x[2][1:1] == "H") || (length(x) == 6), files)
     datasetNames = unique!(map(x->x[1],files))
     fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
     fileGroups = map(fileGroup->sort(fileGroup, by=x->length(x) * 100 + parse(Int64, x[2][2:2])), fileGroups)
@@ -103,10 +103,10 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
 end
 
 function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, OutputDir::String, ReportGenreIndex::Integer,
-    Algorithms::Vector{Int64}=[1,2,3])
+    AlgorithmNames::Vector{String}=ALL_ALGORITHM_NAMES)
     sep = (" ")
-    for alg in Algorithms
-        dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", algorithm_names[alg], "_", report_genre[ReportGenreIndex], "/")
+    for alg in 1:length(AlgorithmNames)
+        dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", AlgorithmNames[alg], "_", report_genre[ReportGenreIndex], "/")
         mkpath(dir)
         io_write = open(string(dir,"fig.txt"), "w")
         for fileGroup in ReportFileGroups
@@ -182,10 +182,10 @@ function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
         # read from performance reports (assuming same sub folder and file name)
         io_read_pr = open(string(PERFORMANCE_REPORTS_DIR, DataPointSubDir, fileNames[i]))
         line = split(readline(io_read_pr), ",")
-        IADS_performance_gain = parse(Float64, line[2]) / parse(Float64, line[1])
+        IADS_time_ratio = parse(Float64, line[2]) / parse(Float64, line[1])
         close(io_read_pr)
         overdensed_mean = overdensed_sum / tests
-        line_print = string(dataName, " ", Rsize, " ", overdensed_mean, " ", IADS_performance_gain)
+        line_print = string(dataName, ",", Rsize, " ", overdensed_mean, " ", IADS_time_ratio) # Note need to convert overdensed_mean to non-overdensed prop later.
         write(io_write, string(line_print, "\n"))
     end
     close(io_write)
@@ -194,6 +194,12 @@ end
 # ------------
 # Do the thing
 # ------------
+
+# Example procedure of integrating half edge test results:
+# ReportSubDir = "halfedge_20210322_SLADS_test/"
+# ReportFileGroups = GetHalfEdgeReportFileGroups(ReportSubDir)
+# OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210322_halfedge_test",1,["slads"])
+# OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210322_halfedge_test",2,["slads"]) 
 
 # function DoCollectResults()
 #     OutputIntegratedReport(GetBaselineReportFiles(), "baseline", 1)

@@ -108,7 +108,7 @@ function ConvertDBLPCitationToIN(FileName::AbstractString, RawDirectory::String=
     io_write = open(string(OutputDirectory,FileName), "w")
     write(io_write, string(N, " ", M, "\n"))
     for i = 1:M
-        write(io_write, v1[i], " ", v2[i], "\n")
+        write(io_write, string(v1[i], " ", v2[i], "\n"))
     end
     close(io_write)
 end

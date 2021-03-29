@@ -1,4 +1,5 @@
 using Base
+using StatsBase
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/"
 PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
@@ -189,6 +190,24 @@ function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
         write(io_write, string(line_print, "\n"))
     end
     close(io_write)
+end
+
+function AggregrateRSize(DataPointSubDir::String)
+    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
+    files = map(x->split(x,"-"), fileNames)
+    for i in 1:length(fileNames)
+        dataName = files[i][1]
+        tests = parse(Int64, files[i][2])
+        # read from data point files
+        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
+        size_R = zeros(tests)
+        for j = 1:tests
+            size_R[j] = parse(Int64, split(readline(io_read_dp), ",")[1])
+        end
+        close(io_read_dp)
+        # read from performance reports (assuming same sub folder and file name)
+        println(string(dataName, ",", StatsBase.mean(size_R), ",", StatsBase.std(size_R)))
+    end
 end
 
 # ------------

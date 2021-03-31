@@ -30,7 +30,7 @@ end
 # eucore-1000-2-8-32-2-AnchorSizeTest
 function GetAnchorSizeReportFileGroups(ReportSubDir::String)
     files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
-    files = filter(x->(length(x) >= 7) && x[length(x)] == "AnchorSizeTest", files)
+    files = filter(x->(length(x) >= 7) && x[7] == "AnchorSizeTest", files)
     datasetNames = unique!(map(x->x[1],files))
     fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
     fileGroups = map(fileGroup->sort(fileGroup, by=x->parse(Int64, x[5])), fileGroups)

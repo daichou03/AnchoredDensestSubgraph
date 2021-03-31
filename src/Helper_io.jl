@@ -80,39 +80,6 @@ function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1}, Iteration::Int
     end
 end
 
-# Was 0 indexed, convert to 1-indexed.
-# Remove any self-loops.
-
-function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/", OutputDirectory::String="../CaseStudy/IN/")
-    io_read = open(string(RawDirectory,FileName))
-    N = parse(Int64, readline(io_read))
-    M = 0
-    node1 = -1
-    v1 = Int64[]
-    v2 = Int64[]
-    while !eof(io_read)
-        line = readline(io_read)
-        if startswith(line, "#index")
-            node1 = parse(Int64, line[7:length(line)]) + 1
-        elseif startswith(line, "#%")
-            node2 = parse(Int64, line[3:length(line)]) + 1
-            if node1 != node2
-                M += 1
-                push!(v1, node1)
-                push!(v2, node2)
-            end
-        end
-    end
-    close(io_read)
-    # Write
-    io_write = open(string(OutputDirectory,OutputFileName), "w")
-    write(io_write, string(N, " ", M, "\n"))
-    for i = 1:M
-        write(io_write, string(v1[i], " ", v2[i], "\n"))
-    end
-    close(io_write)
-end
-
 #"lastfm","deezer","orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","catster","hamster","douban","gowalla","douban","gowalla","gowalla","douban","gowalla"
 
 

@@ -4,5 +4,6 @@ Example_preprocessed/*
 Example_SCC/*
 PerformanceReports/*
 PerformanceReportsIntegrated/*/*.txt
+PerformanceReportsIntegrated/unused/*
 DataPoints/*
 CaseStudy/*

@@ -30,7 +30,7 @@ end
 # eucore-1000-2-8-32-2-AnchorSizeTest
 function GetAnchorSizeReportFileGroups(ReportSubDir::String)
     files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
-    files = filter(x->(length(x) >= 7) && x[7] == "AnchorSizeTest", files)
+    files = filter(x->(length(x) >= 7) && x[length(x)] == "AnchorSizeTest", files)
     datasetNames = unique!(map(x->x[1],files))
     fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
     fileGroups = map(fileGroup->sort(fileGroup, by=x->parse(Int64, x[5])), fileGroups)
@@ -54,7 +54,17 @@ function CopyBaselineReportsToHalfEdgeFolder(ReportSubDir::String, BaselineSubDi
         println(string(length(baselineFileNamesOld), " old baseline reports removed."))
         # Copy
         baselineFileNames = map(y->join(y, "-"), baselineFiles)
-        map(x->Base.Filesystem.cp(string(PERFORMANCE_REPORTS_DIR, BaselineSubDir, x), string(PERFORMANCE_REPORTS_DIR, ReportSubDir, x)), baselineFileNames)
+        for baseFile in baselineFileNames
+            # Copy only SLADS
+            io_read = open(string(PERFORMANCE_REPORTS_DIR, BaselineSubDir, baseFile))
+            io_write = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, baseFile), "w")
+            for i = 1:2
+                line = readline(io_read)
+                write(io_write, string(split(line, ",")[3], "\n"))
+            end
+            close(io_read)
+            close(io_write)
+        end
         println(string(length(baselineFileNames), " baseline reports copied."))
     end
 end
@@ -213,6 +223,25 @@ end
 # ------------
 # Do the thing
 # ------------
+
+function DoCollectResults()
+    # --- baseline ---
+    ReportSubDir="base/"
+    ReportFiles = GetBaselineReportFiles(ReportSubDir)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"20210331_baseline",1)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"20210331_baseline",2)
+    # --- anchorsize ---
+    ReportSubDir = "ahs/" # Avoid long dir
+    ReportFileGroups = GetAnchorSizeReportFileGroups(ReportSubDir)
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_anchorsize",1,["slads"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_anchorsize",2,["slads"]) 
+    # --- halfedge ---
+    ReportSubDir = "hl/"
+    CopyBaselineReportsToHalfEdgeFolder(ReportSubDir, "base/")
+    ReportFileGroups = GetHalfEdgeReportFileGroups(ReportSubDir)
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",1,["slads"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",2,["slads"])
+end
 
 # Example procedure of integrating half edge test results:
 # ReportSubDir = "halfedge_20210322_SLADS_test/"

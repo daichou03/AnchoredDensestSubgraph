@@ -17,7 +17,7 @@ unset mytics
 
 
 unset xlabel
-set ylabel "N / density(G) vs SLADS Performance Gain" offset 0.5 font "Times-Roman,18"
+set ylabel "N / density(G) vs SLADS Speed Up" offset 0.5 font "Times-Roman,18"
 
 set logscale y
 set format y "10^{%L}
@@ -29,5 +29,5 @@ set yrange [0.1:1000000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'N / |V(G)|' lt -1 fs pattern 8,\
-	'' using 3 title 'SLADS Performance Gain' lt -1 fs pattern 4
+plot 	'fig.txt' using 2:xtic(1) title 'N / density(G)' lt -1 fs pattern 8,\
+	'' using 3 title 'SLADS Speed Up' lt -1 fs pattern 4

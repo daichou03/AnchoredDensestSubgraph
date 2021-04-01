@@ -5,7 +5,7 @@ PERFORMANCE_REPORTS_DIR = "../PerformanceReports/"
 PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
 GRAPH_METADATA_DIR = "../DataGraphMeta/"
 DATA_POINTS_DIR = "../DataPoints/"
-# chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
+# chosen_dataset_names = ["dblp", "livejournal", "livemocha", "orkut", "youtube"]
 REPORT_GENRE = ["time", "size"]
 ALL_ALGORITHM_NAMES = ["ads", "iads", "slads"]
 

@@ -381,11 +381,13 @@ function BulkPerformQueryIADSSmallAnchorSizeTest(dataset_names::Array{String,1},
     for ds_name in dataset_names
         println(string("Performing Small Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
+        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
+        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
+        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
+        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 10, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 12, 2)
     end
 end
 

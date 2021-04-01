@@ -88,7 +88,8 @@ mutable struct rNodeDegreeCap
     max_scale::Float64
 end
 
-DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(1.0, 2.0, 10.0)
+#DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(1.0, 2.0, 10.0)
+DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(8.0, 2.0, 8.0)
 NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(Inf, 1.0, Inf)
 
 function GetRNodeDegreeCap(c_max::Int64, N::Int64, RNodeDegreeCap::rNodeDegreeCap)

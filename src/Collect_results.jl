@@ -73,7 +73,7 @@ function GetRCapReportFileGroups(ReportSubDir::String)
     files = filter(x->length(x) == 10 && x[7] == "cap", files)
     datasetNames = unique!(map(x->x[1],files))
     fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
-    fileGroups = map(fileGroup->sort(fileGroup, by=x->length(x) * 100 + parse(Int64, x[2][2:2])), fileGroups)
+    fileGroups = map(fileGroup->sort(fileGroup, by=x->parse(Float64, x[10])), fileGroups)
     fileGroupNames = map(fileGroup->map(y->join(y, "-"), fileGroup), fileGroups)
 end
 
@@ -212,9 +212,75 @@ function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
     close(io_write)
 end
 
-# -----------
-# Other stats
-# -----------
+# -----------------
+# Cap speed up test
+# -----------------
+
+# Group by d_multi
+function OutputCapSpeedUpReport(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, OutputDir::String, ReportGenreIndex::Integer)
+    sep = (" ")
+    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", REPORT_GENRE[ReportGenreIndex], "/")
+    mkpath(dir)
+    io_write = open(string(dir,"fig.txt"), "w")
+    all_speedups = []
+    for fileGroup in ReportFileGroups
+        nums = []
+        report_name = split(fileGroup[1], "-")[1]
+        for report in fileGroup
+            tests = parse(Int64, split(report, "-")[2])
+            io_read = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, report))
+            line = ""
+            for i = 1:ReportGenreIndex
+                line = readline(io_read)
+            end
+            close(io_read)
+            append!(nums, parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)) # For size report, bytes to megabytes
+        end
+        speedups = []
+        for i = 1:(length(nums)-1)
+            append!(speedups, nums[length(nums)] / nums[i])
+        end
+        append!(all_speedups, [speedups])       
+    end
+    # Group by d_multi, not data graphs
+    for i in 1:length(all_speedups[1])
+        write(io_write, string(join(map(x->string(x[i]), all_speedups), sep), "\n"))
+    end
+    close(io_write)
+end
+
+# Group by data graph
+# function OutputCapSpeedUpReport(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, OutputDir::String, ReportGenreIndex::Integer)
+#     sep = (" ")
+#     dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", REPORT_GENRE[ReportGenreIndex], "/")
+#     mkpath(dir)
+#     io_write = open(string(dir,"fig.txt"), "w")
+#     for fileGroup in ReportFileGroups
+#         nums = []
+#         report_name = split(fileGroup[1], "-")[1]
+#         line_print = report_name
+#         for report in fileGroup
+#             tests = parse(Int64, split(report, "-")[2])
+#             io_read = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, report))
+#             line = ""
+#             for i = 1:ReportGenreIndex
+#                 line = readline(io_read)
+#             end
+#             close(io_read)
+#             # line_print = string(line_print, sep, num)
+#             append!(nums, parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)) # For size report, bytes to megabytes
+#         end
+#         speedups = []
+#         for i = 1:(length(nums)-1)
+#             append!(speedups, nums[length(nums)] / nums[i])
+#         end
+#         for speedup in speedups
+#             line_print = string(line_print, sep, speedup)
+#         end
+#         write(io_write, string(line_print, "\n"))
+#     end
+#     close(io_write)
+# end
 
 # -----------
 # Other stats
@@ -340,8 +406,8 @@ function DoCollectResults()
     # --- rcap ---
     ReportSubDir = "cap/"
     ReportFileGroups = GetRCapReportFileGroups(ReportSubDir)
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210401_cap", 1, ["slads"])
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210401_cap", 2, ["slads"])
+    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "20210401_cap", 1)
+    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "20210401_cap", 2)
 end
 
 # Example procedure of integrating half edge test results:

@@ -429,7 +429,7 @@ end
 # Do SLADS but returns expanded only.
 function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return length(GetComponentAdjacency(B, RSorted, true))
+        return length(GetComponentAdjacency(B, R, true))
     end
     Expanded = Int64[]
     RSorted = sort(R)

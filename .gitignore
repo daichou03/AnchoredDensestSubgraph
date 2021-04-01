@@ -6,5 +6,6 @@ Example_SCC/*
 PerformanceReports/*
 PerformanceReportsIntegrated/*/*.txt
 PerformanceReportsIntegrated/unused/*
+PerformanceReportsIntegrated/temp/*
 DataPoints/*
 CaseStudy/*

@@ -50,6 +50,37 @@ function GetAnchorSizeReportFileGroups(ReportSubDir::String)
     fileGroupNames = map(fileGroup->map(y->join(y, "-"), fileGroup), fileGroups)
 end
 
+# Ordered file name by groups
+# Assumes both half edge reports and their corresponding baseline reports are in the same folder.
+# If not (as currently half edge tests DO NOT produce baseline reports in the same folder, by default this is the case), look at CopyBaselineReportsToHalfEdgeFolder.
+# Expected half edge report file name format example:
+# eucore-H1-1000-2-8-3-2
+# Expected Baseline report file name format example:
+# eucore-1000-2-8-3-2
+function GetHalfEdgeReportFileGroups(ReportSubDir::String)
+    files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
+    files = filter(x->((length(x) >= 7) && x[2][1:1] == "H") || (length(x) == 6), files)
+    datasetNames = unique!(map(x->x[1],files))
+    fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
+    fileGroups = map(fileGroup->sort(fileGroup, by=x->length(x) * 100 + parse(Int64, x[2][2:2])), fileGroups)
+    fileGroupNames = map(fileGroup->map(y->join(y, "-"), fileGroup), fileGroups)
+end
+
+# Expected R cap test report file name format example:
+# amazon-100-2-8-3-2-cap-1.0-2.0-1.0
+function GetRCapReportFileGroups(ReportSubDir::String)
+    files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
+    files = filter(x->length(x) == 10 && x[7] == "cap", files)
+    datasetNames = unique!(map(x->x[1],files))
+    fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
+    fileGroups = map(fileGroup->sort(fileGroup, by=x->length(x) * 100 + parse(Int64, x[2][2:2])), fileGroups)
+    fileGroupNames = map(fileGroup->map(y->join(y, "-"), fileGroup), fileGroups)
+end
+
+# ------------
+# Middle Utils
+# ------------
+
 # Try to find the baseline reports from another folder and copy to half edge report folder.
 # Watch the number of datasets/files removed/copied to see if it was called properly.
 function CopyBaselineReportsToHalfEdgeFolder(ReportSubDir::String, BaselineSubDir::String)
@@ -80,22 +111,6 @@ function CopyBaselineReportsToHalfEdgeFolder(ReportSubDir::String, BaselineSubDi
         end
         println(string(length(baselineFileNames), " baseline reports copied."))
     end
-end
-
-# Ordered file name by groups
-# Assumes both half edge reports and their corresponding baseline reports are in the same folder.
-# If not (as currently half edge tests DO NOT produce baseline reports in the same folder, by default this is the case), look at CopyBaselineReportsToHalfEdgeFolder.
-# Expected half edge report file name format example:
-# eucore-H1-1000-2-8-3-2
-# Expected Baseline report file name format example:
-# eucore-1000-2-8-3-2
-function GetHalfEdgeReportFileGroups(ReportSubDir::String)
-    files = map(x->split(x,"-"), readdir(string(PERFORMANCE_REPORTS_DIR, ReportSubDir)))
-    files = filter(x->((length(x) >= 7) && x[2][1:1] == "H") || (length(x) == 6), files)
-    datasetNames = unique!(map(x->x[1],files))
-    fileGroups = map(x->filter(y->y[1] == x, files), datasetNames)
-    fileGroups = map(fileGroup->sort(fileGroup, by=x->length(x) * 100 + parse(Int64, x[2][2:2])), fileGroups)
-    fileGroupNames = map(fileGroup->map(y->join(y, "-"), fileGroup), fileGroups)
 end
 
 # ------------------------
@@ -196,6 +211,10 @@ function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
     end
     close(io_write)
 end
+
+# -----------
+# Other stats
+# -----------
 
 # -----------
 # Other stats
@@ -318,6 +337,11 @@ function DoCollectResults()
     # --- smallIADS ---
     DataPointSubDir = "smallIADS/"
     OutputIntegratedSmallIADSReports(DataPointSubDir)
+    # --- rcap ---
+    ReportSubDir = "cap/"
+    ReportFileGroups = GetRCapReportFileGroups(ReportSubDir)
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210401_cap", 1, ["slads"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210401_cap", 2, ["slads"])
 end
 
 # Example procedure of integrating half edge test results:

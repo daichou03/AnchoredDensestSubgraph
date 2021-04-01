@@ -353,6 +353,14 @@ function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64)
     end
 end
 
+function BulkPerformQuerySLADSBaseline(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
+        println(string("Performing Query for: ", ds_name))
+        dataset = readIN(string(ds_name, ".in"))
+        PerformQueryAllAlgorithms(dataset, Tests, ds_name, [false, false, true])
+    end
+end
+
 function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Anchor Size Test Query for: ", ds_name))

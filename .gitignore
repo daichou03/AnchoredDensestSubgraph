@@ -1,4 +1,5 @@
 *.lnk
+*.eps
 Example/*
 Example_preprocessed/*
 Example_SCC/*

@@ -29,6 +29,6 @@ set yrange [0.001:500]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'AnchoredDS' lt -1 fs pattern 8,\
-	'' using 3 title 'ImprovedAnchoredDS' lt -1 fs pattern 4,\
-	'' using 4 title 'LocalAnchoredDS' lt -1 fs pattern 2
+plot 	'fig.txt' using 2:xtic(1) title 'ADS' lt -1 fs pattern 8,\
+	'' using 3 title 'IADS' lt -1 fs pattern 4,\
+	'' using 4 title 'SLADS' lt -1 fs pattern 2

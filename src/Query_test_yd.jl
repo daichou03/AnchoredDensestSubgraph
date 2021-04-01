@@ -383,9 +383,9 @@ function BulkPerformQueryIADSSmallAnchorSizeTest(dataset_names::Array{String,1},
         dataset = readIN(string(ds_name, ".in"))
         # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
         # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
-        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
-        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
-        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
+        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
         PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 10, 2)
         PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 12, 2)
     end
@@ -429,7 +429,7 @@ end
 # Do SLADS but returns expanded only.
 function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return inducedDS
+        return length(GetComponentAdjacency(B, RSorted, true))
     end
     Expanded = Int64[]
     RSorted = sort(R)

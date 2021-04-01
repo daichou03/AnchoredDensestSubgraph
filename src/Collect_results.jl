@@ -135,7 +135,7 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
         end
         close(io_read)
         nums = split(line, ",")
-        nums = map(x->string(parse(Float64, x) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)), nums) # For size report, bytes to megabytes
+        nums = map(x->string(parse(Float64, x) / tests / (ReportGenreIndex == 2 ? 1000000 : 1)), nums) # For size report, bytes to megabytes
         write(io_write, string(report_name, sep, join(nums, sep), "\n"))
     end
     close(io_write)
@@ -161,7 +161,7 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
                 end
                 close(io_read)
                 num = split(line, ",")[alg]
-                num = string(parse(Float64, num) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)) # For size report, bytes to megabytes
+                num = string(parse(Float64, num) / tests / (ReportGenreIndex == 2 ? 1000000 : 1)) # For size report, bytes to megabytes
                 if line_print != ""
                     line_print = string(line_print, sep)
                 end
@@ -234,7 +234,7 @@ function OutputCapSpeedUpReport(ReportSubDir::String, ReportFileGroups::Array{Ar
                 line = readline(io_read)
             end
             close(io_read)
-            append!(nums, parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1048576 : 1)) # For size report, bytes to megabytes
+            append!(nums, parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1000000 : 1)) # For size report, bytes to megabytes
         end
         speedups = []
         for i = 1:(length(nums)-1)

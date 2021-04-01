@@ -20,8 +20,8 @@ set key left bottom
 set key box 1
 set key title "Number of Edges"
 
-set xlabel "% Nodes Explored"
-set ylabel "SLADS Speed Up (Space)"
+set xlabel "% of Nodes Explored by LA"
+set ylabel "LA Space Reduction Ratio"
 
 
 set output 'fig.eps'

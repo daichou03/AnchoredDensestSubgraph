@@ -17,7 +17,7 @@ unset mytics
 
 
 unset xlabel
-set ylabel "Time Consumption (sec)" offset 0.5 font "Times-Roman,18"
+set ylabel "Memory Consumption (MB)" offset 0.5 font "Times-Roman,18"
 
 set logscale y
 set format y "10^{%L}

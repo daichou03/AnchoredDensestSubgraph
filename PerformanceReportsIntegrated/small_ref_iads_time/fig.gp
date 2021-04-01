@@ -13,7 +13,7 @@ set key box 1
 set key title "Size of R"
 
 set xlabel "% Nodes with Degree >= vol(R)"
-set ylabel "IADS Speed Up"
+set ylabel "IGA Speedup"
 
 
 set output 'fig.eps'

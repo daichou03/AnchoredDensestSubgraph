@@ -10,8 +10,8 @@ unset mytics
 
 set key off
 
-set xlabel "d_{multi}"
-set ylabel "Speed Up VS d_{multi} = 16 (Space)"
+set xlabel "d_c"
+set ylabel "Space Reduction Ratio VS d_c = 16"
 
 
 set output 'fig.eps'

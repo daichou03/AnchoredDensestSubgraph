@@ -25,13 +25,13 @@ set format y "10^{%L}
 set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10)
 set xtics rotate by -30 font "Times-Roman,18"
 
-set yrange [0.001:10]
+set yrange [0.001:50]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title '1' lt -1 fs pattern 8,\
-	'' using 3 title '1/2' lt -1 fs pattern 4,\
-	'' using 4 title '1/4' lt -1 fs pattern 2,\
-	'' using 5 title '1/8' lt -1 fs pattern 3,\
-	'' using 6 title '1/16' lt -1 fs pattern 7,\
-	'' using 7 title '1/32' lt -1 fs pattern 5
+plot 	'fig.txt' using 2:xtic(1) title 'G_0' lt -1 fs pattern 8,\
+	'' using 3 title 'G_1' lt -1 fs pattern 4,\
+	'' using 4 title 'G_2' lt -1 fs pattern 2,\
+	'' using 5 title 'G_3' lt -1 fs pattern 3,\
+	'' using 6 title 'G_4' lt -1 fs pattern 7,\
+	'' using 7 title 'G_5' lt -1 fs pattern 5

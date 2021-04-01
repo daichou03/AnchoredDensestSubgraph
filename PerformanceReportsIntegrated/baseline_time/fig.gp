@@ -22,13 +22,13 @@ set ylabel "Time Consumption (sec)" offset 0.5 font "Times-Roman,18"
 set logscale y
 set format y "10^{%L}
 
-set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100)
+set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 1000)
 set xtics rotate by -30 font "Times-Roman,18"
 
-set yrange [0.001:500]
+set yrange [0.001:1000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'ADS' lt -1 fs pattern 8,\
-	'' using 3 title 'IADS' lt -1 fs pattern 4,\
-	'' using 4 title 'SLADS' lt -1 fs pattern 2
+plot 	'fig.txt' using 2:xtic(1) title 'GA' lt -1 fs pattern 8,\
+	'' using 3 title 'IGA' lt -1 fs pattern 4,\
+	'' using 4 title 'LA' lt -1 fs pattern 2

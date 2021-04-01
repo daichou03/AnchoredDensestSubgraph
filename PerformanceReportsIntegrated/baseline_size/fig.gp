@@ -17,7 +17,7 @@ unset mytics
 
 
 unset xlabel
-set ylabel "Memory Consumption (byte)" offset 0.5 font "Times-Roman,18"
+set ylabel "Memory Consumption (MB)" offset 0.5 font "Times-Roman,18"
 
 set logscale y
 set format y "10^{%L}
@@ -29,6 +29,6 @@ set yrange [1:500000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'ADS' lt -1 fs pattern 8,\
-	'' using 3 title 'IADS' lt -1 fs pattern 4,\
-	'' using 4 title 'SLADS' lt -1 fs pattern 2
+plot 	'fig.txt' using 2:xtic(1) title 'GA' lt -1 fs pattern 8,\
+	'' using 3 title 'IGA' lt -1 fs pattern 4,\
+	'' using 4 title 'LA' lt -1 fs pattern 2

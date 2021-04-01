@@ -418,6 +418,24 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
     end
 end
 
+function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
+        println(string("Performing Query for: ", ds_name))
+        dataset = readIN(string(ds_name, ".in"))
+        caps = Array{rNodeDegreeCap,1}(undef, 5)
+        caps[1] = rNodeDegreeCap(1.0, 2.0, 1.0)
+        caps[2] = rNodeDegreeCap(2.0, 2.0, 2.0)
+        caps[3] = rNodeDegreeCap(4.0, 2.0, 4.0)
+        caps[4] = rNodeDegreeCap(8.0, 2.0, 8.0)
+        caps[5] = rNodeDegreeCap(16.0, 2.0, 16.0)
+        for cap in caps
+            PerformQueryAllAlgorithms(dataset, Tests, ds_name, [false, false, true],
+                string("-cap-",cap.min_scale,"-",cap.log_scale,"-",cap.max_scale),
+                DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, cap)
+        end
+    end
+end
+
 #,"orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","hamster","douban","gowalla"
 # IADS tests:
 # ["eucore", "grqc", "hepph", "github", "livemocha", "dblp", "youtube"]

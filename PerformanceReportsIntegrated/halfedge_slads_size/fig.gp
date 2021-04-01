@@ -29,9 +29,10 @@ set yrange [1:10000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title '' lt -1 fs pattern 8,\
-	'' using 3 title '' lt -1 fs pattern 4,\
-	'' using 4 title '' lt -1 fs pattern 2,\
-	'' using 5 title '' lt -1 fs pattern 3,\
-	'' using 6 title '' lt -1 fs pattern 7,\
-	'' using 7 title '' lt -1 fs pattern 5
+plot 	'fig.txt' using 2:xtic(1) title '1' lt -1 fs pattern 8,\
+	'' using 3 title '1/2' lt -1 fs pattern 4,\
+	'' using 4 title '1/4' lt -1 fs pattern 2,\
+	'' using 5 title '1/8' lt -1 fs pattern 3,\
+	'' using 6 title '1/16' lt -1 fs pattern 7,\
+	'' using 7 title '1/32' lt -1 fs pattern 5
+

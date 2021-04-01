@@ -3,10 +3,23 @@ using StatsBase
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/"
 PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
+GRAPH_METADATA_DIR = "../DataGraphMeta/"
 DATA_POINTS_DIR = "../DataPoints/"
-chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
-report_genre = ["time", "size"]
+# chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
+REPORT_GENRE = ["time", "size"]
 ALL_ALGORITHM_NAMES = ["ads", "iads", "slads"]
+
+io_read = open(string(GRAPH_METADATA_DIR, "datagraph.csv"))
+GRAPH_NUM_EDGES = Dict()
+GRAPH_NUM_VERTICES = Dict()
+while !eof(io_read)
+    line = split(readline(io_read), ",")
+    edges = parse(Int64, line[3])
+    vertices = parse(Int64, line[2])
+    GRAPH_NUM_EDGES[line[1]] = edges
+    GRAPH_NUM_VERTICES[line[1]] = vertices
+end
+close(io_read)
 
 # Produce data for gnuplot from output files out of Query_test_yd.
 
@@ -91,7 +104,7 @@ end
 
 function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,1}, OutputDir::String, ReportGenreIndex::Integer)
     sep = (" ")
-    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", report_genre[ReportGenreIndex], "/")
+    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", REPORT_GENRE[ReportGenreIndex], "/")
     mkpath(dir)
     io_write = open(string(dir,"fig.txt"), "w")
     for report in ReportFiles
@@ -117,7 +130,7 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
     AlgorithmNames::Vector{String}=ALL_ALGORITHM_NAMES)
     sep = (" ")
     for alg in 1:length(AlgorithmNames)
-        dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", AlgorithmNames[alg], "_", report_genre[ReportGenreIndex], "/")
+        dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", AlgorithmNames[alg], "_", REPORT_GENRE[ReportGenreIndex], "/")
         mkpath(dir)
         io_write = open(string(dir,"fig.txt"), "w")
         for fileGroup in ReportFileGroups
@@ -145,9 +158,66 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
     end
 end
 
+# -----------------------------------
+# Integrate Data Points for SmallIADS
+# -----------------------------------
+
+function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
+    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
+    files = map(x->split(x,"-"), fileNames)
+    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, DataPointSubDir)
+    mkpath(dir)
+    io_write = open(string(dir,"fig.txt"), "w")
+    prevDataName = ""
+    dataSeq = 0
+    for i in 1:length(fileNames)
+        dataName = files[i][1]
+        if prevDataName != dataName
+            prevDataName = dataName
+            dataSeq += 1
+        end
+        tests = parse(Int64, files[i][2])
+        Rsize = parse(Int64, files[i][5])
+        # read from data point files
+        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
+        overdensed_sum = 0
+        for j = 1:tests
+            overdensed_sum += parse(Int64, split(readline(io_read_dp), ",")[5])
+        end
+        close(io_read_dp)
+        # read from performance reports (assuming same sub folder and file name)
+        io_read_pr = open(string(PERFORMANCE_REPORTS_DIR, DataPointSubDir, fileNames[i]))
+        line = split(readline(io_read_pr), ",")
+        IADS_speed_up = parse(Float64, line[1]) / parse(Float64, line[2])
+        close(io_read_pr)
+        overdensed_mean = overdensed_sum / tests
+        line_print = string(dataName, " ", dataSeq, " ", Rsize, " ", overdensed_mean / GRAPH_NUM_VERTICES[dataName], " ", IADS_speed_up) # Note need to convert overdensed_mean to non-overdensed prop later.
+        write(io_write, string(line_print, "\n"))
+    end
+    close(io_write)
+end
+
 # -----------
 # Other stats
 # -----------
+
+function AggregrateRSize(DataPointSubDir::String)
+    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
+    files = map(x->split(x,"-"), fileNames)
+    for i in 1:length(fileNames)
+        dataName = files[i][1]
+        tests = parse(Int64, files[i][2])
+        # read from data point files
+        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
+        size_R = zeros(tests)
+        for j = 1:tests
+            size_R[j] = parse(Int64, split(readline(io_read_dp), ",")[1])
+        end
+        close(io_read_dp)
+        # read from performance reports (assuming same sub folder and file name)
+        println(string(dataName, ",", StatsBase.mean(size_R), ",", StatsBase.std(size_R)))
+    end
+end
 
 function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
     sep = (" ")
@@ -169,54 +239,58 @@ function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
     end
 end
 
-# -----------------------------------
-# Integrate Data Points for SmallIADS
-# -----------------------------------
-
-function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
-    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
-    files = map(x->split(x,"-"), fileNames)
-    dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, DataPointSubDir)
-    mkpath(dir)
-    io_write = open(string(dir,"overdensedR.txt"), "w")
-    for i in 1:length(fileNames)
-        dataName = files[i][1]
-        tests = parse(Int64, files[i][2])
-        Rsize = parse(Int64, files[i][5])
-        # read from data point files
-        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
-        overdensed_sum = 0
-        for j = 1:tests
-            overdensed_sum += parse(Int64, split(readline(io_read_dp), ",")[5])
+# Assuming halfedge only do SLADS.
+function ReportPerformanceMultiplierHalfEdge(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, ReportGenreIndex::Integer, 
+        FirstToCount::Integer=2, LastToExclude::Integer=1, MaxMultipliers::Integer=99)
+    multipliers = []
+    multipliers_averages = []
+    for fileGroup in ReportFileGroups
+        data_name = split(fileGroup[1], "-")[1]
+        println(string("Data: ", data_name))
+        line_print = ""
+        multiplier = []
+        previous = 0
+        count = 0
+        max_multipliers = 0
+        for report in fileGroup
+            count += 1
+            tests_index = split(report, "-")[2][1:1] == "H" ? 3 : 2
+            tests = parse(Int64, split(report, "-")[tests_index])
+            io_read = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, report))
+            line = ""
+            for i = 1:ReportGenreIndex
+                line = readline(io_read)
+            end
+            close(io_read)
+            current = parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1048576 : 1) # For size report, bytes to megabytes    
+            if count > FirstToCount && count + LastToExclude <= length(fileGroup)
+                append!(multiplier, previous / current)
+                println(previous / current)
+                max_multipliers += 1
+                if max_multipliers >= MaxMultipliers
+                    break
+                end
+            end
+            previous = current
         end
-        close(io_read_dp)
-        # read from performance reports (assuming same sub folder and file name)
-        io_read_pr = open(string(PERFORMANCE_REPORTS_DIR, DataPointSubDir, fileNames[i]))
-        line = split(readline(io_read_pr), ",")
-        IADS_time_ratio = parse(Float64, line[2]) / parse(Float64, line[1])
-        close(io_read_pr)
-        overdensed_mean = overdensed_sum / tests
-        line_print = string(dataName, ",", Rsize, " ", overdensed_mean, " ", IADS_time_ratio) # Note need to convert overdensed_mean to non-overdensed prop later.
-        write(io_write, string(line_print, "\n"))
+        if length(multiplier) > 0
+            multipliers_average = prod(multiplier) ^ (1 / length(multiplier))
+            println(string("Average multiplier: ", multipliers_average))
+            append!(multipliers_averages, multipliers_average)
+            append!(multipliers, [multiplier])
+        end
     end
-    close(io_write)
+    println(string("Overall average multiplier: ", prod(multipliers_averages) ^ (1 / length(multipliers_averages))))
 end
 
-function AggregrateRSize(DataPointSubDir::String)
-    fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
-    files = map(x->split(x,"-"), fileNames)
-    for i in 1:length(fileNames)
-        dataName = files[i][1]
-        tests = parse(Int64, files[i][2])
-        # read from data point files
-        io_read_dp = open(string(DATA_POINTS_DIR, DataPointSubDir, fileNames[i]))
-        size_R = zeros(tests)
-        for j = 1:tests
-            size_R[j] = parse(Int64, split(readline(io_read_dp), ",")[1])
-        end
-        close(io_read_dp)
-        # read from performance reports (assuming same sub folder and file name)
-        println(string(dataName, ",", StatsBase.mean(size_R), ",", StatsBase.std(size_R)))
+function RetrieveNMFromHalfEdgeGraphs()
+    dir = "../Example_SCC/"
+    fileNames = readdir(dir)
+    for file in fileNames
+        io_read = open(string(dir,file))
+        print(string(file, " "))
+        println(readline(io_read))
+        close(io_read)
     end
 end
 
@@ -241,6 +315,9 @@ function DoCollectResults()
     ReportFileGroups = GetHalfEdgeReportFileGroups(ReportSubDir)
     OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",1,["slads"])
     OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",2,["slads"])
+    # --- smallIADS ---
+    DataPointSubDir = "smallIADS/"
+    OutputIntegratedSmallIADSReports(DataPointSubDir)
 end
 
 # Example procedure of integrating half edge test results:

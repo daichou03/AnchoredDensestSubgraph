@@ -420,6 +420,54 @@ end
 # IADS tests:
 # ["eucore", "grqc", "hepph", "github", "livemocha", "dblp", "youtube"]
 
+# ------
+# Others
+# ------
+
+# Do SLADS but returns expanded only.
+function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
+    if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
+        return inducedDS
+    end
+    Expanded = Int64[]
+    RSorted = sort(R)
+    Frontier = RSorted
+    alpha = 0
+    S = Int64[]
+    SUnion = Int64[]
+    L = Int64[]
+    while !isempty(Frontier)
+        Expanded = union(Expanded, Frontier)
+        L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
+        result_S = LocalMaximumDensity(B[L,L], orderedSubsetIndices(L, RSorted), inducedDS)
+        alpha = result_S.alpha_star
+        S = L[result_S.source_nodes]
+        SUnion = union(SUnion, S)
+        Frontier = setdiff(S, Expanded)
+    end
+    return length(L)
+end
+
+function BulkRetrieveSLADSExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
+    for ds_name in dataset_names
+        B = readIN(string(ds_name, ".in"))
+
+        user_inputs = BulkGenerateUserInputSet(B, Tests)
+        anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
+
+        inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
+        globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+        orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
+
+        sizes = []
+        for i in 1:Tests
+            append!(sizes, SLADSExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
+        end
+        print(string(ds_name, ","))
+        println(mean(sizes))
+    end
+end
+
 
 # -----------
 # Preparation

@@ -229,3 +229,7 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowT
     inducedDS = GlobalMaximumDensity(B[R,R])
     return StronglyLocalMaximumDensity(B, R, inducedDS, ShowTrace)
 end
+
+# ------
+# Others
+# ------

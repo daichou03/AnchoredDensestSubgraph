@@ -11,8 +11,9 @@ unset mytics
 set key off
 
 set xlabel "d_c"
-set ylabel "Space Reduction Ratio VS d_c = 16"
+set ylabel "Space Ratio VS d_c = 16"
 
+set xrange [1:16]
 
 set output 'fig.eps'
 

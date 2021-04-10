@@ -237,7 +237,7 @@ function OutputCapSpeedUpReport(ReportSubDir::String, ReportFileGroups::Array{Ar
             append!(nums, parse(Float64, line) / tests / (ReportGenreIndex == 2 ? 1000000 : 1)) # For size report, bytes to megabytes
         end
         speedups = []
-        for i = 1:(length(nums)-1)
+        for i = 1:(length(nums))
             append!(speedups, nums[length(nums)] / nums[i])
         end
         append!(all_speedups, [speedups])       

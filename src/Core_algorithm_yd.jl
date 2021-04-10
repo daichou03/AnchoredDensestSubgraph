@@ -15,7 +15,7 @@ mutable struct densestSubgraph
     source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
 end
 
-function GlobalMaximumDensity(B::SparseMatrixCSC)
+function GlobalDensestSubgraph(B::SparseMatrixCSC)
     N = size(B,1)
     # Weight for source edges
     sWeights = map(x -> GetDegree(B,x), 1:N)
@@ -55,7 +55,7 @@ function FlowNetAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int64
 end
 
 # GA
-# inducedDS = GlobalMaximumDensity(B[R,R])
+# inducedDS = GlobalDensestSubgraph(B[R,R])
 function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
@@ -98,7 +98,7 @@ function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, ind
 end
 
 function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
-    inducedDS = GlobalMaximumDensity(B[R,R])
+    inducedDS = GlobalDensestSubgraph(B[R,R])
     return GlobalAnchoredDensestSubgraph(B, R, inducedDS, ShowTrace)
 end
 
@@ -117,7 +117,7 @@ end
 # globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
 # orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
-# inducedDS = GlobalMaximumDensity(B[R,R])
+# inducedDS = GlobalDensestSubgraph(B[R,R])
 function ImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64},
         globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
     N = size(B,1)
@@ -163,7 +163,7 @@ function ImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int
 end
 
 function ImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
-    inducedDS = GlobalMaximumDensity(B[R,R])
+    inducedDS = GlobalDensestSubgraph(B[R,R])
     return ImprovedGlobalAnchoredDensestSubgraph(B, R, globalDegree, orderByDegreeIndices, inducedDS)
 end
 
@@ -201,7 +201,7 @@ function FlowNetAlphaIGA(BProp::SparseMatrixCSC, alpha::Float64, sWeightsR::Vect
     return F
 end
 
-# inducedDS = GlobalMaximumDensity(B[R,R])
+# inducedDS = GlobalDensestSubgraph(B[R,R])
 function LocalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return inducedDS
@@ -229,7 +229,7 @@ function LocalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, indu
 end
 
 function LocalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
-    inducedDS = GlobalMaximumDensity(B[R,R])
+    inducedDS = GlobalDensestSubgraph(B[R,R])
     return LocalAnchoredDensestSubgraph(B, R, inducedDS, ShowTrace)
 end
 

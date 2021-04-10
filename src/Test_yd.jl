@@ -38,15 +38,15 @@ const DUMMY_SEED = -1
 
 # V does not need to be relevant - in which case assign it to be something <= 0 to indicate this.
 function GetGenericSeedReport(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
-    inducedDS = GlobalMaximumDensity(B[R,R])
-    localDS = FlowNetAlphaLA(B, R, inducedDS)
+    inducedDS = GlobalDensestSubgraph(B[R,R])
+    localDS = LocalAnchoredDensestSubgraph(B, R, inducedDS)
     degree = V <= 0 ? -1 : GetDegree(B, V)
     rSeed(V, R, degree, GetVolume(B, R), GetInducedVolume(B, R), inducedDS.alpha_star, length(inducedDS.source_nodes), localDS.alpha_star, length(localDS.source_nodes))
 end
 
 function GetGenericSeedReportV2(B::SparseMatrixCSC, V::Int64, R::Vector{Int64})
-    inducedDS = GlobalMaximumDensity(B[R,R])
-    localDS = FlowNetAlphaLA(B, R, inducedDS)
+    inducedDS = GlobalDensestSubgraph(B[R,R])
+    localDS = LocalAnchoredDensestSubgraph(B, R, inducedDS)
     degree = V <= 0 ? -1 : GetDegree(B, V)
     rSeedV2(V, R, degree, GetVolume(B, R), GetInducedVolume(B, R), densestSubgraph(inducedDS.alpha_star, R[inducedDS.source_nodes]) , localDS)
 end
@@ -187,7 +187,7 @@ function ReportAllDSRatioSizeOnSeedExcludingSelf(B::SparseMatrixCSC, filename::S
         ratio = GetDensestSubgraphRatioSize(RGraph)
         rep = GetSeedExcludingSelfReport(B,i)
         non_degenerate = rep.local_density - rep.induced_maximum_density > 1e-6
-        densityR = GlobalMaximumDensity(RGraph).alpha_star
+        densityR = GlobalDensestSubgraph(RGraph).alpha_star
         write(io, string(i)) # ID
         write(io, string(",", ratio)) # Ratio (Densest subgraph's size of R relative to |R|)
         write(io, string(",", non_degenerate)) # Non-degeneracy
@@ -780,7 +780,7 @@ end
 # The purpose is that that may have a high chance of producing non-degenerating R.
 function GetConcentratedRandomWalkLeaveLowestDensityOut(B::SparseMatrixCSC, Size::Int64)
     r = GetStepRandomWalkUntilSize(B, Size)
-    r = r[GlobalMaximumDensity(B[r, r]).source_nodes]
+    r = r[GlobalDensestSubgraph(B[r, r]).source_nodes]
     lowest_deg_index = findmin(map(z->GetDegree(B,z), r))[2]
     deleteat!(r, lowest_deg_index)
     return r
@@ -824,7 +824,7 @@ end
 
 # Check if the ads of R is the same as ds(R) over G.
 function CheckIdenticalAfterTakingDensestSubgraphOfR(B::SparseMatrixCSC, R::Vector{Int64}, printADS::Bool=false)
-    dsR = GlobalMaximumDensity(B[R,R]).source_nodes
+    dsR = GlobalDensestSubgraph(B[R,R]).source_nodes
     popfirst!(dsR)
     dsR = map(x->x-1, dsR)
     dsR = R[dsR] # Now dsR is the densest subgraph of R

@@ -230,7 +230,7 @@ function DataPointToString(dp::dataPoint)
 end
 
 function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, AlgorithmMask::Vector{Bool})
-    inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
+    inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
     globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
     orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
@@ -484,7 +484,7 @@ function BulkRetrieveSLADSExpansionSize(dataset_names::Array{String,1}, Tests::I
         user_inputs = BulkGenerateUserInputSet(B, Tests)
         anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
 
-        inducedDS_set = map(r -> GlobalMaximumDensity(B[r,r]), anchors)
+        inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
         globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
         orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
@@ -508,7 +508,7 @@ end
 
 println("Warming up each core algorithm...")
 sample_graph = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5) # lobster.in
-GlobalMaximumDensity(sample_graph)
+GlobalDensestSubgraph(sample_graph)
 GlobalAnchoredDensestSubgraph(sample_graph, [1,2])
 ImprovedGlobalAnchoredDensestSubgraph(sample_graph, [1,2], [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
 LocalAnchoredDensestSubgraph(sample_graph, [1,2])

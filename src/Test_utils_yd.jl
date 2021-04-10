@@ -16,5 +16,5 @@ include("Core_algorithm_yd.jl")
 
 function GetDensestSubgraphRatioSize(R::SparseMatrixCSC)
     N = size(R, 1)
-    return length(GlobalMaximumDensity(R).source_nodes) / N
+    return length(GlobalDensestSubgraph(R).source_nodes) / N
 end

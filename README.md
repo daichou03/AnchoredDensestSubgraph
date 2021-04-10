@@ -66,7 +66,7 @@ B = readSMAT("graph.smat")
 
 Find (global) densest subgraph and its density:
 
-GlobalMaximumDensity(A)
+GlobalDensestSubgraph(A)
 
 TODO: which algorithm?
 The subgraph is a maximum densest subgraph.

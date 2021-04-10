@@ -24,13 +24,13 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
     flow_alpha_minus = 0
     alpha_star = 0
 
-    if FlowWithAlpha(B, alpha_bottom, sWeights).flowvalue >= sum(sWeights) - 1e-6
+    if FlowNetAlpha(B, alpha_bottom, sWeights).flowvalue >= sum(sWeights) - 1e-6
         alpha_star = alpha_bottom
-        flow_alpha_minus = FlowWithAlpha(B, alpha_star - 1 / (N * (N+1)), sWeights)
+        flow_alpha_minus = FlowNetAlpha(B, alpha_star - 1 / (N * (N+1)), sWeights)
     else
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
-            F = FlowWithAlpha(B, alpha, sWeights)
+            F = FlowNetAlpha(B, alpha, sWeights)
             if F.flowvalue >= sum(sWeights) - 1e-6 # YD 20201223: tolerance doesn't matter much, just don't trust alpha_top
                 alpha_top = alpha
             else
@@ -38,14 +38,14 @@ function GlobalMaximumDensity(B::SparseMatrixCSC)
             end
             # println(alpha)
         end
-        flow_alpha_minus = FlowWithAlpha(B, alpha_bottom, sWeights)
+        flow_alpha_minus = FlowNetAlpha(B, alpha_bottom, sWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64(floor((alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
-function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int64})
+function FlowNetAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int64})
     N = size(B,1)
     FlowNet = [spzeros(1,1) sparse(sWeights') spzeros(1,1);
                spzeros(N,1) B                 sparse(repeat([alpha], N));
@@ -54,8 +54,9 @@ function FlowWithAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int6
     return F
 end
 
+# GA
 # inducedDS = GlobalMaximumDensity(B[R,R])
-function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
+function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
@@ -73,13 +74,13 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
                    spzeros(N,1) B                  sparse(repeat([1], N));
                    spzeros(1,N+2)]
 
-    if FlowWithAlphaLocalDensity(FlowNetTemp, alpha_bottom).flowvalue >= sum(sWeightsR) - 1e-6
+    if FlowNetAlphaGA(FlowNetTemp, alpha_bottom).flowvalue >= sum(sWeightsR) - 1e-6
         alpha_star = alpha_bottom
-        flow_alpha_minus = FlowWithAlphaLocalDensity(FlowNetTemp, alpha_star - 1 / (N * (N+1)))
+        flow_alpha_minus = FlowNetAlphaGA(FlowNetTemp, alpha_star - 1 / (N * (N+1)))
     else
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
-            F = FlowWithAlphaLocalDensity(FlowNetTemp, alpha)
+            F = FlowNetAlphaGA(FlowNetTemp, alpha)
             if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
@@ -89,19 +90,19 @@ function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
                 println(string("Current alpha: ", alpha))
             end
         end
-        flow_alpha_minus = FlowWithAlphaLocalDensity(FlowNetTemp, alpha_bottom)
+        flow_alpha_minus = FlowNetAlphaGA(FlowNetTemp, alpha_bottom)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
-function LocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
     inducedDS = GlobalMaximumDensity(B[R,R])
-    return LocalMaximumDensity(B, R, inducedDS, ShowTrace)
+    return GlobalAnchoredDensestSubgraph(B, R, inducedDS, ShowTrace)
 end
 
-function FlowWithAlphaLocalDensity(FlowNet::SparseMatrixCSC, alpha::Float64)
+function FlowNetAlphaGA(FlowNet::SparseMatrixCSC, alpha::Float64)
     N = size(FlowNet,1) - 2
     for i = 2:N+1
         FlowNet[i, N+2] = alpha
@@ -110,12 +111,14 @@ function FlowWithAlphaLocalDensity(FlowNet::SparseMatrixCSC, alpha::Float64)
     return F
 end
 
+# IGA
+
 # globalDegree and orderByDegreeIndices are information global to B. Pre-calculate them as below:
 # globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
 # orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
 # inducedDS = GlobalMaximumDensity(B[R,R])
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
+function ImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64},
         globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, inducedDS::densestSubgraph)
     N = size(B,1)
     # Weight for source edges
@@ -137,13 +140,13 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
     alpha_star = 0
 
     # YD: Just merge the super node with sink. Also ignore any directed edges from it to regular nodes.
-    if FlowWithAlphaImprovedLocalDensity(BProp, alpha_bottom, sWeightsRProp, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
+    if FlowNetAlphaIGA(BProp, alpha_bottom, sWeightsRProp, rToOWeights).flowvalue >= sum(sWeightsR) - 1e-6
         alpha_star = alpha_bottom
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, alpha_star - 1 / (N * (N+1)), sWeightsRProp, rToOWeights)
+        flow_alpha_minus = FlowNetAlphaIGA(BProp, alpha_star - 1 / (N * (N+1)), sWeightsRProp, rToOWeights)
     else
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
-            F = FlowWithAlphaImprovedLocalDensity(BProp, alpha, sWeightsRProp, rToOWeights)
+            F = FlowNetAlphaIGA(BProp, alpha, sWeightsRProp, rToOWeights)
             if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
@@ -151,7 +154,7 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
             end
             # println(alpha)
         end
-        flow_alpha_minus = FlowWithAlphaImprovedLocalDensity(BProp, alpha_bottom, sWeightsRProp, rToOWeights)
+        flow_alpha_minus = FlowNetAlphaIGA(BProp, alpha_bottom, sWeightsRProp, rToOWeights)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
@@ -159,9 +162,9 @@ function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64},
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 
-function ImprovedLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
+function ImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     inducedDS = GlobalMaximumDensity(B[R,R])
-    return ImprovedLocalMaximumDensity(B, R, globalDegree, orderByDegreeIndices, inducedDS)
+    return ImprovedGlobalAnchoredDensestSubgraph(B, R, globalDegree, orderByDegreeIndices, inducedDS)
 end
 
 function GetOverdensedNodes(N::Int64, orderByDegreeIndices::Array{Tuple{Int64,Int64},1}, volume_R::Union{Int64,Float64})
@@ -180,7 +183,7 @@ function GetOverdensedNodes(N::Int64, orderByDegreeIndices::Array{Tuple{Int64,In
     # println(string("Overdensed nodes: ", length(overdensed), " / ", N))
 end
 
-function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})
+function FlowNetAlphaIGA(BProp::SparseMatrixCSC, alpha::Float64, sWeightsR::Vector{Int64}, rToOWeights::Vector{Int64})
     NProp = size(BProp,1)
 
 #    Supernode version
@@ -199,7 +202,7 @@ function FlowWithAlphaImprovedLocalDensity(BProp::SparseMatrixCSC, alpha::Float6
 end
 
 # inducedDS = GlobalMaximumDensity(B[R,R])
-function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
+function LocalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return inducedDS
     end
@@ -213,7 +216,7 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, induc
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
-        result_S = LocalMaximumDensity(B[L,L], orderedSubsetIndices(L, RSorted), inducedDS)
+        result_S = GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted), inducedDS)
         alpha = result_S.alpha_star
         S = L[result_S.source_nodes]
         if ShowTrace
@@ -225,9 +228,9 @@ function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, induc
     return densestSubgraph(alpha, S)
 end
 
-function StronglyLocalMaximumDensity(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+function LocalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
     inducedDS = GlobalMaximumDensity(B[R,R])
-    return StronglyLocalMaximumDensity(B, R, inducedDS, ShowTrace)
+    return LocalAnchoredDensestSubgraph(B, R, inducedDS, ShowTrace)
 end
 
 # ------

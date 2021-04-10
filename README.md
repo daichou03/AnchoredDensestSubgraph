@@ -74,7 +74,7 @@ The subgraph is a maximum densest subgraph.
 Find local densest subgraph and its density with reference vertices:
 
 R = vec([1 2])
-LocalMaximumDensity(A, R)
+GlobalAnchoredDensestSubgraph(A, R)
 
 Note R is a vector of indices of vertices in A, 1-indexed.
 

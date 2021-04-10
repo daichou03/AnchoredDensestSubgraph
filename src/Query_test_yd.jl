@@ -181,32 +181,32 @@ end
 # -------------
 
 # Atomic query
-function ProcessLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
+function ProcessGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
     localDS_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = LocalMaximumDensity(B,R,inducedDS_set[i])
+        localDS = GlobalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
         push!(localDS_set, localDS)
     end
     return localDS_set
 end
 
-function ProcessImprovedLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64},
+function ProcessImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64},
             orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
     localDS_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = ImprovedLocalMaximumDensity(B,R,globalDegree,orderByDegreeIndices,inducedDS_set[i])
+        localDS = ImprovedGlobalAnchoredDensestSubgraph(B,R,globalDegree,orderByDegreeIndices,inducedDS_set[i])
         push!(localDS_set, localDS)
     end
     return localDS_set
 end
 
-function ProcessStronglyLocalMaximumDensity(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
+function ProcessLocalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
     localDS_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = StronglyLocalMaximumDensity(B,R,inducedDS_set[i])
+        localDS = LocalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
         push!(localDS_set, localDS)
     end
     return localDS_set
@@ -238,11 +238,11 @@ function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, Algorith
     for alg_index in 1:length(AlgorithmMask)
         if AlgorithmMask[alg_index]
             if alg_index == ALG_MASK_ADS
-                append!(performances, [@timed ProcessLocalMaximumDensity(B, anchors, inducedDS_set)])
+                append!(performances, [@timed ProcessGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             elseif alg_index == ALG_MASK_IADS
-                append!(performances, [@timed ProcessImprovedLocalMaximumDensity(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
+                append!(performances, [@timed ProcessImprovedGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
             else
-                append!(performances, [@timed ProcessStronglyLocalMaximumDensity(B, anchors, inducedDS_set)])
+                append!(performances, [@timed ProcessLocalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             end
         else
             append!(performances, [[0,0,0]])
@@ -468,7 +468,7 @@ function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS:
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
-        result_S = LocalMaximumDensity(B[L,L], orderedSubsetIndices(L, RSorted), inducedDS)
+        result_S = GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted), inducedDS)
         alpha = result_S.alpha_star
         S = L[result_S.source_nodes]
         SUnion = union(SUnion, S)
@@ -509,8 +509,8 @@ end
 println("Warming up each core algorithm...")
 sample_graph = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5) # lobster.in
 GlobalMaximumDensity(sample_graph)
-LocalMaximumDensity(sample_graph, [1,2])
-ImprovedLocalMaximumDensity(sample_graph, [1,2], [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
-StronglyLocalMaximumDensity(sample_graph, [1,2])
+GlobalAnchoredDensestSubgraph(sample_graph, [1,2])
+ImprovedGlobalAnchoredDensestSubgraph(sample_graph, [1,2], [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
+LocalAnchoredDensestSubgraph(sample_graph, [1,2])
 
 println("Done.")

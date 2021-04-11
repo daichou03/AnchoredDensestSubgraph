@@ -22,9 +22,9 @@ end
 mutable struct dataPoint
     R_size::Int64
     R_induced_DS_size::Int64
-    ADS_size::Int64
+    ADS_size::Int64 # Size of anchored densest subgraph
     expansion_size::Int64
-    IADS_overdensed_nodes::Int64
+    IGA_overdensed_nodes::Int64
 end
 
 # ----------
@@ -34,10 +34,11 @@ DEF_USER_TARGET_SIZE = 8
 DEF_ANCHOR_REPEATS = 3
 DEF_AHCHOR_STEPS = 2
 
-ALG_MASK_ADS = 1
-ALG_MASK_IADS = 2
-ALG_MASK_SLADS = 3
+ALG_MASK_GA = 1
+ALG_MASK_IGA = 2
+ALG_MASK_LA = 3
 ALL_ALGORITHMS = [true, true, true]
+LA_ONLY = [false, false, true]
 
 # --------------
 # User input set
@@ -217,16 +218,16 @@ function RetrieveDataPointsFromReport(report::rMinimalSeed)
     return RetrieveDataPointsFromReport(report.R, report.induceDS, report.localDS)
 end
 
-function RetrieveDataPointsFromReport(R::Vector{Int64}, inducedDS::densestSubgraph, localDS::densestSubgraph, IADS_overdensed_nodes::Int64=0)
+function RetrieveDataPointsFromReport(R::Vector{Int64}, inducedDS::densestSubgraph, localDS::densestSubgraph, IGA_overdensed_nodes::Int64=0)
     R_size = length(R)
     R_induced_DS_size = length(inducedDS.source_nodes)
     ADS_size = length(localDS.source_nodes)
     expansion_size = length(setdiff(localDS.source_nodes, R))
-    return dataPoint(R_size, R_induced_DS_size, ADS_size, expansion_size, IADS_overdensed_nodes)
+    return dataPoint(R_size, R_induced_DS_size, ADS_size, expansion_size, IGA_overdensed_nodes)
 end
 
 function DataPointToString(dp::dataPoint)
-    return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size, ",", dp.IADS_overdensed_nodes)
+    return string(dp.R_size, ",", dp.R_induced_DS_size, ",", dp.ADS_size, ",", dp.expansion_size, ",", dp.IGA_overdensed_nodes)
 end
 
 function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, AlgorithmMask::Vector{Bool})
@@ -237,9 +238,9 @@ function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, Algorith
     performances = []
     for alg_index in 1:length(AlgorithmMask)
         if AlgorithmMask[alg_index]
-            if alg_index == ALG_MASK_ADS
+            if alg_index == ALG_MASK_GA
                 append!(performances, [@timed ProcessGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
-            elseif alg_index == ALG_MASK_IADS
+            elseif alg_index == ALG_MASK_IGA
                 append!(performances, [@timed ProcessImprovedGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
             else
                 append!(performances, [@timed ProcessLocalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
@@ -268,7 +269,7 @@ function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMas
     N = length(globalDegree)
     for i = 1:Tests
         overdensed = 0
-        if AlgorithmMask[ALG_MASK_IADS]
+        if AlgorithmMask[ALG_MASK_IGA]
             # Also record #overdensed nodes for IADS
             sWeightsR = map(x -> (x in anchors[i]) ? globalDegree[x] : 0, 1:N)
             volume_R = sum(sWeightsR)
@@ -346,20 +347,16 @@ end
 # anchor_size_test_dataset_names = ["livemocha","catster"]
 # chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
 
-function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64)
+function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64, AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS)
     for ds_name in dataset_names
         println(string("Performing Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAllAlgorithms(dataset, Tests, ds_name)
+        PerformQueryAllAlgorithms(dataset, Tests, ds_name, AlgorithmMask)
     end
 end
 
 function BulkPerformQuerySLADSBaseline(dataset_names::Array{String,1}, Tests::Int64)
-    for ds_name in dataset_names
-        println(string("Performing Query for: ", ds_name))
-        dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAllAlgorithms(dataset, Tests, ds_name, [false, false, true])
-    end
+    BulkPerformQueryBaseline(dataset_names, Tests, LA_ONLY)
 end
 
 function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)

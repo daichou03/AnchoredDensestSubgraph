@@ -14,6 +14,7 @@ include("Utils.jl")
 include("Test_yd.jl")
 include("Query_test_yd.jl")
 
+println(ARGS)
 data_name = ARGS[1]
 tests = ARGS[2]
 BulkPerformQueryBaseline([data_name], tests)

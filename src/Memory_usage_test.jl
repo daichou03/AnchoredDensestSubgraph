@@ -15,6 +15,6 @@ include("Test_yd.jl")
 include("Query_test_yd.jl")
 
 args = split(ARGS[1], ",")
-data_name = args[1]
+data_name = string(args[1])
 tests = parse(Int64, args[2])
 BulkPerformQueryBaseline([data_name], tests)

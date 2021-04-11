@@ -11,9 +11,24 @@ include("Utils.jl")
 # For undirected and unweighted graph.
 
 mutable struct densestSubgraph
-    alpha_star::Float64 # The minimum alpha value that can saturate all source edges
-    source_nodes::Vector{Int64} # give the indices of the nodes attached to the source.
+    alpha_star::Float64 # The minimum alpha value that can saturate all source edges.
+    source_nodes::Vector{Int64} # give the indices of the nodes attached to the source, i.e., the (anchored) densest subgraph.
 end
+
+mutable struct performance
+    time::Float64
+    memory::Float64
+
+mutable struct stats
+    # Necessary for reproduction
+    R::Vector{Int64}
+    # Result-related stats
+    R_inducedDS::Int64 # Densest subgraph of induced subgraph of R. Reproduceable given B and R.
+    expansion_size::Int64 # Number of nodes that are in source_nodes but not in R.
+    # Performance-related stats
+    Netflow_runs::Int64 # Number of network flow runs in this algorithm
+    IGA_overdensed_nodes::Int64 # IGA only otherwise 0: number of overdensed nodes.
+    LA_expansions::Int64 # Number of expansions of B.
 
 function GlobalDensestSubgraph(B::SparseMatrixCSC)
     N = size(B,1)
@@ -54,15 +69,17 @@ function FlowNetAlpha(B::SparseMatrixCSC, alpha::Float64, sWeights::Vector{Int64
     return F
 end
 
+return (_densestSubgraph, _performance, _stats)
+
 # GA
 # inducedDS = GlobalDensestSubgraph(B[R,R])
-function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
+function BenchmarkedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, ShowTrace::Bool=false)
     N = size(B,1)
     # Weight for source edges
     # sWeightsR = map(x -> sum(B[x,:]), R)
     density_R = inducedDS.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        return inducedDS
+        return (inducedDS, performance(0.0, 0.0), 
     end
     sWeightsR = map(x -> (x in R) ? GetDegree(B,x) : 0, 1:N)
     alpha_bottom = density_R # Reachable (degenerate case)

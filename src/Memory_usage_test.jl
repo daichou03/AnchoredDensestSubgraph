@@ -22,7 +22,7 @@ if length(args) == 5
     doIGA = string(args[4] == "1")
     doLA = string(args[5] == "1")
     BulkPerformQueryBaseline([data_name], tests, [doGA, doIGA, doLA])
-else if length(args) == 2
+elseif length(args) == 2
     BulkPerformQueryBaseline([data_name], tests)
 else
     error("Must pass 2 or 5 arguments - see Memory_usage_test.jl.")

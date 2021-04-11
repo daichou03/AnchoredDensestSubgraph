@@ -18,9 +18,9 @@ args = split(ARGS[1], ",")
 data_name = string(args[1])
 tests = parse(Int64, args[2])
 if length(args) == 5
-    doGA = string(args[3] == "1")
-    doIGA = string(args[4] == "1")
-    doLA = string(args[5] == "1")
+    doGA = string(args[3]) == "1"
+    doIGA = string(args[4]) == "1"
+    doLA = string(args[5]) == "1"
     BulkPerformQueryBaseline([data_name], tests, [doGA, doIGA, doLA])
 elseif length(args) == 2
     BulkPerformQueryBaseline([data_name], tests)

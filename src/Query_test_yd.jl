@@ -258,47 +258,54 @@ function GetSoleAlgorithmIndex(AlgorithmMask::Vector{Bool})
             return alg_index
         end
     end
-    error("No algorithm is chosen!")
+    return -1
 end
 
 function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMask::Vector{Bool}, performances::Array{Any,1},
         anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
-    # Write data points to file
-    mkpath("../DataPoints")
-    io = open(string("../DataPoints/",filename), "w")
-    N = length(globalDegree)
-    for i = 1:Tests
-        overdensed = 0
-        if AlgorithmMask[ALG_MASK_IGA]
-            # Also record #overdensed nodes for IADS
-            sWeightsR = map(x -> (x in anchors[i]) ? globalDegree[x] : 0, 1:N)
-            volume_R = sum(sWeightsR)
-            overdensed = length(GetOverdensedNodes(N, orderByDegreeIndices, volume_R))
+    soleAlgIndex = GetSoleAlgorithmIndex(AlgorithmMask)
+    if soleAlgIndex >= 0
+        # Write data points to file
+        mkpath("../DataPoints")
+        io_dp = open(string("../DataPoints/",filename), "w")
+        N = length(globalDegree)
+        for i = 1:Tests
+            overdensed = 0
+            if AlgorithmMask[ALG_MASK_IGA]
+                # Also record #overdensed nodes for IADS
+                sWeightsR = map(x -> (x in anchors[i]) ? globalDegree[x] : 0, 1:N)
+                volume_R = sum(sWeightsR)
+                overdensed = length(GetOverdensedNodes(N, orderByDegreeIndices, volume_R))
+            end
+            dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[soleAlgIndex][1][i], overdensed)
+            write(io_dp, string(DataPointToString(dataPoint),"\n"))
         end
-        dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[GetSoleAlgorithmIndex(AlgorithmMask)][1][i], overdensed)
-        write(io, string(DataPointToString(dataPoint),"\n"))
-    end
-    close(io)
-    # Write time/memory reports to file
-    mkpath("../PerformanceReports")
-    io = open(string("../PerformanceReports/",filename), "w")
-    ret = []
-    for index = 2:3
-        str = ""
-        for alg_index in 1:length(AlgorithmMask)
-            if AlgorithmMask[alg_index]
-                append!(ret, performances[alg_index][index])
-                if str == ""
-                    str = string(performances[alg_index][index])
-                else
-                    str = string(str, ",", performances[alg_index][index])
+        close(io_dp)
+        # Write time/memory reports to file
+        mkpath("../PerformanceReports")
+        io_pr = open(string("../PerformanceReports/",filename), "w")
+        ret = []
+        for index = 2:3
+            str = ""
+            for alg_index in 1:length(AlgorithmMask)
+                if AlgorithmMask[alg_index]
+                    append!(ret, performances[alg_index][index])
+                    if str == ""
+                        str = string(performances[alg_index][index])
+                    else
+                        str = string(str, ",", performances[alg_index][index])
+                    end
                 end
             end
+            write(io_pr, string(str,"\n"))
         end
-        write(io, string(str,"\n"))
-    end
-    close(io)
-    return ret
+        close(io_pr)
+        return ret
+    else
+        # Skip writing data points
+        println("Warning: No algorithm is chosen - this is meaningless unless for benchmark purposes.")
+        return []
+    end   
 end
 
 # Baseline query

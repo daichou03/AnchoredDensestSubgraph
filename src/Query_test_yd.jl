@@ -29,6 +29,8 @@ end
 
 # ----------
 
+ANCHOR_NODES_BASE_DIR = "../AnchorNodes/"
+
 DEF_USER_MAX_HOPS = 2
 DEF_USER_TARGET_SIZE = 8
 DEF_ANCHOR_REPEATS = 3
@@ -449,9 +451,28 @@ function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
     end
 end
 
-#,"orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","hamster","douban","gowalla"
-# IADS tests:
-# ["eucore", "grqc", "hepph", "github", "livemocha", "dblp", "youtube"]
+# Generate AnchorNodes file
+function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
+    dataset = readIN(string(ds_name, ".in"))
+
+    MaxHops = DEF_USER_MAX_HOPS
+    UserTargetSize = DEF_USER_TARGET_SIZE
+    Repeats = DEF_ANCHOR_REPEATS
+    Steps = DEF_AHCHOR_STEPS
+    RNodeDegreeCap = DEFAULT_R_NODE_DEGREE_CAP
+
+    user_inputs = BulkGenerateUserInputSet(dataset, Tests, MaxHops, UserTargetSize)
+    anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, Repeats, Steps, RNodeDegreeCap)
+
+    dir = string(ANCHOR_NODES_BASE_DIR,OutputSubDirName)
+    mkpath(dir)
+    io = open(string(dir, ds_name, ".anchor"), "w")
+    write(io, string(ds_name,"\n"))
+    for anchor in anchors
+        write(io, string(join(map(string, anchor),","), "\n"))
+    end
+    close(io)
+end
 
 # ------
 # Others
@@ -500,7 +521,6 @@ function BulkRetrieveSLADSExpansionSize(dataset_names::Array{String,1}, Tests::I
         println(mean(sizes))
     end
 end
-
 
 # -----------
 # Preparation

@@ -7,5 +7,6 @@ PerformanceReports/*
 PerformanceReportsIntegrated/*/*.txt
 PerformanceReportsIntegrated/unused/*
 PerformanceReportsIntegrated/temp/*
+AnchorNodes/*
 DataPoints/*
 CaseStudy/*

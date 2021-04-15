@@ -30,12 +30,6 @@ RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")
 #     error("Must pass 2 or 5 arguments - see Memory_usage_test.jl.")
 # end
 
-args = split(ARGS[1], ",")
-file_name = string(args[1])
-anchor_index = parse(Int64, args[2])
-algorithm_index = parse(Int64, args[3])
-TestRSS(file_name, anchor_index, algorithm_index)
-
 # Reads a file for time test.
 
 # Filename:
@@ -69,3 +63,9 @@ function TestRSS(Filename::String, RIndex::Int64, AlgorithmIndex::Int64)
     (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(dataset, anchors, algorithmMask)
     run(`ps -p $(getpid()) -o pid,comm,vsize,rss,size`)
 end
+
+args = split(ARGS[1], ",")
+file_name = string(args[1])
+anchor_index = parse(Int64, args[2])
+algorithm_index = parse(Int64, args[3])
+TestRSS(file_name, anchor_index, algorithm_index)

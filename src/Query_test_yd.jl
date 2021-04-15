@@ -451,7 +451,21 @@ function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
     end
 end
 
-# Generate AnchorNodes file
+# Generate AnchorNodes file.
+
+# Format:
+# The first line is the data graph name.
+# The second line is the number of anchor sets.
+# The following lines are the anchor sets.
+
+# Example:
+
+# eucore
+# 1000
+# 1,2,3,4,5,6
+# 7,8,9,10,11,12
+# ......
+
 function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
     dataset = readIN(string(ds_name, ".in"))
 
@@ -467,11 +481,18 @@ function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Test
     dir = string(ANCHOR_NODES_BASE_DIR,OutputSubDirName)
     mkpath(dir)
     io = open(string(dir, ds_name, ".anchor"), "w")
-    write(io, string(ds_name,"\n"))
+    write(io, string(ds_name, "\n"))
+    write(io, string(Tests), "\n")
     for anchor in anchors
         write(io, string(join(map(string, anchor),","), "\n"))
     end
     close(io)
+end
+
+function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
+    for ds_name in dataset_names
+        GenerateAnchorNodesFile(ds_name, OutputSubDirName, Tests)
+    end
 end
 
 # ------

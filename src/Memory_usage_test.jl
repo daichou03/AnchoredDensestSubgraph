@@ -30,14 +30,9 @@ RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")
 #     error("Must pass 2 or 5 arguments - see Memory_usage_test.jl.")
 # end
 
-# Reads a file for time test.
+# Reads an anchor node set file for external time test.
 
-# Filename:
-# The first line of file contains the file name, the following rows are R. Example:
-# eucore
-# 1,2,3,4,5,6
-# 7,8,9,10,11,12
-# ......
+
 # RIndex:
 # Which row (after 1) of R to read.
 # AlgorithmIndex:
@@ -45,6 +40,7 @@ RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")
 function TestRSS(Filename::String, RIndex::Int64, AlgorithmIndex::Int64)
     io_test = open(string(RSS_TEST_DIR,Filename,".anchor"))
     ds_name = readline(io_test)
+    num_tests = parse(Int64, readline(io_test))
     anchor_text /= ""
     for i in 1:RIndex
         anchor_text = readline(io_test)

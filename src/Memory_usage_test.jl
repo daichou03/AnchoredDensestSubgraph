@@ -41,7 +41,7 @@ function TestRSS(Filename::String, RIndex::Int64, AlgorithmIndex::Int64)
     io_test = open(string(RSS_TEST_DIR,Filename,".anchor"))
     ds_name = readline(io_test)
     num_tests = parse(Int64, readline(io_test))
-    anchor_text /= ""
+    anchor_text = ""
     for i in 1:RIndex
         anchor_text = readline(io_test)
     end

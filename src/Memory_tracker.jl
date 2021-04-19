@@ -5,6 +5,8 @@ end
 
 GLOBAL_memory_dict = Dict{String,Dict{String,Int64}}()
 GLOBAL_max_memory_usage = 0
+GLOBAL_current_stack = 1
+GLOBAL_current_stamp = 1
 
 function UpdateMaxMemoryUsage()
     global GLOBAL_memory_dict
@@ -18,39 +20,58 @@ function UpdateMaxMemoryUsage()
     GLOBAL_max_memory_usage = max(GLOBAL_max_memory_usage, sum_memory_usage)
 end
 
-# Call after each major assignment
-function RegisterMemoryItem(FunctionName::String, Var::Any, VarName::String)
+function FunctionKeyName(FunctionName::String, Stamp::Int)
+    return string(FunctionName, "-", Stamp)
+end
+
+# Call at the start of a function
+# stamp = RegisterFunctionStamp()
+function RegisterFunctionStamp()
+    global GLOBAL_current_stack
+    global GLOBAL_current_stamp
+    current_stamp = GLOBAL_current_stamp
+    GLOBAL_current_stamp += 1
+    GLOBAL_current_stack += 1
+    return current_stamp
+end
+
+function RegisterMemoryItem(FunctionName::String, Stamp::Int, Var::Any, VarName::String)
     global GLOBAL_memory_dict
-    if !haskey(GLOBAL_memory_dict, FunctionName)
-        GLOBAL_memory_dict[FunctionName] = Dict{String,Int64}()
+    functionKey = FunctionKeyName(FunctionName, Stamp)
+    if !haskey(GLOBAL_memory_dict, functionKey)
+        GLOBAL_memory_dict[functionKey] = Dict{String,Int64}()
     end
-    GLOBAL_memory_dict[FunctionName][VarName] = Base.summarysize(Var)
+    GLOBAL_memory_dict[functionKey][VarName] = Base.summarysize(Var)
     UpdateMaxMemoryUsage()
 end
 
-function DeregisterMemoryItem(FunctionName::String, VarName::String)
+function DeregisterMemoryItem(FunctionName::String, Stamp::Int, VarName::String)
     global GLOBAL_memory_dict
-    if haskey(GLOBAL_memory_dict, FunctionName) && haskey(GLOBAL_memory_dict[FunctionName], VarName)
-        delete!(GLOBAL_memory_dict[FunctionName], VarName)
+    functionKey = FunctionKeyName(FunctionName, Stamp)
+    if haskey(GLOBAL_memory_dict, functionKey)
+        delete!(GLOBAL_memory_dict[functionKey], VarName)
     end
 end
 
-# Call before return from a function
-function ReclaimFunctionMemoryUsage(FunctionName::String)
+# Call at the end of the function
+function ReclaimFunctionMemoryUsage(FunctionName::String, Stamp::Int)
+    global GLOBAL_current_stack
     UpdateMaxMemoryUsage()
-    GLOBAL_memory_dict[FunctionName] = Dict{String,Int64}()
+    GLOBAL_current_stack -= 1
+    delete!(GLOBAL_memory_dict, FunctionKeyName(FunctionName, Stamp))
+    # GLOBAL_memory_dict[FunctionKeyName(FunctionName, Stamp)] = Dict{String,Int64}() # If want to leave trace
 end
 
 # Take and clear max memory usage value
-function PopMaxMemoryUsage()
+function PopMaxMemoryUsage(ResetStackAndStamp::Bool=true)
     global GLOBAL_max_memory_usage
+    global GLOBAL_current_stack
+    global GLOBAL_current_stamp
     memory_usage = GLOBAL_max_memory_usage
     GLOBAL_max_memory_usage = 0
+    if ResetStackAndStamp
+        GLOBAL_current_stack = 1
+        GLOBAL_current_stamp = 1
+    end
     return memory_usage
 end
-
-# function BulkRegisterMemoryItems(FunctionName::String, Vars::Array{Any, 1}, VarNames::Array{String, 1})
-#     for i in 1:length(Vars)
-#         RegisterMemoryItem(FunctionName, Vars[i], VarNames[i])
-#     end
-# end

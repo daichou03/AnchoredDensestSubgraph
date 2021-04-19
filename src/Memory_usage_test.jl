@@ -16,6 +16,8 @@ include("Query_test_yd.jl")
 
 RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")
 
+# 20210419: Guess we don't test memory usage this way.
+
 # args = split(ARGS[1], ",")
 # data_name = string(args[1])
 # tests = parse(Int64, args[2])
@@ -37,6 +39,9 @@ RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")
 # Which row (after 1) of R to read.
 # AlgorithmIndex:
 # 1-3. 0 = preparation only.
+
+# In linux, check max RSS:
+# /usr/bin/time -v julia Memory_usage_test.jl epinion,1,3
 function TestRSS(Filename::String, RIndex::Int64, AlgorithmIndex::Int64)
     io_test = open(string(RSS_TEST_DIR,Filename,".anchor"))
     ds_name = readline(io_test)
@@ -57,7 +62,6 @@ function TestRSS(Filename::String, RIndex::Int64, AlgorithmIndex::Int64)
     anchors = Any[]
     push!(anchors, anchor)
     (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(dataset, anchors, algorithmMask)
-    run(`ps -p $(getpid()) -o pid,comm,vsize,rss,size`)
 end
 
 args = split(ARGS[1], ",")

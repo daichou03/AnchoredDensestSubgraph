@@ -1,6 +1,8 @@
 using MatrixNetworks
 using SparseArrays
 
+include("Memory_tracker.jl")
+
 # Push Relabel solver for maximum s-t flow, minimum s-t cut problems
 
 mutable struct stFlow
@@ -30,8 +32,9 @@ flowtol = tolerance parameter for whether there is still capacity available on
 
 Returns F, which is of type stFlow.
 """
-function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowtol::Union{Float64,Int}= 1e-6)
 
+function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowtol::Union{Float64,Int}= 1e-6)
+    GLOBAL_memory_dict["maxflow"] = Dict{String,Int64}()
     if flowtol >= .1
         println("flowtol is a tolerance parameter for rounding small residual capacity edges to zero, and should be much smaller than $flowtol. Changing it to default value 1e-6")
         flowtol = 1e-6
@@ -88,6 +91,63 @@ function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowto
 
     smap = sortperm(Map)
     F = stFlow(value, value, sort(Map[source_nodes]),C[smap,smap],FlowMat[smap,smap],s,t)
+
+    return F
+end
+
+# The simplified version that AnchoredDensestSubgraph uses with these assumptions:
+## s is always the first node and t is the last node.
+## Graph is nondirectional.
+# No much difference, except less memory usage than without these assumptions.
+function maxflowYD(B::SparseMatrixCSC)
+    GLOBAL_memory_dict["maxflow"] = Dict{String,Int64}()
+
+    N = size(B,1)
+    flowtol = 1e-6
+    s = 1
+    t = N
+
+    # Extract weights from source s to non-terminal nodes,
+    # and from non-terminal nodes to sink node t
+    sWeights = Array(B[s,:])
+    tWeights = Array(B[:,t])
+    NonTerminal = collect(2:N-1)
+
+    sWeights = sWeights[NonTerminal]
+    tWeights = tWeights[NonTerminal]
+
+    # Extract the edges between non-terminal nodes
+    A = B[NonTerminal,NonTerminal]
+
+    # A = the matrix of capacities for all nodes EXCEPT the source and sink
+    # sWeights = a vector of weights for edges from source to non-terminal nodes
+    # tWeights = vector of weights from non-terminal nodes to the sink node t.
+
+    # This is the map from the original node indices to the rearranged
+    # version in which the source is the first node and the sink is the last
+    Map = collect(1:N)
+
+    # Directly set up the flow matrix
+    C = [spzeros(1,1) sparse(sWeights') spzeros(1,1);
+         sparse(sWeights) A sparse(tWeights);
+         spzeros(1,1) sparse(tWeights') spzeros(1,1)]
+
+    # Allocate space for the flow we will calculate
+    # In a flow problem, we will eventually need to send flow the reverse
+    # direction, so it's important to allocate space for F[i,j] if C[j,i] is an
+    # edge, even if C[i,j] is not directed
+    F = SparseMatrixCSC(N,N,C.colptr,C.rowval,zeros(length(C.rowval)))
+    ExcessNodes = vec(round.(Int64,findall(x->x!=0,sWeights).+1))
+
+    # Initialize the Preflow and the excess vector
+    for v = ExcessNodes
+        F[1,v] = C[1,v]
+        F[v,1] = -C[1,v]
+    end
+    excess = [0;sWeights;0]
+    source_nodes, FlowMat, value = Main_Push_Relabel(C,F,ExcessNodes,excess,flowtol)
+    F = stFlow(value, value, source_nodes,C,FlowMat,s,t)
+    
     return F
 end
 
@@ -291,7 +351,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     inQ[ExcessNodes] .= true
 
     # count the number of nodes that have been relabeled
-    relabelings::Int64 = 0
+    relabelings = 0
 
     height = relabeling_bfs(C,F,flowtol,n)  # compute initial distance from sink
     # In the code and comments, height = distance from sink = label of node

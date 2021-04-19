@@ -6,17 +6,7 @@ end
 GLOBAL_memory_dict = Dict{String,Dict{String,Int64}}()
 GLOBAL_max_memory_usage = 0
 
-# Call after each major assignment
-function RegisterMemoryItem(FunctionName::String, Var::Any, VarName::String)
-    global GLOBAL_memory_dict
-    if !haskey(GLOBAL_memory_dict, FunctionName)
-        GLOBAL_memory_dict[FunctionName] = Dict{String,Int64}()
-    end
-    GLOBAL_memory_dict[FunctionName][VarName] = Base.summarysize(Var)
-end
-
-# Call before return from a function
-function ReclaimFunctionMemoryUsage(FunctionName::String)
+function UpdateMaxMemoryUsage()
     global GLOBAL_memory_dict
     global GLOBAL_max_memory_usage
     sum_memory_usage = 0
@@ -26,7 +16,28 @@ function ReclaimFunctionMemoryUsage(FunctionName::String)
         end
     end
     GLOBAL_max_memory_usage = max(GLOBAL_max_memory_usage, sum_memory_usage)
-    # Clear function local memory usage
+end
+
+# Call after each major assignment
+function RegisterMemoryItem(FunctionName::String, Var::Any, VarName::String)
+    global GLOBAL_memory_dict
+    if !haskey(GLOBAL_memory_dict, FunctionName)
+        GLOBAL_memory_dict[FunctionName] = Dict{String,Int64}()
+    end
+    GLOBAL_memory_dict[FunctionName][VarName] = Base.summarysize(Var)
+    UpdateMaxMemoryUsage()
+end
+
+function DeregisterMemoryItem(FunctionName::String, VarName::String)
+    global GLOBAL_memory_dict
+    if haskey(GLOBAL_memory_dict, FunctionName) && haskey(GLOBAL_memory_dict[FunctionName], VarName)
+        delete!(GLOBAL_memory_dict[FunctionName], VarName)
+    end
+end
+
+# Call before return from a function
+function ReclaimFunctionMemoryUsage(FunctionName::String)
+    UpdateMaxMemoryUsage()
     GLOBAL_memory_dict[FunctionName] = Dict{String,Int64}()
 end
 

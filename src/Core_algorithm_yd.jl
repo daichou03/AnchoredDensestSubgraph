@@ -11,6 +11,8 @@ include("Utils.jl")
 
 # For undirected and unweighted graph.
 
+Memory_item_GA = "GA"
+
 mutable struct densestSubgraph
     alpha_star::Float64 # The minimum alpha value that can saturate all source edges
     source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
@@ -63,11 +65,11 @@ function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, Ind
     # sWeightsR = map(x -> sum(B[x,:]), R)
     density_R = InducedDS.alpha_star # Density of the densest subgraph of R
     if density_R < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
-        ReclaimFunctionMemoryUsage("GA")
+        ReclaimFunctionMemoryUsage(Memory_item_GA)
         return InducedDS
     end
     sWeightsR = map(x -> (x in R) ? GetDegree(B,x) : 0, 1:N)
-    RegisterMemoryItem("GA", sWeightsR, @varname sWeightsR)
+    RegisterMemoryItem(Memory_item_GA, sWeightsR, @varname sWeightsR)
     alpha_bottom = density_R # Reachable (degenerate case)
     alpha_top = length(R) # Not reachable
     flow_alpha_minus = 0
@@ -76,15 +78,17 @@ function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, Ind
     FlowNetTemp = [spzeros(1,1) sparse(sWeightsR') spzeros(1,1);
                    spzeros(N,1) B                  sparse(repeat([alpha_bottom], N));
                    spzeros(1,N+2)]
-    RegisterMemoryItem("GA", FlowNetTemp, @varname FlowNetTemp)
+    RegisterMemoryItem(Memory_item_GA, FlowNetTemp, @varname FlowNetTemp)
 
     if FlowNetAlphaGA(FlowNetTemp, alpha_bottom).flowvalue >= sum(sWeightsR) - 1e-6
         alpha_star = alpha_bottom
         flow_alpha_minus = FlowNetAlphaGA(FlowNetTemp, alpha_star - 1 / (N * (N+1)))
+        RegisterMemoryItem(Memory_item_GA, flow_alpha_minus, @varname flow_alpha_minus)
     else
         while alpha_top - alpha_bottom >= 1 / (N * (N+1))
             alpha = (alpha_bottom + alpha_top) / 2
             F = FlowNetAlphaGA(FlowNetTemp, alpha)
+            RegisterMemoryItem(Memory_item_GA, F, @varname F)
             if F.flowvalue >= sum(sWeightsR) - 1e-6
                 alpha_top = alpha
             else
@@ -94,11 +98,13 @@ function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, Ind
                 println(string("Current alpha: ", alpha))
             end
         end
-        flow_alpha_minus = FlowNetAlphaGA(FlowNetTemp, alpha_bottom)
+        DeregisterMemoryItem(Memory_item_GA, @varname F)
+        flow_alpha_minus = FlowNetAlphaGA(FlowNetTemp, alpha_bottom) 
+        RegisterMemoryItem(Memory_item_GA, flow_alpha_minus, @varname flow_alpha_minus)
         subgraph_length = length(flow_alpha_minus.source_nodes) - 1
         alpha_star = Float64((floor(alpha_bottom * subgraph_length) + 1) / subgraph_length)
     end
-    ReclaimFunctionMemoryUsage("GA")
+    ReclaimFunctionMemoryUsage(Memory_item_GA)
     return densestSubgraph(alpha_star, PopSourceForFlowNetworkResult(flow_alpha_minus.source_nodes))
 end
 

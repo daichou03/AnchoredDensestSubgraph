@@ -33,8 +33,11 @@ flowtol = tolerance parameter for whether there is still capacity available on
 Returns F, which is of type stFlow.
 """
 
+Memory_item_maxflow = "maxflow"
+Memory_item_MainPR = "mainPR"
+Memory_item_relabeling_bfs = "relabeling_bfs"
+
 function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowtol::Union{Float64,Int}= 1e-6)
-    GLOBAL_memory_dict["maxflow"] = Dict{String,Int64}()
     if flowtol >= .1
         println("flowtol is a tolerance parameter for rounding small residual capacity edges to zero, and should be much smaller than $flowtol. Changing it to default value 1e-6")
         flowtol = 1e-6
@@ -100,7 +103,6 @@ end
 ## Graph is nondirectional.
 # No much difference, except less memory usage than without these assumptions.
 function maxflowYD(B::SparseMatrixCSC)
-    GLOBAL_memory_dict["maxflow"] = Dict{String,Int64}()
 
     N = size(B,1)
     flowtol = 1e-6
@@ -111,13 +113,19 @@ function maxflowYD(B::SparseMatrixCSC)
     # and from non-terminal nodes to sink node t
     sWeights = Array(B[s,:])
     tWeights = Array(B[:,t])
+    RegisterMemoryItem(Memory_item_maxflow, sWeights, @varname sWeights)
+    RegisterMemoryItem(Memory_item_maxflow, tWeights, @varname tWeights)
     NonTerminal = collect(2:N-1)
+    RegisterMemoryItem(Memory_item_maxflow, NonTerminal, @varname NonTerminal)
 
     sWeights = sWeights[NonTerminal]
     tWeights = tWeights[NonTerminal]
+    RegisterMemoryItem(Memory_item_maxflow, sWeights, @varname sWeights)
+    RegisterMemoryItem(Memory_item_maxflow, tWeights, @varname tWeights)
 
     # Extract the edges between non-terminal nodes
     A = B[NonTerminal,NonTerminal]
+    RegisterMemoryItem(Memory_item_maxflow, A, @varname A)
 
     # A = the matrix of capacities for all nodes EXCEPT the source and sink
     # sWeights = a vector of weights for edges from source to non-terminal nodes
@@ -126,18 +134,22 @@ function maxflowYD(B::SparseMatrixCSC)
     # This is the map from the original node indices to the rearranged
     # version in which the source is the first node and the sink is the last
     Map = collect(1:N)
+    RegisterMemoryItem(Memory_item_maxflow, Map, @varname Map)
 
     # Directly set up the flow matrix
     C = [spzeros(1,1) sparse(sWeights') spzeros(1,1);
          sparse(sWeights) A sparse(tWeights);
          spzeros(1,1) sparse(tWeights') spzeros(1,1)]
+    RegisterMemoryItem(Memory_item_maxflow, C, @varname C)
 
     # Allocate space for the flow we will calculate
     # In a flow problem, we will eventually need to send flow the reverse
     # direction, so it's important to allocate space for F[i,j] if C[j,i] is an
     # edge, even if C[i,j] is not directed
     F = SparseMatrixCSC(N,N,C.colptr,C.rowval,zeros(length(C.rowval)))
+    RegisterMemoryItem(Memory_item_maxflow, F, @varname F)
     ExcessNodes = vec(round.(Int64,findall(x->x!=0,sWeights).+1))
+    RegisterMemoryItem(Memory_item_maxflow, ExcessNodes, @varname ExcessNodes)
 
     # Initialize the Preflow and the excess vector
     for v = ExcessNodes
@@ -145,9 +157,14 @@ function maxflowYD(B::SparseMatrixCSC)
         F[v,1] = -C[1,v]
     end
     excess = [0;sWeights;0]
+    RegisterMemoryItem(Memory_item_maxflow, excess, @varname excess)
     source_nodes, FlowMat, value = Main_Push_Relabel(C,F,ExcessNodes,excess,flowtol)
+    RegisterMemoryItem(Memory_item_maxflow, source_nodes, @varname source_nodes)
+    RegisterMemoryItem(Memory_item_maxflow, FlowMat, @varname FlowMat)
     F = stFlow(value, value, source_nodes,C,FlowMat,s,t)
+    RegisterMemoryItem(Memory_item_maxflow, F, @varname F)
     
+    ReclaimFunctionMemoryUsage("maxflow")
     return F
 end
 
@@ -329,12 +346,16 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     n = size(C,1)
 
     height = zeros(Int64,n)      # label/height of each node
+    RegisterMemoryItem(Memory_item_MainPR, height, @varname height)
     inQ = zeros(Bool,n)          # list whether or not nodes are in the queue
+    RegisterMemoryItem(Memory_item_MainPR, inQ, @varname inQ)
 
     # Store adjacency list. Because flow can be sent either direction on an
     # arc during the course of the algorithm, it's important to list all neighbors
     # or each node, counting both incoming and outgoing edges
     Neighbs,d = ConstructAdj(C+C',n)
+    RegisterMemoryItem(Memory_item_MainPR, Neighbs, @varname Neighbs)
+    RegisterMemoryItem(Memory_item_MainPR, d, @varname d)
 
     # We will maintain a queue of active nodes.
     #   An actual queue implementation is available in the DataStructures.jl
@@ -348,12 +369,14 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     for v = ExcessNodes
         push!(Queue,v)
     end
+    RegisterMemoryItem(Memory_item_MainPR, Queue, @varname Queue)
     inQ[ExcessNodes] .= true
 
     # count the number of nodes that have been relabeled
     relabelings = 0
 
     height = relabeling_bfs(C,F,flowtol,n)  # compute initial distance from sink
+    RegisterMemoryItem(Memory_item_MainPR, height, @varname height)
     # In the code and comments, height = distance from sink = label of node
 
     # Continue until the queue no longer contains any active nodes.
@@ -392,9 +415,12 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
             push!(S,i)
         end
     end
+    RegisterMemoryItem(Memory_item_MainPR, S, @varname S)
 
     mflow = excess[n]     # the excess at the sink equals the maximum flow value
+    RegisterMemoryItem(Memory_item_MainPR, mflow, @varname mflow)
 
+    ReclaimFunctionMemoryUsage(Memory_item_MainPR)
     return S, F, mflow
 
 end
@@ -509,7 +535,9 @@ function relabeling_bfs(C::SparseMatrixCSC,F::SparseMatrixCSC,flowtol::Union{Flo
     # flow, when computing a bfs, round edges to zero if they are under
     # a certain tolerance
     Cf = C-F
+    RegisterMemoryItem(Memory_item_relabeling_bfs, Cf, @varname Cf)
     Cf = Cf.*(Cf.>flowtol)
+    RegisterMemoryItem(Memory_item_relabeling_bfs, Cf, @varname Cf)
     n = size(Cf,1)
 
     if start == 0
@@ -517,12 +545,16 @@ function relabeling_bfs(C::SparseMatrixCSC,F::SparseMatrixCSC,flowtol::Union{Flo
     end
 
     rp = Cf.colptr
+    RegisterMemoryItem(Memory_item_relabeling_bfs, rp, @varname rp)
     ci = Cf.rowval
+    RegisterMemoryItem(Memory_item_relabeling_bfs, ci, @varname ci)
 
     N=length(rp)-1
 
     d = n*ones(Int64,N)
+    RegisterMemoryItem(Memory_item_relabeling_bfs, d, @varname d)
     sq=zeros(Int64,N)
+    RegisterMemoryItem(Memory_item_relabeling_bfs, sq, @varname sq)
     sqt=0
     sqh=0 # search queue and search queue tail/head
 
@@ -544,5 +576,6 @@ function relabeling_bfs(C::SparseMatrixCSC,F::SparseMatrixCSC,flowtol::Union{Flo
         end
     end
 
+    ReclaimFunctionMemoryUsage(Memory_item_relabeling_bfs)
     return d
 end

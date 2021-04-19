@@ -185,34 +185,40 @@ end
 
 # Atomic query
 function ProcessGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
-    localDS_set = Any[]
+    result_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = GlobalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
-        push!(localDS_set, localDS)
+        PopMaxMemoryUsage()
+        result = @timed GlobalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
+        result = (result[1], result[2], PopMaxMemoryUsage()) # Replace memory allocation to maximum memory usage by Memory_tracker
+        push!(result_set, result)
     end
-    return localDS_set
+    return result_set
 end
 
-function ProcessImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1}, globalDegree::Vector{Int64},
-            orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
-    localDS_set = Any[]
+function ProcessImprovedGlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1},
+    globalDegree::Vector{Int64}, orderByDegreeIndices::Array{Tuple{Int64,Int64},1})
+    result_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = ImprovedGlobalAnchoredDensestSubgraph(B,R,globalDegree,orderByDegreeIndices,inducedDS_set[i])
-        push!(localDS_set, localDS)
+        PopMaxMemoryUsage()
+        result = @timed ImprovedGlobalAnchoredDensestSubgraph(B,R,globalDegree,orderByDegreeIndices,inducedDS_set[i])
+        result = (result[1], result[2], PopMaxMemoryUsage()) # Replace memory allocation to maximum memory usage by Memory_tracker
+        push!(result_set, result)
     end
-    return localDS_set
+    return result_set
 end
 
 function ProcessLocalAnchoredDensestSubgraph(B::SparseMatrixCSC, anchors::Array{Any,1}, inducedDS_set::Array{densestSubgraph,1})
-    localDS_set = Any[]
+    result_set = Any[]
     for i = 1:length(anchors)
         R = anchors[i]
-        localDS = LocalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
-        push!(localDS_set, localDS)
+        PopMaxMemoryUsage()
+        result = @timed LocalAnchoredDensestSubgraph(B,R,inducedDS_set[i])
+        result = (result[1], result[2], PopMaxMemoryUsage()) # Replace memory allocation to maximum memory usage by Memory_tracker
+        push!(result_set, result)
     end
-    return localDS_set
+    return result_set
 end
 
 # Query utils
@@ -241,11 +247,11 @@ function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, Algorith
     for alg_index in 1:length(AlgorithmMask)
         if AlgorithmMask[alg_index]
             if alg_index == ALG_MASK_GA
-                append!(performances, [@timed ProcessGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
+                append!(performances, [ProcessGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             elseif alg_index == ALG_MASK_IGA
-                append!(performances, [@timed ProcessImprovedGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
+                append!(performances, [ProcessImprovedGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
             else
-                append!(performances, [@timed ProcessLocalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
+                append!(performances, [ProcessLocalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             end
         else
             append!(performances, [[0,0,0]])
@@ -279,7 +285,7 @@ function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMas
                 volume_R = sum(sWeightsR)
                 overdensed = length(GetOverdensedNodes(N, orderByDegreeIndices, volume_R))
             end
-            dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[soleAlgIndex][1][i], overdensed)
+            dataPoint = RetrieveDataPointsFromReport(anchors[i], inducedDS_set[i], performances[soleAlgIndex][i][1], overdensed)
             write(io_dp, string(DataPointToString(dataPoint),"\n"))
         end
         close(io_dp)
@@ -287,15 +293,16 @@ function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMas
         mkpath("../PerformanceReports")
         io_pr = open(string("../PerformanceReports/",filename), "w")
         ret = []
-        for index = 2:3
+        for perf_index = 2:3
             str = ""
             for alg_index in 1:length(AlgorithmMask)
                 if AlgorithmMask[alg_index]
-                    append!(ret, performances[alg_index][index])
+                    sum_perf = mapreduce(x1->x1[perf_index], +, performances[alg_index])
+                    append!(ret, sum_perf)
                     if str == ""
-                        str = string(performances[alg_index][index])
+                        str = string(sum_perf)
                     else
-                        str = string(str, ",", performances[alg_index][index])
+                        str = string(str, ",", sum_perf)
                     end
                 end
             end

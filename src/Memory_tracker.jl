@@ -3,10 +3,12 @@ macro varname(arg)
     string(arg)
 end
 
+# This tool manually tracks memory usage of functions.
+
 GLOBAL_memory_dict = Dict{String,Dict{String,Int64}}()
 GLOBAL_max_memory_usage = 0
-GLOBAL_current_stack = 1
-GLOBAL_current_stamp = 1
+GLOBAL_current_stack = 1 # Depth of current call (among functions of interest only)
+GLOBAL_current_stamp = 1 # Number of calls of functions of interest
 
 function UpdateMaxMemoryUsage()
     global GLOBAL_memory_dict

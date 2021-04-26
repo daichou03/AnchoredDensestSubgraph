@@ -280,7 +280,7 @@ function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMas
         for i = 1:Tests
             overdensed = 0
             if AlgorithmMask[ALG_MASK_IGA]
-                # Also record #overdensed nodes for IADS
+                # Also record #overdensed nodes for IGA
                 sWeightsR = map(x -> (x in anchors[i]) ? globalDegree[x] : 0, 1:N)
                 volume_R = sum(sWeightsR)
                 overdensed = length(GetOverdensedNodes(N, orderByDegreeIndices, volume_R))
@@ -331,9 +331,10 @@ function PerformQueryAllAlgorithms(B::SparseMatrixCSC, Tests::Int64, DatasetName
 end
 
 # Query for fixed anchor size
-function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String,
+# Default only run LA.
+function PerformQueryAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String,
         MaxHops::Int64, UserTargetSize::Int64, AnchorTargetSize::Int64, Steps::Int64,
-        AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS, FileNameSuffix::String="-AnchorSizeTest",
+        AlgorithmMask::Vector{Bool}=LA_ONLY, FileNameSuffix::String="-AnchorSizeTest",
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
     anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
@@ -342,26 +343,17 @@ function PerformQueryAllAlgorithmsAnchorSizeTest(B::SparseMatrixCSC, Tests::Int6
     return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
 end
 
-function PerformQuerySLADSAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
-            AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
-    return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
-        [false, false, true], "-AnchorSizeTest-SLADS", RNodeDegreeCap, MaxRetriesMultiplier)
-end
-
-function PerformQueryIADSSmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
+# Query for IGA performance gain vs GA with small anchor size.
+function PerformQueryIGASmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
         AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
-        [true, true, false], "-AnchorSizeTest-SmallIADS", RNodeDegreeCap, MaxRetriesMultiplier)
+        [true, true, false], "-AnchorSizeTest-SmallIGA", RNodeDegreeCap, MaxRetriesMultiplier)
 end
 # --------------
 # Complete Query
 # --------------
 
-# all_test_dataset_names = ["eucore","lastfm","twitch","deezer","enron","epinion"]
-# ["amazon, condmat, grqc"]
-# anchor_size_test_dataset_names = ["eucore","lastfm","deezer","epinion"]
-# anchor_size_test_dataset_names = ["livemocha","catster"]
-# chosen_dataset_names = ["eucore","fbgov","epinion","livemocha"]
+# SmallIGA_dataset_names = ["dblp","github","grqc","hepph","livemocha","youtube"]
 
 function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64, AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS)
     for ds_name in dataset_names
@@ -371,45 +363,27 @@ function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64, 
     end
 end
 
-function BulkPerformQuerySLADSBaseline(dataset_names::Array{String,1}, Tests::Int64)
-    BulkPerformQueryBaseline(dataset_names, Tests, LA_ONLY)
-end
-
 function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 4, 16, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 8, 32, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 16, 64, 2)
-        PerformQueryAllAlgorithmsAnchorSizeTest(dataset, Tests, ds_name, 2, 32, 128, 2)
+        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 4, 16, 2)
+        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 8, 32, 2)
+        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 16, 64, 2)
+        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 32, 128, 2)
     end
 end
 
-function BulkPerformQuerySLADSAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
-    for ds_name in dataset_names
-        println(string("Performing Anchor Size Test Query for: ", ds_name))
-        dataset = readIN(string(ds_name, ".in"))
-        PerformQuerySLADSAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
-        PerformQuerySLADSAnchorSizeTest(dataset, Tests, ds_name, 2, 4, 16, 2)
-        PerformQuerySLADSAnchorSizeTest(dataset, Tests, ds_name, 2, 8, 32, 2)
-        PerformQuerySLADSAnchorSizeTest(dataset, Tests, ds_name, 2, 16, 64, 2)
-        PerformQuerySLADSAnchorSizeTest(dataset, Tests, ds_name, 2, 32, 128, 2)
-    end
-end
-
-function BulkPerformQueryIADSSmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
+function BulkPerformQueryIGASmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Small Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 1, 2, 2, 2)
-        # PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 3, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 10, 2)
-        PerformQueryIADSSmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 12, 2)
+        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
+        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
+        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
+        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 10, 2)
+        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 12, 2)
     end
 end
 
@@ -506,8 +480,8 @@ end
 # Others
 # ------
 
-# Do SLADS but returns expanded only.
-function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
+# Do LA but returns the size of the area expanded only.
+function LAExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return length(GetComponentAdjacency(B, R, true))
     end
@@ -530,7 +504,7 @@ function SLADSExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS:
     return length(L)
 end
 
-function BulkRetrieveSLADSExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
+function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         B = readIN(string(ds_name, ".in"))
 
@@ -543,7 +517,7 @@ function BulkRetrieveSLADSExpansionSize(dataset_names::Array{String,1}, Tests::I
 
         sizes = []
         for i in 1:Tests
-            append!(sizes, SLADSExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
+            append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
         end
         print(string(ds_name, ","))
         println(mean(sizes))

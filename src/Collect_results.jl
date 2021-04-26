@@ -174,10 +174,10 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
 end
 
 # -----------------------------------
-# Integrate Data Points for SmallIADS
+# Integrate Data Points for SmallIGA
 # -----------------------------------
 
-function OutputIntegratedSmallIADSReports(DataPointSubDir::String)
+function OutputIntegratedSmallIGAReports(DataPointSubDir::String)
     fileNames = readdir(string(DATA_POINTS_DIR, DataPointSubDir))
     files = map(x->split(x,"-"), fileNames)
     dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, DataPointSubDir)
@@ -400,9 +400,9 @@ function DoCollectResults()
     ReportFileGroups = GetHalfEdgeReportFileGroups(ReportSubDir)
     OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",1,["slads"])
     OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",2,["slads"])
-    # --- smallIADS ---
-    DataPointSubDir = "smallIADS/"
-    OutputIntegratedSmallIADSReports(DataPointSubDir)
+    # --- SmallIGA ---
+    DataPointSubDir = "SmallIGA/"
+    OutputIntegratedSmallIGAReports(DataPointSubDir)
     # --- rcap ---
     ReportSubDir = "cap/"
     ReportFileGroups = GetRCapReportFileGroups(ReportSubDir)

@@ -1,13 +1,13 @@
 using Base
 using StatsBase
 
-PERFORMANCE_REPORTS_DIR = "../PerformanceReports/"
+PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Query_test_yd.jl uses the same constant
 PERFORMANCE_REPORTS_INTEGRATED_DIR = "../PerformanceReportsIntegrated/"
 GRAPH_METADATA_DIR = "../DataGraphMeta/"
 DATA_POINTS_DIR = "../DataPoints/"
 # chosen_dataset_names = ["dblp", "livejournal", "livemocha", "orkut", "youtube"]
 REPORT_GENRE = ["time", "size"]
-ALL_ALGORITHM_NAMES = ["ads", "iads", "slads"]
+ALL_ALGORITHM_NAMES = ["GA", "IGA", "LA"]
 
 io_read = open(string(GRAPH_METADATA_DIR, "datagraph.csv"))
 GRAPH_NUM_EDGES = Dict()
@@ -99,7 +99,7 @@ function CopyBaselineReportsToHalfEdgeFolder(ReportSubDir::String, BaselineSubDi
         # Copy
         baselineFileNames = map(y->join(y, "-"), baselineFiles)
         for baseFile in baselineFileNames
-            # Copy only SLADS
+            # Copy only LA
             io_read = open(string(PERFORMANCE_REPORTS_DIR, BaselineSubDir, baseFile))
             io_write = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, baseFile), "w")
             for i = 1:2
@@ -304,7 +304,7 @@ function AggregrateRSize(DataPointSubDir::String)
     end
 end
 
-function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
+function ReportLAPerformanceGain(ReportGenreIndex::Integer)
     sep = (" ")
     reportFiles = GetBaselineReportFiles("/")
     for report in reportFiles
@@ -324,7 +324,7 @@ function ReportSLADSPerformanceGain(ReportGenreIndex::Integer)
     end
 end
 
-# Assuming halfedge only do SLADS.
+# Assuming halfedge only do LA.
 function ReportPerformanceMultiplierHalfEdge(ReportSubDir::String, ReportFileGroups::Array{Array{String,1},1}, ReportGenreIndex::Integer, 
         FirstToCount::Integer=2, LastToExclude::Integer=1, MaxMultipliers::Integer=99)
     multipliers = []
@@ -387,27 +387,28 @@ function DoCollectResults()
     # --- baseline ---
     ReportSubDir="base/"
     ReportFiles = GetBaselineReportFiles(ReportSubDir)
-    OutputIntegratedReport(ReportSubDir,ReportFiles,"20210331_baseline",1)
-    OutputIntegratedReport(ReportSubDir,ReportFiles,"20210331_baseline",2)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",1)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",2)
     # --- anchorsize ---
     ReportSubDir = "ahs/" # Avoid long dir
     ReportFileGroups = GetAnchorSizeReportFileGroups(ReportSubDir)
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_anchorsize",1,["slads"])
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_anchorsize",2,["slads"]) 
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "anchorsize",1,["LA"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "anchorsize",2,["LA"]) 
     # --- halfedge ---
     ReportSubDir = "hl/"
     CopyBaselineReportsToHalfEdgeFolder(ReportSubDir, "base/")
     ReportFileGroups = GetHalfEdgeReportFileGroups(ReportSubDir)
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",1,["slads"])
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "20210331_halfedge",2,["slads"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "halfedge",1,["LA"])
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "halfedge",2,["LA"])
     # --- SmallIGA ---
+    # NOTE: REQUIRES data points
     DataPointSubDir = "SmallIGA/"
     OutputIntegratedSmallIGAReports(DataPointSubDir)
     # --- rcap ---
     ReportSubDir = "cap/"
     ReportFileGroups = GetRCapReportFileGroups(ReportSubDir)
-    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "20210401_cap", 1)
-    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "20210401_cap", 2)
+    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "cap", 1)
+    OutputCapSpeedUpReport(ReportSubDir, ReportFileGroups, "cap", 2)
 end
 
 # Example procedure of integrating half edge test results:

@@ -22,17 +22,15 @@ set ylabel "Memory Consumption (MB)" offset 0.5 font "Times-Roman,18"
 set logscale y
 set format y "10^{%L}
 
-set ytics ('10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 1000, '10^{4}' 10000)
+set ytics ('10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 1000)
 set xtics rotate by -30 font "Times-Roman,18"
 
-set yrange [1:10000]
+set yrange [0.01:1000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'G_0' lt -1 fs pattern 8,\
-	'' using 3 title 'G_1' lt -1 fs pattern 4,\
-	'' using 4 title 'G_2' lt -1 fs pattern 2,\
-	'' using 5 title 'G_3' lt -1 fs pattern 3,\
-	'' using 6 title 'G_4' lt -1 fs pattern 7,\
-	'' using 7 title 'G_5' lt -1 fs pattern 5
-
+plot 	'fig.txt' using 2:xtic(1) title '8' lt -1 fs pattern 8,\
+	'' using 3 title '16' lt -1 fs pattern 4,\
+	'' using 4 title '32' lt -1 fs pattern 2,\
+	'' using 5 title '64' lt -1 fs pattern 3,\
+	'' using 6 title '128' lt -1 fs pattern 5

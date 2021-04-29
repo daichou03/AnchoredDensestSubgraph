@@ -13,6 +13,8 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 include("Test_yd.jl")
 
+PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
+
 mutable struct rMinimalSeed
     R::Vector{Int64}
     inducedDS::densestSubgraph
@@ -291,7 +293,7 @@ function DoOutputPerformanceReports(filename::String, Tests::Int64, AlgorithmMas
         close(io_dp)
         # Write time/memory reports to file
         mkpath("../PerformanceReports")
-        io_pr = open(string("../PerformanceReports/",filename), "w")
+        io_pr = open(string(PERFORMANCE_REPORTS_DIR,filename), "w")
         ret = []
         for perf_index = 2:3
             str = ""
@@ -504,7 +506,10 @@ function LAExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
     return length(L)
 end
 
+# TODO: Specify the anchors instead to always use the same anchor node set for this test and baseline test.
+# TODO: Generate separate files for each data graph instead.
 function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
+    io = open(string(PERFORMANCE_REPORTS_DIR, "exp_size/exp_size_all"), "w")
     for ds_name in dataset_names
         B = readIN(string(ds_name, ".in"))
 
@@ -519,9 +524,9 @@ function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int6
         for i in 1:Tests
             append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
         end
-        print(string(ds_name, ","))
-        println(mean(sizes))
+        write(io, string(ds_name, ",", mean(sizes), "\n"))
     end
+    close(io)
 end
 
 # -----------

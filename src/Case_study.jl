@@ -39,6 +39,7 @@ function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::Abstr
     end
     close(io_read)
     # Write
+    mkpath(OutputDirectory)
     io_write = open(string(OutputDirectory,OutputFileName), "w")
     write(io_write, string(N, " ", M, "\n"))
     for i = 1:M
@@ -50,20 +51,40 @@ end
 # TODO:
 # Read raw to make an array of all nodes so that can index -> article title.
 
+function LoadDBLPTitleAsArray(FileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/")
+    io_read = open(string(RawDirectory,FileName))
+    titles = String[]
+    while !eof(io_read)
+        line = readline(io_read)
+        if startswith(line, "#*")
+            push!(titles, chop(line,head=2,tail=0))
+        end
+    end
+    close(io_read)
+    return titles
+end
+
 # TODO:
 # In case we find a small CC, report. make a function that checks if this node is in a CC of at least k nodes. Maybe not necessary if we always cherry pick starting nodes.
 
+DBLP_RAW_FILE = "DBLP-citation-Jan8.txt"
 DBLP_CI_FILE = "dblpciv4.in"
 
-println("Reading DBLP citation data...")
-B = readIN(DBLP_CI_FILE, "../CaseStudy/IN/")
+# ConvertDBLPCitationToIN("DBLP-citation-Jan8.txt", DBLP_CI_FILE)
 
-V = 95485
-# As an example, say V = 95485, for getting info from the raw citation data given this index (note -1 for the raw file):
-# grep -n "#index95484" DBLP-citation-Jan8.txt
-# Say you get row number = 6809987, then:
-# Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
 
-C = GenerateUserInputSet(B,V,2,4)
-R = GenerateReferenceSetFixedWalks(B,C)
-a = StronglyLocalMaxmumDensity(B,R)
+function CaseStudy1()
+    println("Reading DBLP citation data...")
+    B = readIN(DBLP_CI_FILE)
+    allTitles = LoadDBLPTitleAsArray(DBLP_RAW_FILE)
+    V = 95485
+    # As an example, say V = 95485, for getting info from the raw citation data given this index (note -1 for the raw file):
+    # grep -n "#index95484" DBLP-citation-Jan8.txt
+    # Say you get row number = 6809987, then:
+    # Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
+    
+    C = GenerateUserInputSet(B,V,2,4)
+    R = GenerateReferenceSetFixedWalks(B,C)
+    refined = LocalAnchoredDensestSubgraph(B,R).source_nodes
+    titles = allTitles[refined]
+end

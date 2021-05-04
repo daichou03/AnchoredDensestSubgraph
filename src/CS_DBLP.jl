@@ -11,13 +11,13 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("Test_yd.jl")
 include("Query_test_yd.jl")
+include("CS_generic.jl")
 
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.
 
-function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/", OutputDirectory::String="../CaseStudy/IN/")
+function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::AbstractString, RawDirectory::String="../CaseStudy/DBLP/Raw/", OutputDirectory::String="../CaseStudy/DBLP/IN/")
     io_read = open(string(RawDirectory,FileName))
     N = parse(Int64, readline(io_read))
     M = 0
@@ -51,7 +51,7 @@ end
 # TODO:
 # Read raw to make an array of all nodes so that can index -> article title.
 
-function LoadDBLPTitleAsArray(FileName::AbstractString, RawDirectory::String="../CaseStudy/Raw/")
+function LoadDBLPTitleAsArray(FileName::AbstractString, RawDirectory::String="../CaseStudy/DBLP/Raw/")
     io_read = open(string(RawDirectory,FileName))
     titles = String[]
     while !eof(io_read)
@@ -76,22 +76,13 @@ println("Reading DBLP citation data...")
 B = readIN(DBLP_CI_FILE)
 allTitles = LoadDBLPTitleAsArray(DBLP_RAW_FILE)
 
-C = GenerateUserInputSet(B,V,2,4)
-
 # V = 95485
-function GetRefinedSet(C::Vector{Int64})
+# C = GenerateUserInputSet(B,V,2,4)
+
+function GetRefinedSetDBLP(C::Vector{Int64})
     # As an example, say V = 95485, for getting info from the raw citation data given this index (note -1 for the raw file):
     # grep -n "#index95484" DBLP-citation-Jan8.txt
     # Say you get row number = 6809987, then:
     # Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
-    
-    R = GenerateReferenceSetFixedWalks(B,C)
-    refined = LocalAnchoredDensestSubgraph(B,R).source_nodes
-    println("Articles from refined set: ")
-    println("------------")
-    for i in refined
-        println(string(allTitles[i]))
-    end
-    println("------------")
-    return refined
+    return GetRefinedSet(B, C, allTitles)
 end

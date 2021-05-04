@@ -23,3 +23,10 @@ end
 # https://stackoverflow.com/questions/25678112/insert-item-into-a-sorted-list-with-julia-with-and-without-duplicates
 insert_and_dedup!(v::Vector, x) = (splice!(v, searchsorted(v,x), [x]); v)
 
+function emptyStringArray(len::Int64)
+    ret = Array{String, 1}(undef, len)
+    for i in 1:len
+        ret[i] = ""
+    end
+    return ret
+end

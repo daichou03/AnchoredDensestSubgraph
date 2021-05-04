@@ -72,19 +72,26 @@ DBLP_CI_FILE = "dblpciv4.in"
 
 # ConvertDBLPCitationToIN("DBLP-citation-Jan8.txt", DBLP_CI_FILE)
 
+println("Reading DBLP citation data...")
+B = readIN(DBLP_CI_FILE)
+allTitles = LoadDBLPTitleAsArray(DBLP_RAW_FILE)
 
-function CaseStudy1()
-    println("Reading DBLP citation data...")
-    B = readIN(DBLP_CI_FILE)
-    allTitles = LoadDBLPTitleAsArray(DBLP_RAW_FILE)
-    V = 95485
+C = GenerateUserInputSet(B,V,2,4)
+
+# V = 95485
+function GetRefinedSet(C::Vector{Int64})
     # As an example, say V = 95485, for getting info from the raw citation data given this index (note -1 for the raw file):
     # grep -n "#index95484" DBLP-citation-Jan8.txt
     # Say you get row number = 6809987, then:
     # Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
     
-    C = GenerateUserInputSet(B,V,2,4)
     R = GenerateReferenceSetFixedWalks(B,C)
     refined = LocalAnchoredDensestSubgraph(B,R).source_nodes
-    titles = allTitles[refined]
+    println("Articles from refined set: ")
+    println("------------")
+    for i in refined
+        println(string(allTitles[i]))
+    end
+    println("------------")
+    return refined
 end

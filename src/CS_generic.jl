@@ -13,8 +13,13 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 include("Query_test_yd.jl")
 
+# From C
 function GetRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, Info::Array{String, 1}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
     R = GenerateReferenceSetFixedWalks(B,C,Repeats,Steps)
+    return GetRefinedSetFromR(B, R, Info)
+end
+
+function GetRefinedSetFromR(B::SparseMatrixCSC, R::Vector{Int64}, Info::Array{String, 1})
     refined = LocalAnchoredDensestSubgraph(B,R).source_nodes
     println("Info of refined set: ")
     println("------------")

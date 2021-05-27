@@ -21,11 +21,15 @@ end
 
 function GetRefinedSetFromR(B::SparseMatrixCSC, R::Vector{Int64}, Info::Array{String, 1})
     refined = LocalAnchoredDensestSubgraph(B,R).source_nodes
+    DisplaySubset(refined, Info)
+    return refined
+end
+
+function DisplaySubset(S::Vector{Int64}, Info::Array{String, 1})
     println("Info of refined set: ")
     println("------------")
-    for i in refined
+    for i in S
         println(string(i, ": ", Info[i]))
     end
     println("------------")
-    return refined
 end

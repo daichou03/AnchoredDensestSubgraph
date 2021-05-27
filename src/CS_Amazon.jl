@@ -61,6 +61,16 @@ function GetRefinedSetAmazon(C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS
     GetRefinedSet(B, C, allTitles, Repeats, Steps)
 end
 
+function GetRAmazon(C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
+    R = GenerateReferenceSetFixedWalks(B, C, Repeats, Steps)
+    DisplaySubset(R, allTitles)
+    return R
+end
+
+function GetRefinedSetFromRAmazon(R::Vector{Int64})
+    GetRefinedSetFromR(B, R, allTitles)
+end
+
 # V = 9999 # "Programming and Problem Solving With C++"
 
 # V = 43329 # "Les Miserables"

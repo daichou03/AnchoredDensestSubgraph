@@ -16,7 +16,7 @@
 5 7
 6 7
 
-R is [1:6]. ds(R) = [1:5].
+R is [1:6]. ds(B[R]) = [1:5].
 If R = [1:6], ads(R) = [1:7].
 If R = [1:5], ads(R) = [1:5, 7].
 This is a non-degenerate example so should be clear.

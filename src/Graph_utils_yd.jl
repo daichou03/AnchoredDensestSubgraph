@@ -180,6 +180,30 @@ function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bo
     return L
 end
 
+# Returns whether the connected subgraph S is in a connected component at least of size Size.
+# Basically finding the connected component (in an inefficient way) but can return quickly if Size is small.
+function ConnectedComponentSizeAtLeast(B::SparseMatrixCSC, S::Vector{Int64}, Size::Integer)
+    if length(S) >= Size
+        return true
+    end
+    N = size(B,1)
+    L = copy(S)
+    size_old = length(L)
+    while true
+        for V in L
+            L = union(L, GetAdjacency(B,V,true))
+            if length(L) >= Size
+                return true
+            end
+        end
+        if size_old == length(L)
+            return false
+        else
+            size_old = length(L)
+        end
+    end
+end
+
 function GetVolume(B::SparseMatrixCSC, S::Vector{Int64})
     sum(map(v->GetWeightedDegree(B,v), S))
 end

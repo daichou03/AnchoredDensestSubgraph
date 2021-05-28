@@ -44,11 +44,26 @@ ALG_MASK_LA = 3
 ALL_ALGORITHMS = [true, true, true]
 LA_ONLY = [false, false, true]
 
+CC_SIZE_THRESHOLD = 128
+
 # --------------
 # User input set
 # --------------
 
 function GenerateUserInputSet(B::SparseMatrixCSC, V::Int64, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE)
+    pool = [V]
+    for i = 1:MaxHops
+        pool = GetComponentAdjacency(B, pool, true)
+    end
+    return GenerateUserInputSetFromPool(B, V, setdiff(pool, [V]), TargetSize)
+end
+
+function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE)
+    N = size(B,1)
+    V = rand(1:N)
+    while !ConnectedComponentSizeAtLeast(B, [V], CC_SIZE_THRESHOLD)
+        V = rand(1:N)
+    end
     pool = [V]
     for i = 1:MaxHops
         pool = GetComponentAdjacency(B, pool, true)
@@ -70,8 +85,7 @@ function BulkGenerateUserInputSet(B::SparseMatrixCSC, Tests::Int64, MaxHops::Int
     user_inputs = Any[]
     N = size(B,1)
     for i = 1:Tests
-        V = rand(1:N)
-        c = GenerateUserInputSet(B, V, MaxHops, TargetSize)
+        c = RandomGenerateUserInputSet(B, MaxHops, TargetSize)
         push!(user_inputs, c)
     end
     return user_inputs
@@ -347,9 +361,9 @@ end
 
 # Query for IGA performance gain vs GA with small anchor size.
 function PerformQueryIGASmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
-        AnchorTargetSize::Int64, Steps::Int64, RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
+        AnchorTargetSize::Int64, Steps::Int64, FileNameSuffix::String="-AnchorSizeTest-SmallIGA", RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
-        [true, true, false], "-AnchorSizeTest-SmallIGA", RNodeDegreeCap, MaxRetriesMultiplier)
+        [true, true, false], FileNameSuffix, RNodeDegreeCap, MaxRetriesMultiplier)
 end
 # --------------
 # Complete Query

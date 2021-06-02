@@ -406,7 +406,7 @@ end
 # This assumes the half edge graph data file of the original exists.
 # It does not perform tests on the original graph, only the half edge ones.
 function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, TestOriginal::Bool=false, Iteration::Integer=5, GraphSizeThreshold::Integer=32,
-        AlgorithmMask::Vector{Bool}=[false, false, true])
+        AlgorithmMask::Vector{Bool}=LA_ONLY)
     for ds_name in dataset_names
         println(string("Performing Half Edge Test Query for: ", ds_name))
         if TestOriginal
@@ -441,7 +441,7 @@ function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
         caps[4] = rNodeDegreeCap(8.0, 2.0, 8.0)
         caps[5] = rNodeDegreeCap(16.0, 2.0, 16.0)
         for cap in caps
-            PerformQueryAllAlgorithms(dataset, Tests, ds_name, [false, false, true],
+            PerformQueryAllAlgorithms(dataset, Tests, ds_name, LA_ONLY,
                 string("-cap-",cap.min_scale,"-",cap.log_scale,"-",cap.max_scale),
                 DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, cap)
         end
@@ -541,6 +541,21 @@ function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int6
         write(io, string(ds_name, ",", mean(sizes), "\n"))
     end
     close(io)
+end
+
+function RetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
+    user_inputs = BulkGenerateUserInputSet(B, Tests)
+    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
+
+    inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
+    globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+    orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
+
+    sizes = []
+    for i in 1:Tests
+        append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
+    end
+    return sizes
 end
 
 # -----------

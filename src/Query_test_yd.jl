@@ -362,7 +362,7 @@ end
 # Query for IGA performance gain vs GA with small anchor size.
 function PerformQueryIGASmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String, MaxHops::Int64, UserTargetSize::Int64,
         AnchorTargetSize::Int64, Steps::Int64, FileNameSuffix::String="-AnchorSizeTest-SmallIGA", RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
-    return PerformQueryAllAlgorithmsAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
+    return PerformQueryAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
         [true, true, false], FileNameSuffix, RNodeDegreeCap, MaxRetriesMultiplier)
 end
 # --------------

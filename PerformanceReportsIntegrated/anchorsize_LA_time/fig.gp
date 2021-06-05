@@ -25,7 +25,7 @@ set format y "10^{%L}
 set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100)
 set xtics rotate by -30 font "Times-Roman,18"
 
-set yrange [0.001:100]
+set yrange [0.001:500]
 
 
 set output 'fig.eps'

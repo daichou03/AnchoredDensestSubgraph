@@ -33,3 +33,8 @@ function DisplaySubset(S::Vector{Int64}, Info::Array{String, 1})
     end
     println("------------")
 end
+
+# Competitor algorithms
+# function GreedyMinusDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64})
+
+# end

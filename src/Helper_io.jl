@@ -52,7 +52,7 @@ function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Ex
     N = size(B,1)
     write(io, string(size(B,1)," ",Int64(nnz(B)/2),"\n"))
     for i = 1:N
-        indices = B[i,:].nzind
+        indices = B[:,i].nzind
         indices = indices[searchsortedfirst(indices, i) : length(indices)]
         for j = 1:length(indices)
             write(io, string(i," ",indices[j],"\n"))

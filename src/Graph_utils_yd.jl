@@ -37,7 +37,7 @@ end
 
 # YD 20200201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
 function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
-    L = SparseArrays.nonzeroinds(B[V,:])
+    L = SparseArrays.nonzeroinds(B[:,V])
     if Self
         L = insert_and_dedup!(L, V) # Keep this list sorted
     end

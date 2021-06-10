@@ -492,7 +492,7 @@ end
 # Copy paste below to the console.
 # The idea is if something is wrong, still have the loaded data graph in the memory.
 ds_name = "flickr"
-B = readIN(string(ds_name, ".in")
+B = readIN(string(ds_name, ".in"))
 BatchPerformAllTests(B, ds_name, 100, false)
 
 # Generate AnchorNodes file.

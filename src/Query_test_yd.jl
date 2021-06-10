@@ -369,6 +369,7 @@ end
 # Complete Query
 # --------------
 
+# All_dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
 # SmallIGA_dataset_names = ["dblp","github","grqc","hepph","livemocha","youtube"]
 
 function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64, AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS)
@@ -405,7 +406,7 @@ end
 
 # This assumes the half edge graph data file of the original exists.
 # It does not perform tests on the original graph, only the half edge ones.
-function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, TestOriginal::Bool=false, Iteration::Integer=5, GraphSizeThreshold::Integer=32,
+function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int64, TestOriginal::Bool=false, Iteration::Integer=5, GraphSizeThreshold::Integer=128,
         AlgorithmMask::Vector{Bool}=LA_ONLY)
     for ds_name in dataset_names
         println(string("Performing Half Edge Test Query for: ", ds_name))

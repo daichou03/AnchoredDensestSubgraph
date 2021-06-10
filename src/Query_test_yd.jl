@@ -380,27 +380,35 @@ function BulkPerformQueryBaseline(dataset_names::Array{String,1}, Tests::Int64, 
     end
 end
 
+function BatchPerformQueryAnchorSizeTest(B::SparseMatrixCSC, ds_name::String, Tests::Int64)
+    PerformQueryAnchorSizeTest(B, Tests, ds_name, 2, 2, 8, 2)
+    PerformQueryAnchorSizeTest(B, Tests, ds_name, 2, 4, 16, 2)
+    PerformQueryAnchorSizeTest(B, Tests, ds_name, 2, 8, 32, 2)
+    PerformQueryAnchorSizeTest(B, Tests, ds_name, 2, 16, 64, 2)
+    PerformQueryAnchorSizeTest(B, Tests, ds_name, 2, 32, 128, 2)
+end
+
 function BulkPerformQueryAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
-        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 4, 16, 2)
-        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 8, 32, 2)
-        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 16, 64, 2)
-        PerformQueryAnchorSizeTest(dataset, Tests, ds_name, 2, 32, 128, 2)
+        BatchPerformQueryAnchorSizeTest(dataset, ds_name, Tests)
     end
+end
+
+function BatchPerformQueryIGASmallAnchorSizeTest(B::SparseMatrixCSC, ds_name::String, Tests::Int64)
+    PerformQueryIGASmallAnchorSizeTest(B, Tests, ds_name, 2, 2, 4, 2)
+    PerformQueryIGASmallAnchorSizeTest(B, Tests, ds_name, 2, 2, 6, 2)
+    PerformQueryIGASmallAnchorSizeTest(B, Tests, ds_name, 2, 2, 8, 2)
+    PerformQueryIGASmallAnchorSizeTest(B, Tests, ds_name, 2, 2, 10, 2)
+    PerformQueryIGASmallAnchorSizeTest(B, Tests, ds_name, 2, 2, 12, 2)
 end
 
 function BulkPerformQueryIGASmallAnchorSizeTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Small Anchor Size Test Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 4, 2)
-        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 6, 2)
-        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 8, 2)
-        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 10, 2)
-        PerformQueryIGASmallAnchorSizeTest(dataset, Tests, ds_name, 2, 2, 12, 2)
+        BatchPerformQueryIGASmallAnchorSizeTest(dataset, ds_name, Tests)
     end
 end
 
@@ -412,14 +420,12 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
         println(string("Performing Half Edge Test Query for: ", ds_name))
         if TestOriginal
             println(string("Original:"))
-            filename = ds_name, ".in"
             dataset = readIN(string(ds_name, ".in"))
             PerformQueryAllAlgorithms(dataset, Tests, ds_name, AlgorithmMask)
         end
         for iter = 1:Iteration
             println(string("Iteration: ", iter))
             ds_name_half_edge = string(ds_name, "-H", iter)
-            filename = ds_name_half_edge, ".in"
             dataset = readIN(string(ds_name_half_edge, ".in"))
             if size(dataset, 1) < GraphSizeThreshold
                 println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
@@ -431,23 +437,63 @@ function BulkPerformQueryHalfEdgeTest(dataset_names::Array{String,1}, Tests::Int
     end
 end
 
+function BatchPerformDegreeCapTest(B::SparseMatrixCSC, ds_name::String, Tests::Int64)
+    caps = Array{rNodeDegreeCap,1}(undef, 5)
+    caps[1] = rNodeDegreeCap(1.0, 2.0, 1.0)
+    caps[2] = rNodeDegreeCap(2.0, 2.0, 2.0)
+    caps[3] = rNodeDegreeCap(4.0, 2.0, 4.0)
+    caps[4] = rNodeDegreeCap(8.0, 2.0, 8.0)
+    caps[5] = rNodeDegreeCap(16.0, 2.0, 16.0)
+    for cap in caps
+        PerformQueryAllAlgorithms(B, Tests, ds_name, LA_ONLY,
+            string("-cap-",cap.min_scale,"-",cap.log_scale,"-",cap.max_scale),
+            DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, cap)
+    end
+end
+
 function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
     for ds_name in dataset_names
         println(string("Performing Query for: ", ds_name))
         dataset = readIN(string(ds_name, ".in"))
-        caps = Array{rNodeDegreeCap,1}(undef, 5)
-        caps[1] = rNodeDegreeCap(1.0, 2.0, 1.0)
-        caps[2] = rNodeDegreeCap(2.0, 2.0, 2.0)
-        caps[3] = rNodeDegreeCap(4.0, 2.0, 4.0)
-        caps[4] = rNodeDegreeCap(8.0, 2.0, 8.0)
-        caps[5] = rNodeDegreeCap(16.0, 2.0, 16.0)
-        for cap in caps
-            PerformQueryAllAlgorithms(dataset, Tests, ds_name, LA_ONLY,
-                string("-cap-",cap.min_scale,"-",cap.log_scale,"-",cap.max_scale),
-                DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, cap)
+        BatchPerformDegreeCapTest(dataset, ds_name, Tests)
+    end
+end
+
+# For one data graph.
+function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64, LAOnly::Bool=false)
+    println("Baseline test:")
+    PerformQueryAllAlgorithms(B, Tests, ds_name, LAOnly ? LA_ONLY : ALL_ALGORITHMS)
+    println("Anchor size test:")
+    BatchPerformQueryAnchorSizeTest(B, ds_name, Tests)
+    println("Cap test:")
+    BatchPerformDegreeCapTest(B, ds_name, Tests)
+    if !LAOnly
+        println("Small IGA test:")
+        BatchPerformQueryIGASmallAnchorSizeTest(B, ds_name, Tests)
+    end
+    println("Half edge test:")
+    BatchPerformHalfEdgeTest(ds_name, Tests)
+end
+
+# This loads the original graph rather than existing half-edged graphs.
+function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThreshold=128)
+    for iter = 1:5
+        B = readIN(string(ds_name, ".in"), 0.5 ^ iter)
+        if size(B, 1) < GraphSizeThreshold
+            println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
+            break
+        else
+            PerformQueryAllAlgorithms(dataset, Tests, ds_name_half_edge, AlgorithmMask)
+            println(string("Graph size of iteration ", iter, ": ", size(B)))
         end
     end
 end
+
+# Copy paste below to the console.
+# The idea is if something is wrong, still have the loaded data graph in the memory.
+ds_name = "flickr"
+B = readIN(string(ds_name, ".in")
+BatchPerformAllTests(B, ds_name, 100, false)
 
 # Generate AnchorNodes file.
 

@@ -483,7 +483,7 @@ function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThresh
             println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
             break
         else
-            PerformQueryAllAlgorithms(dataset, Tests, ds_name_half_edge, AlgorithmMask)
+            PerformQueryAllAlgorithms(B, Tests, string(ds_name, "-H", iter), LA_ONLY)
             println(string("Graph size of iteration ", iter, ": ", size(B)))
         end
     end

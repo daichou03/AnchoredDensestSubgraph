@@ -471,12 +471,15 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
         println("Small IGA test:")
         BatchPerformQueryIGASmallAnchorSizeTest(B, ds_name, Tests)
     end
+    println("Nodes expanded (standard output only):")
+    BatchRetrieveLAExpansionSize(B, Tests)
     println("Half edge test:")
     BatchPerformHalfEdgeTest(ds_name, Tests)
 end
 
 # This loads the original graph rather than existing half-edged graphs.
 function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThreshold=128)
+    println("Graph size for each iteration (standard output only):")
     for iter = 1:5
         B = readIN(string(ds_name, ".in"), 0.5 ^ iter)
         if size(B, 1) < GraphSizeThreshold
@@ -484,7 +487,7 @@ function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThresh
             break
         else
             PerformQueryAllAlgorithms(B, Tests, string(ds_name, "-H", iter), LA_ONLY)
-            println(string("Graph size of iteration ", iter, ": ", size(B)))
+            println(string(iter, "|", size(B, 1), "|", div(length(B.nzval), 2)))
         end
     end
 end
@@ -569,26 +572,32 @@ end
 
 # TODO: Specify the anchors instead to always use the same anchor node set for this test and baseline test.
 # TODO: Generate separate files for each data graph instead.
-function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
-    io = open(string(PERFORMANCE_REPORTS_DIR, "exp_size/exp_size_all"), "w")
-    for ds_name in dataset_names
-        B = readIN(string(ds_name, ".in"))
+function BatchRetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
+    user_inputs = BulkGenerateUserInputSet(B, Tests)
+    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
 
-        user_inputs = BulkGenerateUserInputSet(B, Tests)
-        anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
+    inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
+    # globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
+    # orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
 
-        inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
-        globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
-        orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
-
-        sizes = []
-        for i in 1:Tests
-            append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
-        end
-        write(io, string(ds_name, ",", mean(sizes), "\n"))
+    sizes = []
+    for i in 1:Tests
+        append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
     end
-    close(io)
+    return mean(sizes)
 end
+
+# Note this rewrites the entire "exp_size/exp_size_all" file!
+# TODO: Should write as separate files, for now just don't use this and manually modify that file with new data instead.
+# function BulkRetrieveLAExpansionSize(dataset_names::Array{String,1}, Tests::Int64)
+#     io = open(string(PERFORMANCE_REPORTS_DIR, "exp_size/exp_size_all"), "w")
+#     for ds_name in dataset_names
+#         B = readIN(string(ds_name, ".in"))
+#         mean_size = BatchRetrieveLAExpansionSize(B, Tests)
+#         write(io, string(ds_name, ",", mean_size, "\n"))
+#     end
+#     close(io)
+# end
 
 function RetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
     user_inputs = BulkGenerateUserInputSet(B, Tests)

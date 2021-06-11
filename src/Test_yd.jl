@@ -241,7 +241,7 @@ end
 function GetClusterExcludingSelfThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
     adj = GetComponentAdjacency(B, R, false)
     weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj]))
-    removes = sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
+    removes = StatsBase.sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
     deleteat!(adj, sort(removes))
     GetGenericSeedReport(B,DUMMY_SEED,adj)
 end
@@ -290,7 +290,7 @@ end
 function GetClusterNeighbourThenRemoveReport(B::SparseMatrixCSC, R::Vector{Int64}, RemoveProp::Float64, DensityWeightFactor::Union{Int64,Float64})
     adj = GetComponentAdjacency(B, R, false)
     weights = map(x->(x[2] == 0 ? (1 / size(B, 1)) : x[2]) ^ DensityWeightFactor, GetAllDegrees(B[adj,adj])) #
-    removes = sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
+    removes = StatsBase.sample(1:length(adj), Weights(weights), Int64(round(RemoveProp * length(adj))), replace=false)
     deleteat!(adj, sort(removes))
     GetGenericSeedReport(B,DUMMY_SEED,union(adj,R))
 end
@@ -384,7 +384,7 @@ function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, R::Vector{Int64}, Size::
     walk = copy(R_sorted)
     len = length(R_sorted)
     if len > Size
-        return sample(r, Size, replace=false, ordered=true)
+        return StatsBase.sample(r, Size, replace=false, ordered=true)
     end
     while len < Size
         for i = 1:length(walk)
@@ -494,7 +494,7 @@ end
 
 function GenerateSmallRandomWalksSet(B::SparseMatrixCSC, R::Vector{Int64}, TargetSize::Int64, MaxStep::Int64=2, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
     if length(R) > TargetSize
-        return sample(R, TargetSize, replace=false, ordered=true)
+        return StatsBase.sample(R, TargetSize, replace=false, ordered=true)
     end    
     r = copy(R)
     step = 0
@@ -576,7 +576,7 @@ end
 function GetStepRandomWalkUntilSizeThenRemoveHighDensity(B::SparseMatrixCSC, Size::Int64, Removes::Int64, DensityWeightFactor::Union{Int64,Float64})
     r = GetStepRandomWalkUntilSize(B, Size + Removes)
     weights = map(x->x[2]^DensityWeightFactor, GetAllDegrees(B[r,r]))
-    removes = sample(1:length(r), Weights(weights), Removes, replace=false)
+    removes = StatsBase.sample(1:length(r), Weights(weights), Removes, replace=false)
     deleteat!(r, sort(removes))
     return r
 end
@@ -697,7 +697,7 @@ function GetFixedSizeWithMinimumDensity(B::SparseMatrixCSC, Size::Int64, MinVolu
         retry = Size * 2 # TODO: number of retries reasonable? To see.
         while retry > 0 && GetInducedVolume(B, R) < MinVolume
             residualR = map(x -> Size - 1 - GetDegree(B[R,R], x), 1:Size) # For each vertex in r, the density it could possibly improve
-            v = sample(1:Size, Weights(residualR))
+            v = StatsBase.sample(1:Size, Weights(residualR))
             oldDegree = GetDegree(B[R,R], v)
             if oldDegree > 0
                 soleNeighbour = rand(R[GetAdjacency(B[R,R], v, false)])

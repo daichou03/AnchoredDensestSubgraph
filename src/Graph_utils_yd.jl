@@ -49,7 +49,7 @@ end
 function GetRandomAdjacency(B::SparseMatrixCSC, V::Int64, Size::Int64)
     L = GetAdjacency(B, V, false)
     if length(L) >= Size
-        L = sample(L, Size - 1, replace=false, ordered=true)
+        L = StatsBase.sample(L, Size - 1, replace=false, ordered=true)
     end
     L = insert_and_dedup!(L, V)
     return L

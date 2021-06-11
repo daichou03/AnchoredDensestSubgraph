@@ -151,7 +151,7 @@ end
 function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, MaxStep::Int64,
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
     if length(C) > TargetSize
-        return sample(C, TargetSize, replace=false, ordered=true)
+        return StatsBase.sample(C, TargetSize, replace=false, ordered=true)
     end    
     r = copy(C)
     rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
@@ -495,6 +495,7 @@ end
 # Copy paste below to the console.
 # The idea is if something is wrong, still have the loaded data graph in the memory as B ->
 # ds_name = "flickr"
+# include("Query_test_yd.jl")
 # using Laplacians
 # using Laplacians
 # B = readIN(string(ds_name, ".in"))

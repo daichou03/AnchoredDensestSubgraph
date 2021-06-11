@@ -76,7 +76,7 @@ function GenerateUserInputSetFromPool(B::SparseMatrixCSC, V::Int64, NeighbourPoo
         pool = GetComponentAdjacency(B, NeighbourPool, true)
         return GenerateUserInputSetFromPool(B, V, setdiff(pool, [V]), TargetSize)
     end
-    c = sample(NeighbourPool, TargetSize - 1, replace=false)
+    c = StatsBase.sample(NeighbourPool, TargetSize - 1, replace=false)
     append!(c, V)
     return c
 end
@@ -473,28 +473,30 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
     end
     println("Nodes expanded (standard output only):")
     BatchRetrieveLAExpansionSize(B, Tests)
-    println("Half edge test:")
+    println("Half edge test - Graph size for each iteration including 0 (standard output only):")
+    println(string(size(B, 1), "|", div(length(B.nzval), 2)))
     BatchPerformHalfEdgeTest(ds_name, Tests)
 end
 
 # This loads the original graph rather than existing half-edged graphs.
 function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThreshold=128)
-    println("Graph size for each iteration (standard output only):")
     for iter = 1:5
-        B = readIN(string(ds_name, ".in"), 0.5 ^ iter)
+        B = biggestComp(readIN(string(ds_name, ".in"), 0.5 ^ iter))
         if size(B, 1) < GraphSizeThreshold
             println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
             break
         else
             PerformQueryAllAlgorithms(B, Tests, string(ds_name, "-H", iter), LA_ONLY)
-            println(string(iter, "|", size(B, 1), "|", div(length(B.nzval), 2)))
+            println(string(size(B, 1), "|", div(length(B.nzval), 2)))
         end
     end
 end
 
 # Copy paste below to the console.
-# The idea is if something is wrong, still have the loaded data graph in the memory.
+# The idea is if something is wrong, still have the loaded data graph in the memory as B ->
 # ds_name = "flickr"
+# using Laplacians
+# using Laplacians
 # B = readIN(string(ds_name, ".in"))
 # BatchPerformAllTests(B, ds_name, 100, false)
 
@@ -584,7 +586,7 @@ function BatchRetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
     for i in 1:Tests
         append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
     end
-    return mean(sizes)
+    return StatsBase.mean(sizes)
 end
 
 # Note this rewrites the entire "exp_size/exp_size_all" file!

@@ -471,8 +471,7 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
         println("Small IGA test:")
         BatchPerformQueryIGASmallAnchorSizeTest(B, ds_name, Tests)
     end
-    println("Nodes expanded (standard output only):")
-    BatchRetrieveLAExpansionSize(B, Tests)
+    println(string("Nodes expanded (standard output only): ", BatchRetrieveLAExpansionSize(B, Tests)))
     println("Half edge test - Graph size for each iteration including 0 (standard output only):")
     println(string(size(B, 1), "|", div(length(B.nzval), 2)))
     BatchPerformHalfEdgeTest(ds_name, Tests)

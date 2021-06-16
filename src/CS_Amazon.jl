@@ -23,7 +23,6 @@ println("Reading Amazon data...")
 B = readIN(AMAZON_GRAPH_FILE)
 
 function RetrieveProductInfoAsArray(InfoTypes::Vector{String}=["title","group"])
-    filename = AMAZON_META_FILE
     io_read = open(AMAZON_META_FILE)
     info = emptyStringArray(AMAZON_META_TOTAL)
     current_id = -1
@@ -84,6 +83,10 @@ function SearchNonDegRefinedSet(C::Vector{Int64}, MaxRetry::Int64=100)
     return (Int64[], -1)
 end
 
+# Competitor - flowseed
+# include("..\\CS_Competitors\\FlowSeed-master\\Test_yd.jl") # This will intefere my core algorithm unfortunately. So possibly only retrieve result set from flowseed.
+
+
 # V = 9999 # "Programming and Problem Solving With C++"
 
 # V = 43329 # "Les Miserables"
@@ -91,37 +94,7 @@ end
 # V = 19217 # "War and Peace"
 # V = 72370, 72371, 79592, 100920, 102150, 170945, 229862, 261557, 266632, 291301 # "Oh My Goddess"
 # Expansive R:
-# 72370
-# 94242
-# 94246
-# 134143
-# 373719
-# 389896
-# 413692
-# 543801
-# 543802
-# 35050
-# 506867
-# 335249
-# 72371
-# 434276
-# 100920
-# 367186
-# 361337
-# 112723
-# 545069
-# 466130
-# 218147
-# 44918
-# 283142
-# 509960
-# 405823
-# 68838
-# 218774
-# 29740
-# 80600
-# 29738
-# 285038
+# R = [72370, 94242, 94246, 134143, 373719, 389896, 413692, 543801, 543802, 35050, 506867, 335249, 72371, 434276, 100920, 367186, 361337, 112723, 545069, 466130, 218147, 44918, 283142, 509960, 405823, 68838, 218774, 29740, 80600, 29738, 285038]
 
 # V = 230805 # Forrest Gump
 # V = 325872 # Off the wall

@@ -497,8 +497,9 @@ end
 # include("Query_test_yd.jl")
 # using Laplacians
 # using Laplacians
-# B = readIN(string(ds_name, ".in"))
-# BatchPerformAllTests(B, ds_name, 100, false)
+# B = 0
+# @time B = readIN(string(ds_name, ".in"))
+# BatchPerformAllTests(B, ds_name, 100, length(B.nzval)>200000000)
 
 # Generate AnchorNodes file.
 

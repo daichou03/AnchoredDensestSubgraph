@@ -1,0 +1,4 @@
+Competitor codes are sorted in root/CS_Competitors. This folder is ignored in git.
+Any code that relies on them are in root/CS_External.
+
+FlowSeed: https://github.com/nveldt/FlowSeed

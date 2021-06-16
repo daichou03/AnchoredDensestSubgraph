@@ -45,6 +45,7 @@ function RegisterMemoryItem(FunctionName::String, Stamp::Int, Var::Any, VarName:
     end
     GLOBAL_memory_dict[functionKey][VarName] = Base.summarysize(Var)
     UpdateMaxMemoryUsage()
+    # println(string(FunctionName, ", ", Stamp, ", ", Var, ", ", VarName))
 end
 
 function DeregisterMemoryItem(FunctionName::String, Stamp::Int, VarName::String)

@@ -205,7 +205,12 @@ function ConnectedComponentSizeAtLeast(B::SparseMatrixCSC, S::Vector{Int64}, Siz
 end
 
 function GetVolume(B::SparseMatrixCSC, S::Vector{Int64})
-    sum(map(v->GetWeightedDegree(B,v), S))
+    sum(map(v->GetDegree(B,v), S))
+end
+
+function GetVolume(B::SparseMatrixCSC)
+    N = size(B,1)
+    sum(map(v->GetDegree(B,v), 1:N))
 end
 
 function GetAllDegrees(B::SparseMatrixCSC)
@@ -226,7 +231,7 @@ end
 
 function GetInducedVolume(B::SparseMatrixCSC, S::Vector{Int64})
     N = size(S,1)
-    sum(map(v->GetWeightedDegree(B[S,S],v), 1:N))
+    sum(map(v->GetDegree(B[S,S],v), 1:N))
 end
 
 function PopSourceForFlowNetworkResult(S::Vector{Int64})

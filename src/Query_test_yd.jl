@@ -467,10 +467,6 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
     BatchPerformQueryAnchorSizeTest(B, ds_name, Tests)
     println("Cap test:")
     BatchPerformDegreeCapTest(B, ds_name, Tests)
-    if !LAOnly
-        println("Small IGA test:")
-        BatchPerformQueryIGASmallAnchorSizeTest(B, ds_name, Tests)
-    end
     println(string("Nodes expanded (standard output only): ", BatchRetrieveLAExpansionSize(B, Tests)))
     println("Half edge test - Graph size for each iteration including 0 (standard output only):")
     println(string(size(B, 1), "|", div(length(B.nzval), 2)))
@@ -499,7 +495,7 @@ end
 # using Laplacians
 # B = 0
 # @time B = readIN(string(ds_name, ".in"))
-# BatchPerformAllTests(B, ds_name, 100, length(B.nzval)>200000000)
+# BatchPerformAllTests(B, ds_name, 100, length(B.nzval)>150000000)
 
 # Generate AnchorNodes file.
 

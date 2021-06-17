@@ -11,7 +11,7 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("CP_LScore.jl")
+include("CP_GreedyL.jl")
 
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)

@@ -99,7 +99,8 @@ function LScoreCommunity(G::SparseMatrixCSC, R::Vector{Int64})
     while changed
         changed = false
         for n_i in D
-            if !(LinScore(G, D) > LinScore(G, setdiff(D, n_i)) && LexScore(G, D) < LexScore(G, setdiff(D, n_i)))
+            # Originally does not allow equal, change it to allow equal so the output is maximal
+            if !(LinScore(G, D) >= LinScore(G, setdiff(D, n_i)) && LexScore(G, D) <= LexScore(G, setdiff(D, n_i)))
                 D = setdiff(D, n_i)
                 changed = true
             end

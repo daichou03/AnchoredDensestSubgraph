@@ -41,6 +41,31 @@ function RetrieveProductInfoAsArray(InfoTypes::Vector{String}=["title","group"])
     return info
 end
 
+function RetrieveTopSales(TopNum::Int64=1000)
+    io_read = open(AMAZON_META_FILE)
+    info = emptyStringArray(TopNum)
+    current_id = -1
+    current_title = ""
+    current_group = ""
+    while !eof(io_read)
+        line = readline(io_read)
+        if startswith(line, "Id:")
+            current_id = parse(Int64, last(split(line, " ")))
+        elseif startswith(line, string("  ", "title"))
+            current_title = line[length("title") + 5 : end]                
+        elseif startswith(line, string("  ", "group"))
+            current_group = line[length("group") + 5 : end]
+        elseif startswith(line, string("  ", "salesrank"))
+            rank = parse(Int64, line[length("salesrank") + 5 : end])
+            if 1 <= rank <= TopNum
+                info[rank] = join([current_id, current_title, current_group], "|")
+            end
+        end
+    end
+    close(io_read)
+    return info
+end
+
 allTitles = RetrieveProductInfoAsArray(["title","group"])
 
 function DisplayAdjacent(V::Int64)

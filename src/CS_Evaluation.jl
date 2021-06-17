@@ -11,6 +11,7 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
+include("CP_LScore.jl")
 
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)
@@ -31,6 +32,10 @@ function GetLocalConductance(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int
     return O_R > 0 ? (GetVolume(B, S) - GetVolume(B[S,S])) / O_R : Inf
 end
 
+function GetLScore(B::SparseMatrixCSC, S::Vector{Int64})
+    return LScore(B, S)
+end
+
 function GetPropRinS(R::Vector{Int64}, S::Vector{Int64})
     return 1 - length(setdiff(R, S)) / length(R)
 end
@@ -45,6 +50,7 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetAnchoredDensity(B,R,S),
         GetConductance(B,S),
         GetLocalConductance(B,R,S),
+        GetLScore(B,S),
         GetPropRinS(R,S),
         GetPropSoutR(R,S)], "|")
 end

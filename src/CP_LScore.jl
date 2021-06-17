@@ -1,3 +1,7 @@
+# Reference: this is an implementation of Greedy-L algorithm:
+# Chen, J., Zaïane, O., & Goebel, R. (2009, July). Local community identification in social networks. In 2009 International Conference on Advances in Social Network Analysis and Mining (pp. 237-242). IEEE.
+# Except it can start from an arbitrary node set.
+
 using SparseArrays
 using MAT
 using MatrixNetworks
@@ -38,7 +42,7 @@ function BoundaryNodes(G::SparseMatrixCSC, D::Vector{Int64})
     return filter(i->GetExDegree(G, D, i) > 0, D)
 end
 
-# Faster LScore calculation when adding one vertex.
+# Faster LScore calculation when adding one vertex as per formula (6) in the paper.
 function LScore_inc(G::SparseMatrixCSC, D::Vector{Int64}, V::Int64,
         LinD::Float64, OutVolumeD::Int64, NumBoundaryNodesD::Int64)
     exDeg_V = GetExDegree(G, D, V)
@@ -57,6 +61,9 @@ end
 function LScoreCommunity(G::SparseMatrixCSC, R::Vector{Int64})
     D = copy(R)
     B = BoundaryNodes(G, D)
+    LinD = LinScore(G, D)
+    OutVolumeD = OutVolume(G, D)
+    NumBoundaryNodesD = NumBoundaryNodes(G, D)
     Lscore = -1
     new_L = LScore(G, D)
     S = GetComponentAdjacency(G,D,false)
@@ -66,17 +73,22 @@ function LScoreCommunity(G::SparseMatrixCSC, R::Vector{Int64})
         Lscore = new_L
         new_n = -1
         for n_i in S
-            if LScore(G, union(D, n_i)) > new_L
+            candLScore = LScore_inc(G, D, n_i, LinD, OutVolumeD, NumBoundaryNodesD)
+            if candLScore > new_L
                 new_n = n_i
-                new_L = LScore(G, union(D, n_i))
+                new_L = candLScore
             end
         end
         if new_L > Lscore
-            if LinScore(G, union(D, new_n)) < LinScore(G, D)
+            newLinD = LinScore(G, union(D, new_n))
+            if newLinD < LinD
                 # Case 2 as per paper
                 S = setdiff(S, new_n)
             else
                 D = union(D, new_n)
+                LinD = newLinD
+                OutVolumeD = OutVolume(G, D)
+                NumBoundaryNodesD = NumBoundaryNodes(G, D)
                 B = BoundaryNodes(G, D)
                 S = GetComponentAdjacency(G,D,false)
             end

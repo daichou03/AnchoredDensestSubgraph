@@ -14,17 +14,44 @@ function LinScore(G::SparseMatrixCSC, D::Vector{Int64})
     return GetVolume(G[D,D]) / length(D)
 end
 
+function OutVolume(G::SparseMatrixCSC, D::Vector{Int64})
+    return GetVolume(G, D) - GetVolume(G[D,D])
+end
+
+function NumBoundaryNodes(G::SparseMatrixCSC, D::Vector{Int64})
+    return length(BoundaryNodes(G, D))
+end
+
 function LexScore(G::SparseMatrixCSC, D::Vector{Int64})
-    numB = length(BoundaryNodes(G, D))
-    return (GetVolume(G, D) - GetVolume(G[D,D])) / numB
+    return OutVolume(G, D) / NumBoundaryNodes(G, D)
 end
 
 function LScore(G::SparseMatrixCSC, D::Vector{Int64})
     return LinScore(G,D) / LexScore(G,D)
 end
 
+function GetExDegree(G::SparseMatrixCSC, D::Vector{Int64}, V::Int64)
+    return length(setdiff(GetAdjacency(G, V, false), D))
+end
+
 function BoundaryNodes(G::SparseMatrixCSC, D::Vector{Int64})
-    return filter(i->length(setdiff(GetAdjacency(G, i), D)) > 0, D)
+    return filter(i->GetExDegree(G, D, i) > 0, D)
+end
+
+# Faster LScore calculation when adding one vertex.
+function LScore_inc(G::SparseMatrixCSC, D::Vector{Int64}, V::Int64,
+        LinD::Float64, OutVolumeD::Int64, NumBoundaryNodesD::Int64)
+    exDeg_V = GetExDegree(G, D, V)
+    inDeg_V = GetDegree(G, V) - exDeg_V
+    new_numBoundary = NumBoundaryNodesD + (exDeg_V == 0 ? 0 : 1)
+    for i in intersect(GetAdjacency(G, V, false), D)
+        if GetExDegree(G, D, i) == 1
+            new_numBoundary -= 1
+        end
+    end
+    new_LinD = (LinD * length(D) + inDeg_V * 2) / (length(D) + 1)
+    new_LexD = (OutVolumeD - inDeg_V + exDeg_V) / new_numBoundary
+    return new_LinD / new_LexD
 end
 
 function LScoreCommunity(G::SparseMatrixCSC, R::Vector{Int64})

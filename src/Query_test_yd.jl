@@ -11,7 +11,6 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("Test_degeneracy_yd.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
 
@@ -168,7 +167,7 @@ function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, Ta
                     if ReportTrapped
                         println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with C = ", C, ", need to allow one more step."))
                     end
-                    return GenerateSmallRandomWalksSet(B, C, TargetSize, MaxStep+1, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
+                    return GenerateReferenceSetTargetSize(B, C, TargetSize, MaxStep+1, RNodeDegreeCap, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
                 end
             else
                 retries = 0

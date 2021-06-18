@@ -412,7 +412,8 @@ DEF_ANCHOR_REPEATS = 3
 DEF_AHCHOR_STEPS = 2
 
 function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
-    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
+    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=[1.0, 1.0],
+    RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
     r = copy(C)
     rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
     for v in C
@@ -420,7 +421,7 @@ function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
             current = v
             for step = 1:Steps
                 current = rand(GetAdjacency(B, current, false))
-                if GetDegree(B, current) <= rDegreeCap
+                if (GetDegree(B, current) <= rDegreeCap) && (rand() < ChanceToSelect[step])
                     r = union(r, current)
                 end
             end
@@ -431,8 +432,9 @@ end
 
 # Same with step random walk, but starts only from a single node, and number of steps is proportional to the size of the node's degree.
 function GetBaggedStepRandomWalkFixedWalks(B::SparseMatrixCSC, V::Int64,
-    RepeatMultiplier::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS+1, RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
-    return GetStepRandomWalkFixedWalks(B, [V], GetDegree(B, V) * RepeatMultiplier, Steps, RNodeDegreeCap)
+    RepeatMultiplier::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS+1, ChanceToSelect::Vector{Float64}=[1.0, 1.0, 1.0],
+    RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
+    return GetStepRandomWalkFixedWalks(B, [V], GetDegree(B, V) * RepeatMultiplier, Steps, ChanceToSelect, RNodeDegreeCap)
 end
 
 # ------------
@@ -440,7 +442,7 @@ end
 # ------------
 
 # Get a vector of Rs first, by (for example):
-# Rs=map(x->GetBaggedStepRandomWalkFixedWalks(B,777),1:1000)
+# Rs=map(x->GetBaggedStepRandomWalkFixedWalks(B,rand(size(B,1))),1:1000)
 function BulkTestExpansionRate(B::SparseMatrixCSC, Rs::Vector{Vector{Int64}})
     nonDegInds = Int64[]
     totalExp = 0.0
@@ -453,7 +455,7 @@ function BulkTestExpansionRate(B::SparseMatrixCSC, Rs::Vector{Vector{Int64}})
             totalExp += expRate
         end
     end
-    return (length(nonDegInds), nonDegInds, totalExp / length(Rs))
+    return (length(nonDegInds), nonDegInds, totalExp / length(Rs), sum(map(length, Rs)) / length(Rs))
 end
 
 # ----------------------------------

@@ -11,7 +11,7 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("Test_yd.jl")
+include("Test_degeneracy_yd.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
 

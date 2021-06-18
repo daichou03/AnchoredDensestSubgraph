@@ -407,10 +407,6 @@ function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64)
     GetStepRandomWalkUntilSize(B, GetRandomAdjacency(B, 5), Size)
 end
 
-NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(2.0^32, 2.0, 2.0^32)
-DEF_ANCHOR_REPEATS = 3
-DEF_AHCHOR_STEPS = 2
-
 function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
     Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=[1.0, 1.0],
     RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)

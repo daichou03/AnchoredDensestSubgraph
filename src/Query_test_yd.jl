@@ -94,27 +94,6 @@ end
 # Reference set from user set
 # ---------------------------
 
-# Set an upper bound for node to be taken by degree.
-# c_max: the maximum degree in C
-# N: #nodes of the entire graph
-# We cap the degree of nodes to be taken in R by c_max * X,
-# Where X is smaller if c_max is close to N, and larger if c_max is small, with a bound (min_scale, max_scale).
-# Otherwise, X = log(N / c_max) / log(log_scale).
-mutable struct rNodeDegreeCap
-    min_scale::Float64
-    log_scale::Float64
-    max_scale::Float64
-end
-
-#DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(1.0, 2.0, 10.0)
-DEFAULT_R_NODE_DEGREE_CAP = rNodeDegreeCap(8.0, 2.0, 8.0)
-NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(2.0^32, 2.0, 2.0^32)
-
-function GetRNodeDegreeCap(c_max::Int64, N::Int64, RNodeDegreeCap::rNodeDegreeCap)
-    scale = min(RNodeDegreeCap.max_scale, (max(RNodeDegreeCap.min_scale, log(RNodeDegreeCap.log_scale, N / c_max))))
-    return floor(Int64, scale * c_max)
-end
-
 # Baseline: fixed walks
 function GenerateReferenceSetFixedWalks(B::SparseMatrixCSC, C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS,
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP)

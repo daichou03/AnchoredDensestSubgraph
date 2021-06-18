@@ -328,6 +328,8 @@ end
 #---------------------------------------------
 # Degeneracy test on R based on random walking
 #---------------------------------------------
+# Generate R
+#---------------------------------------------
 
 # Sampling by:
 # starting with chosen/random vertex, sample a random connected component with fixed size
@@ -404,6 +406,59 @@ end
 function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64)
     GetStepRandomWalkUntilSize(B, GetRandomAdjacency(B, 5), Size)
 end
+
+NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(2.0^32, 2.0, 2.0^32)
+DEF_ANCHOR_REPEATS = 3
+DEF_AHCHOR_STEPS = 2
+
+function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
+    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
+    r = copy(C)
+    rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
+    for v in C
+        for i = 1:Repeats
+            current = v
+            for step = 1:Steps
+                current = rand(GetAdjacency(B, current, false))
+                if GetDegree(B, current) <= rDegreeCap
+                    r = union(r, current)
+                end
+            end
+        end
+    end
+    return r
+end
+
+# Same with step random walk, but starts only from a single node, and number of steps is proportional to the size of the node's degree.
+function GetBaggedStepRandomWalkFixedWalks(B::SparseMatrixCSC, V::Int64,
+    RepeatMultiplier::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS+1, RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
+    return GetStepRandomWalkFixedWalks(B, [V], GetDegree(B, V) * RepeatMultiplier, Steps, RNodeDegreeCap)
+end
+
+# ------------
+# Non-deg test
+# ------------
+
+# Get a vector of Rs first, by (for example):
+# Rs=map(x->GetBaggedStepRandomWalkFixedWalks(B,777),1:1000)
+function BulkTestExpansionRate(B::SparseMatrixCSC, Rs::Vector{Vector{Int64}})
+    nonDegInds = Int64[]
+    totalExp = 0.0
+    for i in 1:length(Rs)
+        r = Rs[i]
+        s = LocalAnchoredDensestSubgraph(B, r).source_nodes
+        expRate = length(setdiff(s, r)) / length(s)
+        if expRate > 0
+            append!(nonDegInds, i)
+            totalExp += expRate
+        end
+    end
+    return (length(nonDegInds), nonDegInds, totalExp / length(Rs))
+end
+
+# ----------------------------------
+# I doubt I need all below. To clean
+# ----------------------------------
 
 function TestDegeneracyOnRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64, Tests::Int64, ShowSeed::Bool=false)
     nonDegCount = 0

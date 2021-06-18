@@ -11,7 +11,7 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("Test_yd.jl")
+include("Test_degeneracy_yd.jl")
 include("Query_test_yd.jl")
 
 RSS_TEST_DIR = string(ANCHOR_NODES_BASE_DIR, "Baseline/")

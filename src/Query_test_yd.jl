@@ -147,7 +147,7 @@ end
 
 # Fixed target anchor size
 
-# Copy from Test_yd.GenerateSmallRandomWalksSet with changes.
+# Copy from Test_degeneracy_yd.GenerateSmallRandomWalksSet with changes.
 function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, MaxStep::Int64,
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
     if length(C) > TargetSize

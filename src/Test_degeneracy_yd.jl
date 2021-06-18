@@ -433,6 +433,17 @@ function GetBaggedStepRandomWalkFixedWalks(B::SparseMatrixCSC, V::Int64,
     return GetStepRandomWalkFixedWalks(B, [V], GetDegree(B, V) * RepeatMultiplier, Steps, ChanceToSelect, RNodeDegreeCap)
 end
 
+function GetKHopThenChooseFixed(B::SparseMatrixCSC, V::Int64, K::Int64, Size::Int64=32)
+    r = [V]
+    for i in 1:K
+        r = GetComponentAdjacency(B, r)
+    end
+    if length(r) > Size
+        r = StatsBase.sample(setdiff(r, [V]), Size - 1, replace=false, ordered=true)
+        r = insert_and_dedup!(r, V)
+    end
+end
+
 # ------------
 # Non-deg test
 # ------------

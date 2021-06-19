@@ -128,6 +128,79 @@ function CSTest(V::Int64, Print::Bool=true)
     return (R, S_LA, S_GL, ReportCommunity(B,R,S_LA), ReportCommunity(B,R,S_GL))
 end
 
+# Stratified tests
+
+function ExportIndicesByDegree(Last::Int64=40)
+    ios = Any[]
+    for i = 1:(Last+1)
+        append!(ios, 0)
+        ios[i] = open(string(CS_AMAZON_FOLDER,string("Helper-ind/",i,".txt")), "w")
+    end
+    for v in 1:size(B,1)
+        deg = GetDegree(B, v)
+        if deg > Last
+            write(ios[Last+1], string(v, "\n"))
+        elseif deg > 0
+            write(ios[deg], string(v, "\n"))
+        end
+    end
+    for i = 1:(Last+1)
+        close(ios[i])
+    end
+end
+
+function ReadIndicesByDegree(Last::Int64=40)
+    inds = Any[]
+    for i = 1:(Last+1)
+        io = open(string(CS_AMAZON_FOLDER,string("Helper-ind/",i,".txt")))
+        append!(inds, 0)
+        inds[i] = []
+        while !eof(io)
+            append!(inds[i], parse(Int64, readline(io)))
+        end
+        close(io)
+    end
+    return inds
+end
+
+function SampleRByDegree(Indices, Samples::Int64=100)
+    rs = Any[]
+    for i = 1:length(Indices)
+        ind_sample = StatsBase.sample(Indices[i], Samples)
+        append!(rs, 0)
+        rs[i] = []
+        for j in 1:Samples
+            append!(rs[i], 0)
+            rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 15, 4, [1.0, 1.0, 1.0, 1.0])
+        end
+    end
+    return rs
+end
+
+function StratifiedLATest(RSS)
+    res = Any[]
+    for i = 1:length(RSS)
+        append!(res, 0)
+        res[i] = []
+        for j = 1:length(RSS[i])
+            append!(res[i], 0)
+            res[i][j] = LocalAnchoredDensestSubgraph(B, RSS[i][j])
+        end
+    end
+end
+
+function StratifiedGLTest(RSS)
+    res = Any[]
+    for i = 1:length(RSS)
+        append!(res, 0)
+        res[i] = []
+        for j = 1:length(RSS[i])
+            append!(res[i], 0)
+            res[i][j] = LScoreCommunity(B, RSS[i][j])
+        end
+    end
+end
+
 # V = 9999 # "Programming and Problem Solving With C++"
 
 # V = 43329 # "Les Miserables"

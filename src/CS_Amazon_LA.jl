@@ -18,7 +18,7 @@ include("CP_GreedyL.jl")
 include("CS_Evaluation.jl")
 
 println("Reading Amazon product info...")
-AMAZON_META_FILE = string(CS_AMAZON_FOLDER, "raw/amazon-meta.txt")
+AMAZON_META_FILE = string(CS_AMAZON_FOLDER, "Raw/amazon-meta.txt")
 AMAZON_META_TOTAL = 548552
 
 function RetrieveProductInfoAsArray(InfoTypes::Vector{String}=["title","group"])

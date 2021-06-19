@@ -35,5 +35,16 @@ function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, StrongR::Vector{Int64}=I
     return (S_FS, ReportCommunity(B,R,S_FS))
 end
 
+function StratifiedFSTest(RSS)
+    res = Any[]
+    for i = 1:length(RSS)
+        append!(res, 0)
+        res[i] = []
+        for j = 1:length(RSS[i])
+            append!(res[i], 0)
+            res[i][j] = LScoreCommunity(B, RSS[i][j])
+        end
+    end
+end
 
 # TODO: Move this to somewhere else and still refer to here. Have a document saying it is referring external codes plus credit.

@@ -12,6 +12,7 @@ include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
 include("CP_GreedyL.jl")
+include("CS_Amazon.jl")
 
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)
@@ -53,4 +54,16 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetLScore(B,S),
         GetPropRinS(R,S),
         GetPropSoutR(R,S)], "|")
+end
+
+function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, Name::String)
+    folder = string(CS_AMAZON_FOLDER, "EV-", Name, "/")
+    mkpath(folder)
+    for i in 1:length(Rs)
+        io = open(string(folder,i,".txt"), "w")
+        for j in 1:length(Rs[i])
+            write(io, string(ReportCommunity(B, Rs[i][j], Ss[i][j]), "\n"))
+        end
+        close(io)
+    end
 end

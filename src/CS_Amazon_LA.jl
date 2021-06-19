@@ -16,6 +16,7 @@ include("CS_generic.jl")
 include("CS_Amazon.jl")
 include("CP_GreedyL.jl")
 include("CS_Evaluation.jl")
+include("Test_degeneracy_yd.jl")
 
 println("Reading Amazon product info...")
 AMAZON_META_FILE = string(CS_AMAZON_FOLDER, "Raw/amazon-meta.txt")
@@ -174,6 +175,41 @@ function SampleRByDegree(Indices, Samples::Int64=100)
             rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 15, 4, [1.0, 1.0, 1.0, 1.0])
         end
     end
+    return rs
+end
+
+function ExportRs(Rs::Any, Name::String="0")
+    folder = string(CS_AMAZON_FOLDER, "R-", Name, "/")
+    mkpath(folder)
+    for i in 1:length(Rs)
+        io = open(string(folder,i,".txt"), "w")
+        for j in 1:length(Rs[i])
+            write(io, string(join(Rs[i][j], ","), "\n"))
+        end
+        close(io)
+    end
+end
+
+function ImportRs(Name::String="0")
+    folder = string(CS_AMAZON_FOLDER, "R-", Name, "/")
+    rs = Any[]
+    i = 1
+    filename = string(folder,i,".txt")
+    while isfile(filename)
+        io = open(filename)
+        append!(rs, 0)
+        rs[i] = []
+        j = 1
+        while !eof(io)
+            append!(rs[i], 0)
+            rs[i][j] = map(x->parse(Int64, x), split(readline(io), ","))
+            j += 1
+        end
+        close(io)
+        i += 1
+        filename = string(folder,i,".txt")
+    end
+    println(string(i, " set of Rs imported."))
     return rs
 end
 

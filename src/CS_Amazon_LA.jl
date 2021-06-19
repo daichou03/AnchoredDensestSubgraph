@@ -184,9 +184,10 @@ function StratifiedLATest(RSS)
         res[i] = []
         for j = 1:length(RSS[i])
             append!(res[i], 0)
-            res[i][j] = LocalAnchoredDensestSubgraph(B, RSS[i][j])
+            res[i][j] = LocalAnchoredDensestSubgraph(B, RSS[i][j]).source_nodes
         end
     end
+    return res
 end
 
 function StratifiedGLTest(RSS)
@@ -196,9 +197,10 @@ function StratifiedGLTest(RSS)
         res[i] = []
         for j = 1:length(RSS[i])
             append!(res[i], 0)
-            res[i][j] = LScoreCommunity(B, RSS[i][j])
+            res[i][j] = LScoreCommunity(B, RSS[i][j])[1]
         end
     end
+    return res
 end
 
 # V = 9999 # "Programming and Problem Solving With C++"

@@ -42,9 +42,10 @@ function StratifiedFSTest(RSS)
         res[i] = []
         for j = 1:length(RSS[i])
             append!(res[i], 0)
-            res[i][j] = LScoreCommunity(B, RSS[i][j])
+            res[i][j] = LocalCond(B, RSS[i][j])[1]
         end
     end
+    return res
 end
 
 # TODO: Move this to somewhere else and still refer to here. Have a document saying it is referring external codes plus credit.

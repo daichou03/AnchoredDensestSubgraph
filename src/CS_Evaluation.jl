@@ -67,3 +67,103 @@ function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, Name::String)
         close(io)
     end
 end
+
+# For Graph Editor
+
+function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
+    RUnion = copy(R)
+    for s in Ss
+        RUnion = union(RUnion, s)
+    end
+    sort!(RUnion)
+    RUnionN = sort(GetComponentAdjacency(B, RUnion, true))
+
+    # RIndices, edgelist, R, S1, S2, ...
+    RUnionSubsetInds = orderedSubsetIndices(RUnionN, RUnion)
+    RsubsetInds = orderedSubsetIndices(RUnionN, sort(R))
+    SsubsetIndss = Any[]
+    for i in 1:length(Ss)
+        append!(SsubsetIndss, 0)
+        SsubsetIndss[i] = orderedSubsetIndices(RUnionN, sort(Ss[i]))
+    end
+    Bsubset = B[RUnionN, RUnionN]
+
+    mkpath(string(Folder,Name))
+    io_edgelist = open(string(Folder,Name,"/edgelist.txt"), "w")
+    for v1 in RUnionSubsetInds
+        v1N = GetAdjacency(Bsubset, v1, false)
+        for v2 in v1N
+            if v1 < v2 || !(v2 in RUnionSubsetInds)
+                write(io_edgelist, string(v1, ",", v2, "\n"))
+            end
+        end
+    end
+    close(io_edgelist)
+
+    io_inds = open(string(Folder,Name,"/indices.txt"), "w")
+    for v in RUnionN
+        write(io_inds, string(v, "\n"))
+    end
+    close(io_inds)
+
+    io_inds = open(string(Folder,Name,"/R.csv"), "w")
+    write(io_inds, string("Node,Color", "\n"))
+    for v in 1:length(RUnionN)
+        write(io_inds, string(v, ((v in RsubsetInds) ? "" : ",#FF0000"), "\n"))
+    end
+    close(io_inds)
+
+    for i in 1:length(SsubsetIndss)
+        io_inds = open(string(Folder,Name,"/S-", i,".txt"), "w")
+        for v in SsubsetIndss[i]
+            write(io_inds, string(v, "\n"))
+        end
+        close(io_inds)
+    end
+end
+
+######
+
+function ExportGraphEditorR(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
+    RUnion = copy(R)
+    for s in Ss
+        RUnion = union(RUnion, s)
+    end
+    sort!(RUnion)
+    RUnionN = sort(GetComponentAdjacency(B, RUnion, true))
+
+    # RIndices, edgelist, R, S1, S2, ...
+    RUnionSubsetInds = orderedSubsetIndices(RUnionN, RUnion)
+    RsubsetInds = orderedSubsetIndices(RUnionN, sort(R))
+    SsubsetIndss = Any[]
+    for i in 1:length(Ss)
+        append!(SsubsetIndss, 0)
+        SsubsetIndss[i] = orderedSubsetIndices(RUnionN, sort(Ss[i]))
+    end
+    Bsubset = B[RUnionN, RUnionN]
+
+    mkpath(string(Folder,Name))
+    io_edgelist = open(string(Folder,Name,"/edgelist.csv"), "w")
+    for v1 in RUnionSubsetInds
+        v1N = GetAdjacency(Bsubset, v1, false)
+        for v2 in v1N
+            if v1 < v2 || !(v2 in RUnionSubsetInds)
+                write(io_edgelist, string(v1, ",", v2, "\n"))
+            end
+        end
+    end
+    close(io_edgelist)
+
+    io_inds = open(string(Folder,Name,"/indices.csv"), "w")
+    for v in RUnionN
+        write(io_inds, string(v, "\n"))
+    end
+    close(io_inds)
+
+    io_inds = open(string(Folder,Name,"/R.csv"), "w")
+    write(io_inds, string("Id,Label,Color", "\n"))
+    for v in 1:length(RUnionN)
+        write(io_inds, string(v, ",", v, ((v in RsubsetInds) ? "" : ",#FF0000"), "\n"))
+    end
+    close(io_inds)
+end

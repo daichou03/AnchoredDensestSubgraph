@@ -97,7 +97,7 @@ end
 # Can't ensure we get expansive (non-degenerate) result every time, so for case study retry until we get an expansive example.
 function SearchNonDegRefinedSet(C::Vector{Int64}, MaxRetry::Int64=100)
     for i = 1:MaxRetry
-        R = GenerateReferenceSetFixedWalks(B, C)
+        R = GetStepRandomWalkFixedWalks(B, C, 15, 4, [1.0, 1.0, 1.0, 1.0])
         gds = GlobalDensestSubgraph(B[R,R]).source_nodes
         lds = LocalAnchoredDensestSubgraph(B,R).source_nodes
         if length(setdiff(lds, R[gds])) > 0
@@ -172,7 +172,7 @@ function SampleRByDegree(Indices, Samples::Int64=100)
         rs[i] = []
         for j in 1:Samples
             append!(rs[i], 0)
-            rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 15, 4, [1.0, 1.0, 1.0, 1.0])
+            rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 18, 4, [1.0, 0.7, 0.4, 0.1])
         end
     end
     return rs

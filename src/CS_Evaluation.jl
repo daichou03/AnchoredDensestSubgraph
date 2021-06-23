@@ -56,13 +56,70 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetPropSoutR(R,S)], "|")
 end
 
-function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, Name::String)
-    folder = string(CS_AMAZON_FOLDER, "EV-", Name, "/")
+function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
+    folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/EV-", AlgName, "/")
     mkpath(folder)
     for i in 1:length(Rs)
         io = open(string(folder,i,".txt"), "w")
         for j in 1:length(Rs[i])
             write(io, string(ReportCommunity(B, Rs[i][j], Ss[i][j]), "\n"))
+        end
+        close(io)
+    end
+end
+
+ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
+REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S out of R"]
+REPORT_METRIC_FOLDER_NAME = ["Length", "Density", "R-Subgraph-Density", "Conductance", "Local-Conductance", "L", "Proportion-R-in-S", "Proportion-S-out-of-R"]
+
+IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
+
+function ImputeNaNs(Values::Vector{Float64}, ImputeValues = IMPUTE_VALUES)
+    ret = copy(Values)
+    for i in 1:length(Values)
+        if isnan(ret[i]) || isinf(ret[i])
+            ret[i] = ImputeValues[i]
+        end
+        
+    end
+    return ret
+end
+
+function IntegrateReport(TestName::String, NumReports::Int64=41)
+    statsAlgs = []
+    for i_alg in 1:length(ALG_REPORT_NAMES)
+        folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/", ALG_REPORT_NAMES[i_alg], "/")
+        statsDegs = []
+        for i_deg in 1:NumReports
+            io = open(string(folder,i_deg,".txt"))
+            stats = Array{Float64}(undef, length(REPORT_METRIC_FOLDER_NAME))
+            count = 0
+            while !eof(io)
+                stat = ImputeNaNs(map(x->parse(Float64, x), split(readline(io), "|")))
+                count += 1
+                for j in 1:length(REPORT_METRIC_FOLDER_NAME)
+                    stats[j] += stat[j]
+                end
+            end
+            close(io)
+            append!(statsDegs, 0)
+            statsDegs[i_deg] = map(x->x/count, stats)
+        end
+        append!(statsAlgs, 0)
+        statsAlgs[i_alg] = statsDegs
+    end
+    # For each metrics output data
+    for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
+        output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/", REPORT_METRIC_FOLDER_NAME[i_metric], "/")
+        mkpath(output_folder)
+        io = open(string(output_folder, "fig.txt"), "w")
+        for i_deg in 1:NumReports
+            line = []
+            for i_alg in 1:length(ALG_REPORT_NAMES)
+                append!(line, 0)
+                line[i_alg] = statsAlgs[i_alg][i_deg][i_metric]
+            end
+            write(io, string(join(line, " "), "\n"))
         end
         close(io)
     end

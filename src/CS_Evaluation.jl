@@ -70,7 +70,7 @@ end
 
 # For Graph Editor
 
-function ExportGraphEditorR(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
+function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
     RUnion = copy(R)
     for s in Ss
         RUnion = union(RUnion, s)

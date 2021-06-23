@@ -160,10 +160,14 @@ function ExportGraphEditorR(R, Ss, Name::String, Folder::String=string(CS_AMAZON
     end
     close(io_inds)
 
-    io_inds = open(string(Folder,Name,"/R.csv"), "w")
-    write(io_inds, string("Id,Label,Color", "\n"))
-    for v in 1:length(RUnionN)
-        write(io_inds, string(v, ",", v, ((v in RsubsetInds) ? "" : ",#FF0000"), "\n"))
+    for i in 1:length(SsubsetIndss)
+        io_inds = open(string(Folder,Name,"/S-", i,".csv"), "w")
+        write(io_inds, string("Id,Label,Node,Color,Size", "\n"))
+        for v in 1:length(RUnionN)
+            color = string("#", ((v in SsubsetIndss[i]) ? lpad(string(204*256^(i-1),base=16), 6, "0") : "FFFFFF")) # Note only work if i <= 3
+            size = ((v in RsubsetInds) ? 1 : 0)
+            write(io_inds, string(join([v, v, v, color, size], ","), "\n"))
+        end
+        close(io_inds)
     end
-    close(io_inds)
 end

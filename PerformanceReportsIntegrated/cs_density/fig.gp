@@ -13,6 +13,11 @@ set key off
 set xlabel "deg(V)"
 set ylabel "Density"
 
+array colors[3]
+colors[1] = "#CC0000"
+colors[2] = "#00CC00"
+colors[3] = "#0000CC"
+
 set xrange [1:41]
 
 set output 'fig.eps'
@@ -21,4 +26,4 @@ set encoding utf8
 
 set style data points
 
-plot for [i=2:25] 'fig.txt' using (2**(column(0))):i w linespoints notitle lt -1 ps 1 pt 1
+plot for [i=1:3] 'fig.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] dashtype 2**(i-1) ps 0.5 pt 1

@@ -9,11 +9,14 @@ DATA_POINTS_DIR = "../DataPoints/"
 REPORT_GENRE = ["time", "size"]
 ALL_ALGORITHM_NAMES = ["GA", "IGA", "LA"]
 
-io_read = open(string(GRAPH_METADATA_DIR, "datagraph.csv"))
+io_read = open(string(GRAPH_METADATA_DIR, "datagraph.txt"))
 GRAPH_NUM_EDGES = Dict()
 GRAPH_NUM_VERTICES = Dict()
 while !eof(io_read)
     line = split(readline(io_read), ",")
+    if length(line) < 3 # Appending weird character in front of the file, just walk it around.
+        continue
+    end
     edges = parse(Int64, line[3])
     vertices = parse(Int64, line[2])
     GRAPH_NUM_EDGES[line[1]] = edges
@@ -99,12 +102,11 @@ function CopyBaselineReportsToHalfEdgeFolder(ReportSubDir::String, BaselineSubDi
         # Copy
         baselineFileNames = map(y->join(y, "-"), baselineFiles)
         for baseFile in baselineFileNames
-            # Copy only LA
             io_read = open(string(PERFORMANCE_REPORTS_DIR, BaselineSubDir, baseFile))
             io_write = open(string(PERFORMANCE_REPORTS_DIR, ReportSubDir, baseFile), "w")
             for i = 1:2
-                line = readline(io_read)
-                write(io_write, string(split(line, ",")[3], "\n"))
+                line = split(readline(io_read), ",")
+                write(io_write, string(last(line), "\n")) # Copy LA only
             end
             close(io_read)
             close(io_write)
@@ -117,7 +119,7 @@ end
 # Output Integrated Report
 # ------------------------
 
-function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,1}, OutputDir::String, ReportGenreIndex::Integer)
+function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,1}, OutputDir::String, ReportGenreIndex::Integer, PadColumn::Integer=-1)
     sep = (" ")
     dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", REPORT_GENRE[ReportGenreIndex], "/")
     mkpath(dir)
@@ -134,8 +136,12 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
             line = readline(io_read)
         end
         close(io_read)
-        nums = split(line, ",")
+        nums = split(line, ",")        
         nums = map(x->string(parse(Float64, x) / tests / (ReportGenreIndex == 2 ? 1000000 : 1)), nums) # For size report, bytes to megabytes
+        # Only happens for large tests that can't finish GA and IGA, impute with close to Inf value.
+        while PadColumn > length(nums)
+            nums = vcat([999999], nums)
+        end
         write(io_write, string(report_name, sep, join(nums, sep), "\n"))
     end
     close(io_write)
@@ -393,7 +399,7 @@ function DoCollectResults()
     ReportSubDir = "ahs/" # Avoid long dir
     ReportFileGroups = GetAnchorSizeReportFileGroups(ReportSubDir)
     OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "anchorsize",1,["LA"])
-    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "anchorsize",2,["LA"]) 
+    OutputIntegratedReportsByAlgorithm(ReportSubDir, ReportFileGroups, "anchorsize",2,["LA"])
     # --- halfedge ---
     ReportSubDir = "hl/"
     CopyBaselineReportsToHalfEdgeFolder(ReportSubDir, "base/")

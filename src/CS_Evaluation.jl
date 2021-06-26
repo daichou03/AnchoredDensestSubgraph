@@ -70,7 +70,7 @@ end
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
 REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S out of R"]
-REPORT_METRIC_FOLDER_NAME = ["Length", "Density", "R-Subgraph-Density", "Conductance", "Local-Conductance", "L", "Proportion-R-in-S", "Proportion-S-out-of-R"]
+REPORT_METRIC_FOLDER_NAME = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "soutofr"]
 
 IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
 
@@ -110,9 +110,9 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
     end
     # For each metrics output data
     for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
-        output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/", REPORT_METRIC_FOLDER_NAME[i_metric], "/")
+        output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
         mkpath(output_folder)
-        io = open(string(output_folder, "fig.txt"), "w")
+        io = open(string(output_folder, string(REPORT_METRIC_FOLDER_NAME[i_metric], ".txt")), "w")
         for i_deg in 1:NumReports
             line = []
             for i_alg in 1:length(ALG_REPORT_NAMES)

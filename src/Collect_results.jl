@@ -393,8 +393,8 @@ function DoCollectResults()
     # --- baseline ---
     ReportSubDir="base/"
     ReportFiles = GetBaselineReportFiles(ReportSubDir)
-    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",1)
-    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",2)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",1,3)
+    OutputIntegratedReport(ReportSubDir,ReportFiles,"baseline",2,3)
     # --- anchorsize ---
     ReportSubDir = "ahs/" # Avoid long dir
     ReportFileGroups = GetAnchorSizeReportFileGroups(ReportSubDir)

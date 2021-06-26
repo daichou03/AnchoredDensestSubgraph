@@ -22,10 +22,10 @@ set ylabel "Memory Consumption (MB)" offset 0.5 font "Times-Roman,18"
 set logscale y
 set format y "10^{%L}
 
-set ytics ('10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100)
+set ytics ('10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{2}' 1000)
 set xtics rotate by -30 font "Times-Roman,18"
 
-set yrange [0.01:100]
+set yrange [0.01:1000]
 
 
 set output 'fig.eps'

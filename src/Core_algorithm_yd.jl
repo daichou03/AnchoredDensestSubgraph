@@ -135,6 +135,8 @@ end
 #######
 # IGA #
 #######
+
+# IGA_M
 # This implementation merges overdensed nodes to the sink when builidng the flow network, resulting in a smaller network.
 
 # GlobalDegree and OrderByDegreeIndices are information global to B. Pre-calculate them as below:
@@ -238,6 +240,7 @@ function FlowNetAlphaIGA(FlowNet::SparseMatrixCSC, alpha::Float64, rToOWeights::
     return F
 end
 
+# IGA_SF
 # This implementation sets the sink flow of overdensed nodes to be large enough (volumeR+1).
 # 20210626: Local algorithm uses this now.
 

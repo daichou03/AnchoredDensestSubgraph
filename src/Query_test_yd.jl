@@ -57,7 +57,7 @@ function GenerateUserInputSet(B::SparseMatrixCSC, V::Int64, MaxHops::Int64=DEF_U
     return GenerateUserInputSetFromPool(B, V, setdiff(pool, [V]), TargetSize)
 end
 
-function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE)
+function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE, MaxAvgDegreeMulti::Float64=-1.0)
     N = size(B,1)
     V = rand(1:N)
     while !ConnectedComponentSizeAtLeast(B, [V], CC_SIZE_THRESHOLD)
@@ -67,6 +67,21 @@ function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_
     for i = 1:MaxHops
         pool = GetComponentAdjacency(B, pool, true)
     end
+    if MaxAvgDegreeMulti > 0
+        degThreshold = (sum(B)/size(B,1)/2)*MaxAvgDegreeMulti
+        poolFiltered = filter(x->GetDegree(B,x)<degThreshold, pool)
+        poolSize = length(pool)
+        while length(poolFiltered) < DEF_USER_TARGET_SIZE
+            pool = GetComponentAdjacency(B, pool, true)
+            if length(pool) <= poolSize
+                throw(string("This connected component don't have enough nodes that the degree < ", degThreshold))
+            end
+            poolSize = length(pool)
+            poolFiltered = filter(x->GetDegree(B,x)<degThreshold, pool)
+        end
+        pool = poolFiltered
+    end
+    
     return GenerateUserInputSetFromPool(B, V, setdiff(pool, [V]), TargetSize)
 end
 
@@ -465,6 +480,26 @@ function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThresh
     end
 end
 
+# Just easy to find
+# https://www.asciiart.eu/computers/joysticks
+#             ..                          ..
+#          .''..''.      .--~~--.      .``..``.
+#         .:''     `----'        `----'     ``:.
+#         |       .    ( * )  ( * )    .       |
+#        .' ....   `.  L1/L2  R1/R2  .'     _  `.
+#       : .;\  /;.  :  ( * )  ( * )  :   _ (B) _ :
+#      :  :) () (:   :              :   (A) _ (D) :
+#       : `:/  \:'  :       B        :     (C)   :
+#        :  ''''   .'   A ( * ) D    `.         :
+#       .'        '   ( * ) C ( * )    `        `.
+#      .'        .''.     ( * )      .``.        `.
+#    .'        .'   `. (o)      (o) .'   `.        `.
+#   .'       .'      `.   1(* )2   .'      `.       `.
+# .'       .'         `............'         `.       `.
+# `.      .' 4 BUTTON FLIGHT  YOKE W/THROTTLE `.      .'
+#   `....'   Lester                       AMC   `....'
+
+
 # Copy paste below to the console.
 # The idea is if something is wrong, still have the loaded data graph in the memory as B ->
 # ds_name = "flickr"
@@ -474,6 +509,7 @@ end
 # B = 0
 # @time B = readIN(string(ds_name, ".in"))
 # BatchPerformAllTests(B, ds_name, 100, length(B.nzval)>150000000)
+
 
 # Generate AnchorNodes file.
 

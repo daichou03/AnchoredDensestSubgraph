@@ -32,5 +32,4 @@ set offset 0,0,0,0
 
 set style data points
 
-plot 'fig_l.txt' using 2:3:(sprintf("%d", $1)) title '>= 1000000' lt -1 ps 2 pt 5,\
-    'fig_s.txt' using 2:3:(sprintf("%d", $1)) title '< 1000000' lt -1 ps 2 pt 4,\
+plot 'fig_l.txt' using 2:3:(sprintf("%d", $1)) title '>= 1000000' lt -1 ps 2 pt 4

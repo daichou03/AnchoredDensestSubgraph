@@ -44,6 +44,7 @@ ALL_ALGORITHMS = [true, true, true]
 LA_ONLY = [false, false, true]
 
 CC_SIZE_THRESHOLD = 128
+USER_INPUT_DEGREE_MULTIPLIER_MAX = -1.0
 
 # --------------
 # User input set
@@ -57,7 +58,7 @@ function GenerateUserInputSet(B::SparseMatrixCSC, V::Int64, MaxHops::Int64=DEF_U
     return GenerateUserInputSetFromPool(B, V, setdiff(pool, [V]), TargetSize)
 end
 
-function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE, MaxAvgDegreeMulti::Float64=-1.0)
+function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_MAX_HOPS, TargetSize::Int64=DEF_USER_TARGET_SIZE)
     N = size(B,1)
     V = rand(1:N)
     while !ConnectedComponentSizeAtLeast(B, [V], CC_SIZE_THRESHOLD)
@@ -67,8 +68,8 @@ function RandomGenerateUserInputSet(B::SparseMatrixCSC, MaxHops::Int64=DEF_USER_
     for i = 1:MaxHops
         pool = GetComponentAdjacency(B, pool, true)
     end
-    if MaxAvgDegreeMulti > 0
-        degThreshold = (sum(B)/size(B,1)/2)*MaxAvgDegreeMulti
+    if USER_INPUT_DEGREE_MULTIPLIER_MAX > 0
+        degThreshold = (sum(B)/size(B,1)/2)*USER_INPUT_DEGREE_MULTIPLIER_MAX
         poolFiltered = filter(x->GetDegree(B,x)<degThreshold, pool)
         poolSize = length(pool)
         while length(poolFiltered) < DEF_USER_TARGET_SIZE

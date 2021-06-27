@@ -66,6 +66,19 @@ function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::Str
         end
         close(io)
     end
+    BulkReportRSize(Rs, TestName)
+end
+
+function BulkReportRSize(Rs::Any, TestName::String)
+    folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/R/")
+    mkpath(folder)
+    for i in 1:length(Rs)
+        io = open(string(folder,i,".txt"), "w")
+        for j in 1:length(Rs[i])
+            write(io, string(length(Rs[i][j]), "\n"))
+        end
+        close(io)
+    end
 end
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
@@ -108,6 +121,21 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
         append!(statsAlgs, 0)
         statsAlgs[i_alg] = statsDegs
     end
+    # R length
+    folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/R/")
+    rLengths = []
+    for i_deg in 1:NumReports
+        io = open(string(folder,i_deg,".txt"))
+        rLength = 0
+        count = 0
+        while !eof(io)
+            rLength += parse(Int64, readline(io))
+            count += 1
+        end
+        close(io)
+        append!(rLengths, 0)
+        rLengths[i_deg] = map(x->x/count, rLength)
+    end
     # For each metrics output data
     for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
         output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
@@ -119,14 +147,18 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
                 append!(line, 0)
                 line[i_alg] = statsAlgs[i_alg][i_deg][i_metric]
             end
+            # Append length of R
+            if i_metric == 1
+                append!(line, 0)
+                line[4] = rLengths[i_deg]
+            end
             write(io, string(join(line, " "), "\n"))
         end
         close(io)
     end
 end
 
-# For Graph Editor
-
+# For Gephi
 function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
     RUnion = copy(R)
     for s in Ss

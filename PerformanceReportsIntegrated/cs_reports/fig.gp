@@ -23,9 +23,11 @@ set encoding utf8
 
 set style data points
 
-set xlabel "deg(V)"
+set xlabel "d_G(x)" font ", 30"
+set ylabel font ", 30"
 set xrange [1:41]
 set xtics ('1' 1, '5' 5, '10' 10, '15' 15, '20' 20, '25' 25, '30' 30, '35' 35, '' 40, '41+' 41)
+set tics font ", 30"
 
 set ylabel "Density"
 set output 'density.eps'
@@ -48,10 +50,10 @@ set ylabel "% R in S"
 set output 'rins.eps'
 plot for [i=1:3] 'rins.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
 
-set yrange [0:0.5]
-set ylabel "% S out of R"
-set output 'soutofr.eps'
-plot for [i=1:3] 'soutofr.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+set yrange [0:1]
+set ylabel "% S in R"
+set output 'sinr.eps'
+plot for [i=1:3] 'sinr.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:60]
 set ylabel "Output Set Size"

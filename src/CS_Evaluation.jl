@@ -41,8 +41,12 @@ function GetPropRinS(R::Vector{Int64}, S::Vector{Int64})
     return 1 - length(setdiff(R, S)) / length(R)
 end
 
-function GetPropSoutR(R::Vector{Int64}, S::Vector{Int64})
-    return length(setdiff(S, R)) / length(S)
+# function GetPropSoutR(R::Vector{Int64}, S::Vector{Int64})
+#     return length(setdiff(S, R)) / length(S)
+# end
+
+function GetPropSinR(R::Vector{Int64}, S::Vector{Int64})
+    return 1 - length(setdiff(S, R)) / length(S)
 end
 
 function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
@@ -53,7 +57,7 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetLocalConductance(B,R,S),
         GetLScore(B,S),
         GetPropRinS(R,S),
-        GetPropSoutR(R,S)], "|")
+        GetPropSinR(R,S)], "|")
 end
 
 function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
@@ -82,8 +86,8 @@ function BulkReportRSize(Rs::Any, TestName::String)
 end
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
-REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S out of R"]
-REPORT_METRIC_FOLDER_NAME = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "soutofr"]
+REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
+REPORT_METRIC_FOLDER_NAME = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "sinr"]
 
 IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
 

@@ -10,6 +10,8 @@ GLOBAL_max_memory_usage = 0
 GLOBAL_current_stack = 1 # Depth of current call (among functions of interest only)
 GLOBAL_current_stamp = 1 # Number of calls of functions of interest
 
+PRINT_MEMORY_CLAIM = false
+
 function UpdateMaxMemoryUsage()
     global GLOBAL_memory_dict
     global GLOBAL_max_memory_usage
@@ -19,7 +21,9 @@ function UpdateMaxMemoryUsage()
             sum_memory_usage += var_memory
         end
     end
+    old_max_memory_usage = GLOBAL_max_memory_usage
     GLOBAL_max_memory_usage = max(GLOBAL_max_memory_usage, sum_memory_usage)
+    return GLOBAL_max_memory_usage > old_max_memory_usage
 end
 
 function FunctionKeyName(FunctionName::String, Stamp::Int)
@@ -44,8 +48,9 @@ function RegisterMemoryItem(FunctionName::String, Stamp::Int, Var::Any, VarName:
         GLOBAL_memory_dict[functionKey] = Dict{String,Int64}()
     end
     GLOBAL_memory_dict[functionKey][VarName] = Base.summarysize(Var)
-    UpdateMaxMemoryUsage()
-    # println(string(FunctionName, ", ", Stamp, ", ", Var, ", ", VarName))
+    if (UpdateMaxMemoryUsage() && PRINT_MEMORY_CLAIM)
+        println(join([FunctionName, Stamp, Var, VarName, GLOBAL_max_memory_usage], ","))
+    end
 end
 
 function DeregisterMemoryItem(FunctionName::String, Stamp::Int, VarName::String)

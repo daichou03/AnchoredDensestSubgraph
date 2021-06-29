@@ -14,6 +14,9 @@ include("Utils.jl")
 include("CP_GreedyL.jl")
 include("CS_Amazon.jl")
 
+FS_PENALTY_R = 1.0
+FS_EPSILON = 1.0
+
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)
 end
@@ -28,8 +31,8 @@ function GetConductance(B::SparseMatrixCSC, S::Vector{Int64})
     return 1 - GetVolume(B[S,S]) / GetVolume(B, S)
 end
 
-function GetLocalConductance(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64}, epsilon::Float64=1.0)
-    O_R = GetVolume(B, R) - epsilon * GetVolume(B, setdiff(S, R)) - GetVolume(B, setdiff(R, S))
+function GetLocalConductance(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
+    O_R = GetVolume(B, R) - FS_EPSILON * GetVolume(B, setdiff(S, R)) - FS_PENALTY_R * GetVolume(B, setdiff(R, S))
     return O_R > 0 ? (GetVolume(B, S) - GetVolume(B[S,S])) / O_R : Inf
 end
 
@@ -60,6 +63,10 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetPropSinR(R,S)], "|")
 end
 
+###############
+# Bulk Report #
+###############
+
 function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
     folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/EV-", AlgName, "/")
     mkpath(folder)
@@ -70,7 +77,6 @@ function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::Str
         end
         close(io)
     end
-    BulkReportRSize(Rs, TestName)
 end
 
 function BulkReportRSize(Rs::Any, TestName::String)
@@ -84,6 +90,10 @@ function BulkReportRSize(Rs::Any, TestName::String)
         close(io)
     end
 end
+
+####################
+# Integrate report #
+####################
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
 REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
@@ -162,7 +172,10 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
     end
 end
 
-# For Gephi
+#############
+# For Gephi #
+#############
+
 function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
     RUnion = copy(R)
     for s in Ss

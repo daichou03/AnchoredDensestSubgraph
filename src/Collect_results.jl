@@ -123,7 +123,7 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
     sep = (" ")
     dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", REPORT_GENRE[ReportGenreIndex], "/")
     mkpath(dir)
-    io_write = open(string(dir,"fig.txt"), "w")
+    lines = []
     for report in ReportFiles
         if length(split(report, "-")) != 6 # Not a exclusive check, the error string itself is more explanatory.
             error(string("Unexpected report file name format: ", report, ", expected report file name format example: data-1000-2-8-3-2"))
@@ -142,7 +142,11 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
         while PadColumn > length(nums)
             nums = vcat([999999], nums)
         end
-        write(io_write, string(report_name, sep, join(nums, sep), "\n"))
+        append!(lines, [(GRAPH_NUM_EDGES[report_name], string(report_name, sep, join(nums, sep), "\n"))])
+    end
+    io_write = open(string(dir,"fig.txt"), "w")
+    for line in sort(lines, by=x->x[1])
+        write(io_write, line[2])
     end
     close(io_write)
 end
@@ -153,7 +157,7 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
     for alg in 1:length(AlgorithmNames)
         dir = string(PERFORMANCE_REPORTS_INTEGRATED_DIR, OutputDir, "_", AlgorithmNames[alg], "_", REPORT_GENRE[ReportGenreIndex], "/")
         mkpath(dir)
-        io_write = open(string(dir,"fig.txt"), "w")
+        lines = []
         for fileGroup in ReportFileGroups
             report_name = split(fileGroup[1], "-")[1]
             line_print = ""
@@ -173,7 +177,11 @@ function OutputIntegratedReportsByAlgorithm(ReportSubDir::String, ReportFileGrou
                 end
                 line_print = string(line_print, num)
             end
-            write(io_write, string(report_name, sep, line_print, "\n"))
+            append!(lines, [(GRAPH_NUM_EDGES[report_name], string(report_name, sep, line_print, "\n"))])
+        end
+        io_write = open(string(dir,"fig.txt"), "w")
+        for line in sort(lines, by=x->x[1])
+            write(io_write, line[2])
         end
         close(io_write)
     end

@@ -35,14 +35,14 @@ function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, StrongR::Vector{Int64}=I
     return (S_FS, ReportCommunity(B,R,S_FS))
 end
 
-function StratifiedFSTest(RSS)
+function StratifiedFSTest(RSS, PenalityR::Float64=1.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     res = Any[]
     for i = 1:length(RSS)
         append!(res, 0)
         res[i] = []
         for j = 1:length(RSS[i])
             append!(res[i], 0)
-            res[i][j] = LocalCond(B, RSS[i][j])[1]
+            res[i][j] = LocalCond(B, RSS[i][j], PenalityR, StrongR, epsilon)[1]
         end
     end
     return res

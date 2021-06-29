@@ -51,7 +51,7 @@ function RegisterMemoryItem(FunctionName::String, Stamp::Int, Var::Any, VarName:
     end
     GLOBAL_memory_dict[functionKey][VarName] = Base.summarysize(Var)
     if (UpdateMaxMemoryUsage() && PRINT_MEMORY_CLAIM)
-        println(join([now(), FunctionName, Stamp, (length(string(Var)) > 50 ? string(string(Var)[1:47], "...") : string(Var)) : string(Var), VarName, GLOBAL_max_memory_usage], "|"))
+        println(join([now(), FunctionName, Stamp, (length(string(Var)) > 50 ? string(string(Var)[1:47], "...") : string(Var)), VarName, GLOBAL_max_memory_usage], "|"))
     end
 end
 

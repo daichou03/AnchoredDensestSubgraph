@@ -32,7 +32,7 @@ function GetConductance(B::SparseMatrixCSC, S::Vector{Int64})
 end
 
 function GetLocalConductance(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
-    O_R = GetVolume(B, R) - FS_EPSILON * GetVolume(B, setdiff(S, R)) - FS_PENALTY_R * GetVolume(B, setdiff(R, S))
+    O_R = GetVolume(B, intersect(R, S)) - FS_EPSILON * GetVolume(B, setdiff(S, R)) - FS_PENALTY_R * GetVolume(B, setdiff(R, S))
     return O_R > 0 ? (GetVolume(B, S) - GetVolume(B[S,S])) / O_R : Inf
 end
 
@@ -77,6 +77,7 @@ function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::Str
         end
         close(io)
     end
+    BulkReportRSize(Rs, TestName)
 end
 
 function BulkReportRSize(Rs::Any, TestName::String)
@@ -216,7 +217,7 @@ function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_
         io_inds = open(string(Folder,Name,"/S-", i,".csv"), "w")
         write(io_inds, string("Id,Label,Node,Color,Size", "\n"))
         for v in 1:length(RUnionN)
-            color = string("#", ((v in SsubsetIndss[i]) ? lpad(string(204*256^(i-1),base=16), 6, "0") : "FFFFFF")) # Note only work if i <= 3
+            color = string("#", ((v in SsubsetIndss[i]) ? lpad(string(204*256^(3-i),base=16), 6, "0") : "FFFFFF")) # Note only work if i <= 3
             size = ((v in RsubsetInds) ? 1 : 0)
             write(io_inds, string(join([v, v, v, color, size], ","), "\n"))
         end

@@ -8,6 +8,7 @@ end
 # This tool manually tracks memory usage of functions.
 
 GLOBAL_memory_dict = Dict{String,Dict{String,Int64}}()
+GLOBAL_current_memory_usage = 0
 GLOBAL_max_memory_usage = 0
 GLOBAL_current_stack = 1 # Depth of current call (among functions of interest only)
 GLOBAL_current_stamp = 1 # Number of calls of functions of interest
@@ -23,8 +24,9 @@ function UpdateMaxMemoryUsage()
             sum_memory_usage += var_memory
         end
     end
+    GLOBAL_current_memory_usage = sum_memory_usage
     old_max_memory_usage = GLOBAL_max_memory_usage
-    GLOBAL_max_memory_usage = max(GLOBAL_max_memory_usage, sum_memory_usage)
+    GLOBAL_max_memory_usage = max(GLOBAL_max_memory_usage, GLOBAL_current_memory_usage)
     return GLOBAL_max_memory_usage > old_max_memory_usage
 end
 
@@ -52,7 +54,7 @@ function RegisterMemoryItem(FunctionName::String, Stamp::Int, Var::Any, VarName:
     GLOBAL_memory_dict[functionKey][VarName] = Base.summarysize(Var)
     if (UpdateMaxMemoryUsage() && PRINT_MEMORY_CLAIM)
         varString = Base.summarysize(Var) > 50000000 ? "OVER 50M" : (length(string(Var)) > 50 ? string(string(Var)[1:47], "...") : string(Var))
-        println(join([now(), Stamp, FunctionName, VarName, typeof(Var), Base.summarysize(Var), GLOBAL_max_memory_usage, varString], " | "))
+        println(join([now(), Stamp, FunctionName, VarName, typeof(Var), Base.summarysize(Var), GLOBAL_current_memory_usage, GLOBAL_max_memory_usage, varString], " | "))
     end
 end
 

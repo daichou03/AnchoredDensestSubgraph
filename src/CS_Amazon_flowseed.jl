@@ -10,7 +10,7 @@ include("CS_Evaluation.jl")
 # PenalityR: Penalty for not including R. 1.0 is their default, but 0.0 is closer to our anchored density definition.
 # Strong nodes: flowseed can specify nodes that MUST be included.
 # epsilon: 0.1 is their default, 1.0 is closer to our anchored density definition.
-function LocalCond(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=1.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
+function LocalCond(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     numR = length(R)
     RinS = zeros(numR,1)
     pR = zeros(numR,1)
@@ -36,7 +36,7 @@ function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, StrongR::Vector{Int64}=I
     return (S_FS, ReportCommunity(B,R,S_FS))
 end
 
-function StratifiedFSTest(RSS, PenalityR::Float64=1.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
+function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     res = Any[]
     for i = 1:length(RSS)
         append!(res, 0)

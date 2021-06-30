@@ -14,7 +14,7 @@ include("Utils.jl")
 include("CP_GreedyL.jl")
 include("CS_Amazon.jl")
 
-FS_PENALTY_R = 1.0
+FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0
 
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})

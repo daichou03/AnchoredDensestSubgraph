@@ -17,6 +17,7 @@ PRINT_MEMORY_CLAIM = false
 
 function UpdateMaxMemoryUsage()
     global GLOBAL_memory_dict
+    global GLOBAL_current_memory_usage
     global GLOBAL_max_memory_usage
     sum_memory_usage = 0
     for (func_name, func_memory) in GLOBAL_memory_dict

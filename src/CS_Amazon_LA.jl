@@ -129,29 +129,51 @@ function CSTest(V::Int64, Print::Bool=true)
     return (R, S_LA, S_GL, ReportCommunity(B,R,S_LA), ReportCommunity(B,R,S_GL))
 end
 
+function SampleRByDegree(Indices, Samples::Int64=100)
+    rs = Any[]
+    for i = 1:length(Indices)
+        ind_sample = StatsBase.sample(Indices[i], Samples)
+        append!(rs, 0)
+        rs[i] = []
+        for j in 1:Samples
+            append!(rs[i], 0)
+            rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 18, 4, [1.0, 0.7, 0.4, 0.1])
+        end
+    end
+    return rs
+end
+
 # Stratified tests
 function StratifiedLATest(RSS)
     res = Any[]
     for i = 1:length(RSS)
         append!(res, 0)
         res[i] = []
+        TimerReset()
         for j = 1:length(RSS[i])
             append!(res[i], 0)
             res[i][j] = LocalAnchoredDensestSubgraph(B, RSS[i][j]).source_nodes
         end
+        println(TimerLapValue())
     end
     return res
 end
+
+S_LA = StratifiedLATest(rss)
+println("------GL below ------")
+S_GL = StratifiedGLTest(rss)
 
 function StratifiedGLTest(RSS)
     res = Any[]
     for i = 1:length(RSS)
         append!(res, 0)
         res[i] = []
+        TimerReset()
         for j = 1:length(RSS[i])
             append!(res[i], 0)
             res[i][j] = LScoreCommunity(B, RSS[i][j])[1]
         end
+        println(TimerLapValue())
     end
     return res
 end

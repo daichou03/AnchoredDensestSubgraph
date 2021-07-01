@@ -51,20 +51,6 @@ function ReadIndicesByDegree(Last::Int64=40)
     return inds
 end
 
-function SampleRByDegree(Indices, Samples::Int64=100)
-    rs = Any[]
-    for i = 1:length(Indices)
-        ind_sample = StatsBase.sample(Indices[i], Samples)
-        append!(rs, 0)
-        rs[i] = []
-        for j in 1:Samples
-            append!(rs[i], 0)
-            rs[i][j] = GetStepRandomWalkFixedWalks(B, [ind_sample[j]], 18, 4, [1.0, 0.7, 0.4, 0.1])
-        end
-    end
-    return rs
-end
-
 function ExportRs(Rs::Any, Name::String="0")
     folder = string(CS_AMAZON_FOLDER, "R-", Name, "/")
     mkpath(folder)

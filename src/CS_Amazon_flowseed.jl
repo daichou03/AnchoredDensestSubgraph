@@ -41,10 +41,12 @@ function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=In
     for i = 1:length(RSS)
         append!(res, 0)
         res[i] = []
+        TimerReset()
         for j = 1:length(RSS[i])
             append!(res[i], 0)
             res[i][j] = LocalCond(B, RSS[i][j], PenalityR, StrongR, epsilon)[1]
         end
+        println(TimerLapValue())
     end
     return res
 end

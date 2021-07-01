@@ -1,3 +1,5 @@
+using Dates
+
 # https://stackoverflow.com/a/27930367/10844976
 function print_rgb(r, g, b, t)
     print("\e[1m\e[38;2;$r;$g;$b;249m",t)
@@ -30,3 +32,21 @@ function emptyStringArray(len::Int64)
     end
     return ret
 end
+
+# Timer
+TIMER_DATETIME = now()
+
+function TimerReset()
+    global TIMER_DATETIME
+    TIMER_DATETIME = now()
+end
+
+function TimerLapValue()
+    global TIMER_DATETIME
+    now_0 = now()
+    ret = (now_0-TIMER_DATETIME).value
+    TIMER_DATETIME = now_0
+    return ret / 1000
+end
+
+

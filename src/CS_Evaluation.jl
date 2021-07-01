@@ -108,7 +108,6 @@ function ImputeNaNs(Values::Vector{Float64}, ImputeValues = IMPUTE_VALUES)
         if isnan(ret[i]) || isinf(ret[i])
             ret[i] = ImputeValues[i]
         end
-        
     end
     return ret
 end
@@ -120,7 +119,7 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
         statsDegs = []
         for i_deg in 1:NumReports
             io = open(string(folder,i_deg,".txt"))
-            stats = Array{Float64}(undef, length(REPORT_METRIC_FOLDER_NAME))
+            stats = zeros(length(REPORT_METRIC_FOLDER_NAME))
             count = 0
             while !eof(io)
                 stat = ImputeNaNs(map(x->parse(Float64, x), split(readline(io), "|")))

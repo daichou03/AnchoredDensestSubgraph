@@ -34,43 +34,48 @@ set tics font ", 40"
 
 set ylabel "Density"
 set output 'density.eps'
-plot for [i=1:3] 'density.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'density.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set ylabel "L"
 set output 'lscore.eps'
-plot for [i=1:3] 'lscore.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'lscore.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set ylabel "R-Subgraph Density"
 set output 'rsdensity.eps'
-plot for [i=1:3] 'rsdensity.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'rsdensity.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:0.7]
 set ylabel "Conductance"
 set output 'conductance.eps'
-plot for [i=1:3] 'conductance.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'conductance.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
+
+set yrange [0:50]
+set ylabel "Time Consumption (sec)"
+set output 'runtime.eps'
+plot for [i=1:3] 'runtime.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:1]
 set ylabel "% R in S"
 set output 'rins.eps'
-plot for [i=1:3] 'rins.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'rins.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:1]
 set ylabel "% S in R"
 set output 'sinr.eps'
-plot for [i=1:3] 'sinr.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'sinr.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:1]
 set ylabel "F1-score"
-set output 'sinr.eps'
-plot for [i=1:3] 'f1score.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+set output 'f1score.eps'
+plot for [i=1:3] 'f1score.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:50]
-set ylabel "Output Set Size"
+set ylabel "Output Set Size" offset -3
 set output 'length.eps'
-plot for [i=1:4] 'length.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw (i==4 ? 2 : 3) dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:4] 'length.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw (i==4 ? 3 : 4) dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:1.1]
 set ytics ('0' 0.0, '0.2' 0.2, '0.4' 0.4, '0.6' 0.6, '0.8' 0.8, '1.0' 1.0, 'Inf' 1.1)
 set ylabel "Local Conductance" offset -3
 set output 'lconductance.eps'
-plot for [i=1:3] 'lconductance.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 3 dashtype 2**(i-1) ps 0.5 pt 1
+plot for [i=1:3] 'lconductance.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1

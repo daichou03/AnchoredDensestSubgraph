@@ -97,10 +97,12 @@ end
 ####################
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
-REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
-REPORT_METRIC_FOLDER_NAME = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "sinr"]
+# REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
+REPORT_METRICS = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "sinr"]
 IND_RINS = 7
 IND_SINR = 8
+CALCULATED_METRICS = ["f1score"]
+IND_F1SCORE = 1
 
 IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
 
@@ -121,11 +123,14 @@ function IntegrateCSReport(TestName::String, NumReports::Int64=NUM_REPORTS)
     rLengths = ReadCSRLength(TestName, NumReports)
     output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
     mkpath(output_folder)
+    OutputCSMetrics(statsAlgs, rLengths, output_folder, NumReports)
 
-    OutputCSIntegrated(statsAlgs, rLengths, output_folder, NumReports)
-    OutputCSAggregated(statsAlgs, output_folder, NumReports)
+    calcStatsAlgss = []
+    stat_f1score = ReadCSF1score(TestName, NumReports)
+    OutputCSCalculatedMetric(stat_f1score, CALCULATED_METRICS[IND_F1SCORE], output_folder, NumReports)
+    append!(calcStatsAlgss, [stat_f1score])
 
-    IntegrateCSF1Score(TestName, NumReports)
+    OutputCSAggregated(statsAlgs, calcStatsAlgss, output_folder, NumReports)
 end
 
 function ReadCSReport(TestName::String, NumReports::Int64=NUM_REPORTS)
@@ -135,12 +140,12 @@ function ReadCSReport(TestName::String, NumReports::Int64=NUM_REPORTS)
         statsDegs = []
         for i_deg in 1:NumReports
             io = open(string(folder,i_deg,".txt"))
-            stats = zeros(length(REPORT_METRIC_FOLDER_NAME))
+            stats = zeros(length(REPORT_METRICS))
             count = 0
             while !eof(io)
                 stat = ImputeNaNs(map(x->parse(Float64, x), split(readline(io), "|")))
                 count += 1
-                for j in 1:length(REPORT_METRIC_FOLDER_NAME)
+                for j in 1:length(REPORT_METRICS)
                     stats[j] += stat[j]
                 end
             end
@@ -173,9 +178,9 @@ function ReadCSRLength(TestName::String, NumReports::Int64=NUM_REPORTS)
 end
 
 # For each metrics output data
-function OutputCSIntegrated(statsAlgs, rLengths, output_folder, NumReports::Int64=NUM_REPORTS)
-    for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
-        io = open(string(output_folder, string(REPORT_METRIC_FOLDER_NAME[i_metric], ".txt")), "w")
+function OutputCSMetrics(statsAlgs, rLengths, output_folder, NumReports::Int64=NUM_REPORTS)
+    for i_metric in 1:length(REPORT_METRICS)
+        io = open(string(output_folder, REPORT_METRICS[i_metric], ".txt"), "w")
         for i_deg in 1:NumReports
             line = []
             for i_alg in 1:length(ALG_REPORT_NAMES)
@@ -200,8 +205,8 @@ function f1score(p, r)
     return 2 * p * r / (p + r)
 end
 
-function IntegrateCSF1Score(TestName::String, NumReports::Int64=NUM_REPORTS)
-    statsAlgs = []
+function ReadCSF1score(TestName::String, NumReports::Int64=NUM_REPORTS)
+    calcStatAlgs = []
     for i_alg in 1:length(ALG_REPORT_NAMES)
         folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/", ALG_REPORT_NAMES[i_alg], "/")
         statsDegs = []
@@ -218,13 +223,26 @@ function IntegrateCSF1Score(TestName::String, NumReports::Int64=NUM_REPORTS)
             append!(statsDegs, 0)
             statsDegs[i_deg] = f1 / count
         end
-        append!(statsAlgs, 0)
-        statsAlgs[i_alg] = statsDegs
+        append!(calcStatAlgs, 0)
+        calcStatAlgs[i_alg] = statsDegs
     end
+    return calcStatAlgs
+end
 
-    output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
-    mkpath(output_folder)
+function OutputCSCalculatedMetric(calcStatAlgs, calcStatName, output_folder, NumReports::Int64=NUM_REPORTS)
+    io = open(string(output_folder, calcStatName, ".txt"), "w")
+    for i_deg in 1:NumReports
+        line = []
+        for i_alg in 1:length(ALG_REPORT_NAMES)
+            append!(line, 0)
+            line[i_alg] = calcStatAlgs[i_alg][i_deg]
+        end
+        write(io, string(join(line, " "), "\n"))
+    end
+    close(io)
+end
 
+function OutputCSF1score(statsAlgs, output_folder, NumReports::Int64=NUM_REPORTS)
     io = open(string(output_folder, "f1score.txt"), "w")
     for i_deg in 1:NumReports
         line = []
@@ -237,14 +255,25 @@ function IntegrateCSF1Score(TestName::String, NumReports::Int64=NUM_REPORTS)
     close(io)
 end
 
-function OutputCSAggregated(statsAlgs, output_folder, NumReports::Int64=NUM_REPORTS)
+function OutputCSAggregated(statsAlgs, calcStatsAlgss, output_folder, NumReports::Int64=NUM_REPORTS)
     io = open(string(output_folder, "aggregated.txt"), "w")
-    for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
-        line = [REPORT_METRIC_FOLDER_NAME[i_metric]]
+    for i_metric in 1:length(REPORT_METRICS)
+        line = [REPORT_METRICS[i_metric]]
         for i_alg in 1:length(ALG_REPORT_NAMES)
             stat = 0.0
             for i_deg in 1:NumReports
                 stat += statsAlgs[i_alg][i_deg][i_metric] / NumReports
+            end
+            append!(line, [string(stat)])
+        end
+        write(io, string(join(line, " "), "\n"))
+    end
+    for i_metric in 1:length(calcStatsAlgss)
+        line = [CALCULATED_METRICS[i_metric]]
+        for i_alg in 1:length(ALG_REPORT_NAMES)
+            stat = 0.0
+            for i_deg in 1:NumReports
+                stat += calcStatsAlgss[i_metric][i_alg][i_deg] / NumReports
             end
             append!(line, [string(stat)])
         end

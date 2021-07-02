@@ -99,8 +99,12 @@ end
 ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
 REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
 REPORT_METRIC_FOLDER_NAME = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "sinr"]
+IND_RINS = 7
+IND_SINR = 8
 
 IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
+
+NUM_REPORTS = 41
 
 function ImputeNaNs(Values::Vector{Float64}, ImputeValues = IMPUTE_VALUES)
     ret = copy(Values)
@@ -112,7 +116,19 @@ function ImputeNaNs(Values::Vector{Float64}, ImputeValues = IMPUTE_VALUES)
     return ret
 end
 
-function IntegrateReport(TestName::String, NumReports::Int64=41)
+function IntegrateCSReport(TestName::String, NumReports::Int64=NUM_REPORTS)
+    statsAlgs = ReadCSReport(TestName, NumReports)
+    rLengths = ReadCSRLength(TestName, NumReports)
+    output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
+    mkpath(output_folder)
+
+    OutputCSIntegrated(statsAlgs, rLengths, output_folder, NumReports)
+    OutputCSAggregated(statsAlgs, output_folder, NumReports)
+
+    IntegrateCSF1Score(TestName, NumReports)
+end
+
+function ReadCSReport(TestName::String, NumReports::Int64=NUM_REPORTS)
     statsAlgs = []
     for i_alg in 1:length(ALG_REPORT_NAMES)
         folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/", ALG_REPORT_NAMES[i_alg], "/")
@@ -135,7 +151,10 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
         append!(statsAlgs, 0)
         statsAlgs[i_alg] = statsDegs
     end
-    # R length
+    return statsAlgs
+end
+
+function ReadCSRLength(TestName::String, NumReports::Int64=NUM_REPORTS)
     folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/R/")
     rLengths = []
     for i_deg in 1:NumReports
@@ -150,10 +169,12 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
         append!(rLengths, 0)
         rLengths[i_deg] = map(x->x/count, rLength)
     end
-    # For each metrics output data
+    return rLengths
+end
+
+# For each metrics output data
+function OutputCSIntegrated(statsAlgs, rLengths, output_folder, NumReports::Int64=NUM_REPORTS)
     for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
-        output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
-        mkpath(output_folder)
         io = open(string(output_folder, string(REPORT_METRIC_FOLDER_NAME[i_metric], ".txt")), "w")
         for i_deg in 1:NumReports
             line = []
@@ -170,6 +191,66 @@ function IntegrateReport(TestName::String, NumReports::Int64=41)
         end
         close(io)
     end
+end
+
+function f1score(p, r)
+    if p == 0 && r == 0
+        return 0
+    end
+    return 2 * p * r / (p + r)
+end
+
+function IntegrateCSF1Score(TestName::String, NumReports::Int64=NUM_REPORTS)
+    statsAlgs = []
+    for i_alg in 1:length(ALG_REPORT_NAMES)
+        folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/", ALG_REPORT_NAMES[i_alg], "/")
+        statsDegs = []
+        for i_deg in 1:NumReports
+            io = open(string(folder,i_deg,".txt"))
+            f1 = 0.0
+            count = 0
+            while !eof(io)
+                stat = ImputeNaNs(map(x->parse(Float64, x), split(readline(io), "|")))
+                f1 += f1score(stat[IND_RINS], stat[IND_SINR])
+                count += 1
+            end
+            close(io)
+            append!(statsDegs, 0)
+            statsDegs[i_deg] = f1 / count
+        end
+        append!(statsAlgs, 0)
+        statsAlgs[i_alg] = statsDegs
+    end
+
+    output_folder = string(CS_AMAZON_FOLDER, "ReportIntegrated/", TestName, "/")
+    mkpath(output_folder)
+
+    io = open(string(output_folder, "f1score.txt"), "w")
+    for i_deg in 1:NumReports
+        line = []
+        for i_alg in 1:length(ALG_REPORT_NAMES)
+            append!(line, 0)
+            line[i_alg] = statsAlgs[i_alg][i_deg]
+        end
+        write(io, string(join(line, " "), "\n"))
+    end
+    close(io)
+end
+
+function OutputCSAggregated(statsAlgs, output_folder, NumReports::Int64=NUM_REPORTS)
+    io = open(string(output_folder, "aggregated.txt"), "w")
+    for i_metric in 1:length(REPORT_METRIC_FOLDER_NAME)
+        line = [REPORT_METRIC_FOLDER_NAME[i_metric]]
+        for i_alg in 1:length(ALG_REPORT_NAMES)
+            stat = 0.0
+            for i_deg in 1:NumReports
+                stat += statsAlgs[i_alg][i_deg][i_metric] / NumReports
+            end
+            append!(line, [string(stat)])
+        end
+        write(io, string(join(line, " "), "\n"))
+    end
+    close(io)
 end
 
 #############

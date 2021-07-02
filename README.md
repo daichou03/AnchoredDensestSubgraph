@@ -1,14 +1,12 @@
-README - Last update: 20201223, daichou03
+README - Last update: 20210703, daichou03
 
-Local Densest Subgraph
-
-(Currently as a fork of HypergraphFlowClustering)
+# Anchored Densest Subgraph
 
 ------
 
-# Getting Started
+## Getting Started
 
-## Prerequisites
+### Prerequisites
 (Linux) Install HDF5 if you don't already have.
 
 > Case 1 - Ubuntu: HDF5 not configured properly at the very start, uninstall, install a lower version to force update dependency, uninstall, then install the newest version again can fix.
@@ -22,9 +20,9 @@ Local Densest Subgraph
 > Pkg.rm("HDF5")
 > Pkg.add("HDF5")
 
-## Install 64-bit Julia
+### Install 64-bit Julia
 
-## Install packages
+### Packages required
 In Julia:
 ```julia
 using Pkg
@@ -32,11 +30,9 @@ Pkg.add("MatrixNetworks")
 Pkg.add("MAT")
 Pkg.add("StatsBase")
 ```
-* MatrixNetworks
-* TODO: Need to check.
 
-## Testing
-Under HypergraphFlowClustering/src, enter julia.
+### Testing
+Under ./src, enter julia.
 ```julia
 include("Query_test_yd.jl")
 ```
@@ -44,7 +40,9 @@ include("Query_test_yd.jl")
 Read graph file:
 For loading unweighted, undirected graph:
 
+```julia
 A = readIN("lobster.in", "../Example_small")
+```
 
 - The first line is the number of vertices and the number of edges respectively
 - The remaining lines should be the edge list, vertices are 1-indexed.
@@ -60,27 +58,22 @@ Example:
 3 5
 4 5
 
-For loading weighted, directed graph:
-
-B = readSMAT("graph.smat")
-
 Find (global) densest subgraph and its density:
 
+```julia
 GlobalDensestSubgraph(A)
-
-TODO: which algorithm?
-The subgraph is a maximum densest subgraph.
+```
 
 Find local densest subgraph and its density with reference vertices:
 
-R = vec([1 2])
-GlobalAnchoredDensestSubgraph(A, R)
-
-Note R is a vector of indices of vertices in A, 1-indexed.
+```julia
+R = [1,2]
+LocalAnchoredDensestSubgraph(A, R)
+```
+Note R is a 1-indexed vector of indices of vertices in A.
 
 ------
 Acknowledgement (for code)
 
 - Fork of https://github.com/nveldt/HypergraphFlowClustering
-- Currently using maxflow.jl, will use more
-- May use/modify HyperLocal.jl
+- Using maxflow.jl

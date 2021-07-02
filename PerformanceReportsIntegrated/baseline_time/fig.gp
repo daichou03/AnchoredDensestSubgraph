@@ -29,6 +29,6 @@ set yrange [0.001:1000]
 
 
 set output 'fig.eps'
-plot 	'fig.txt' using 2:xtic(1) title 'GA' lt -1 fs pattern 8,\
-	'' using 3 title 'IGA' lt -1 fs pattern 4,\
-	'' using 4 title 'LA' lt -1 fs pattern 2
+plot 	'fig.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
+	'' using 3 notitle lt -1 fs pattern 4,\
+	'' using 4 notitle lt -1 fs pattern 2

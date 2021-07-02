@@ -1,6 +1,6 @@
 reset
 set terminal postscript eps color "Times-Roman" 18 enhanced
-set size 2,0.125
+set size 2,0.1
 
 set style fill solid border 
 set style fill pattern

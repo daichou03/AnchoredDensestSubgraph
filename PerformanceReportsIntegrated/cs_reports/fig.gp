@@ -65,7 +65,7 @@ set output 'sinr.eps'
 plot for [i=1:3] 'sinr.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 
 set yrange [0:1]
-set ylabel "F1-score"
+set ylabel "F_1-score"
 set output 'f1score.eps'
 plot for [i=1:3] 'f1score.txt' using (column(0)):i w linespoints notitle lt rgb colors[i] lw 4 dashtype 2**(i-1) ps 0.5 pt 1
 

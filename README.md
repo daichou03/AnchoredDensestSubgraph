@@ -1,4 +1,4 @@
-README - Last update: 20210703
+README - Last update: 20210704
 
 # Anchored Densest Subgraph
 
@@ -38,11 +38,19 @@ include("Query_test_yd.jl")
 ```
 
 Read graph file:
-For loading unweighted, undirected graph:
+Some toy data graphs are in /Example_small/:
 
 ```julia
 A = readIN("lobster.in", "../Example_small")
 ```
+
+Some small, processed real-world data graphs are in /Example_SCC/:
+
+```julia
+A = readIN("eucore.in") # "../Example_SCC/" is the default folder for readIN
+```
+
+For loading unweighted, undirected graph:
 
 - The first line is the number of vertices and the number of edges respectively
 - The remaining lines should be the edge list, vertices are 1-indexed.
@@ -58,7 +66,7 @@ Example:
 3 5
 4 5
 
-Find (global) densest subgraph and its density:
+Find densest subgraph (by global, common definition) and its density:
 
 ```julia
 GlobalDensestSubgraph(A)

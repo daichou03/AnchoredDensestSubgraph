@@ -1,4 +1,4 @@
-README - Last update: 20210703, daichou03
+README - Last update: 20210703
 
 # Anchored Densest Subgraph
 

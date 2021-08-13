@@ -9,16 +9,16 @@ README - Last update: 20210704
 ### Prerequisites
 (Linux) Install HDF5 if you don't already have.
 
-> Case 1 - Ubuntu: HDF5 not configured properly at the very start, uninstall, install a lower version to force update dependency, uninstall, then install the newest version again can fix.
-> `apt-get -u install hdf5-tools`
-> Still getting `UndefVarError: libhdf5 not defined`
-> In Julia:
-> using Pkg
-> Pkg.rm("HDF5")
-> Pkg.add(Pkg.PackageSpec(;name="HDF5",version="0.11.1"))
-> Pkg.build("HDF5")
-> Pkg.rm("HDF5")
-> Pkg.add("HDF5")
+> Case 1 - Ubuntu: HDF5 not configured properly at the very start, uninstall, install a lower version to force update dependency, uninstall, then install the newest version again can fix.  
+> `apt-get -u install hdf5-tools`  
+> Still getting `UndefVarError: libhdf5 not defined`  
+> In Julia:  
+> using Pkg  
+> Pkg.rm("HDF5")  
+> Pkg.add(Pkg.PackageSpec(;name="HDF5",version="0.11.1"))  
+> Pkg.build("HDF5")  
+> Pkg.rm("HDF5")  
+> Pkg.add("HDF5")  
 
 ### Install 64-bit Julia
 
@@ -37,34 +37,35 @@ Under ./src, enter julia.
 include("Query_test_yd.jl")
 ```
 
-Read graph file:
+Read graph file:  
 Some toy data graphs are in /Example_small/:
 
 ```julia
 A = readIN("lobster.in", "../Example_small")
 ```
 
-Some small, processed real-world data graphs are in /Example_SCC/:
+Some small, preprocessed real-world data graphs are in /Example_SCC/:
 
 ```julia
-A = readIN("eucore.in") # "../Example_SCC/" is the default folder for readIN
+A = readIN("eucore.in", "../Example_SCC/")
 ```
 
-For loading unweighted, undirected graph:
+This algorithm can work on any unweighted, undirected graph.  
+The accepted format of the input graph:
 
-- The first line is the number of vertices and the number of edges respectively
-- The remaining lines should be the edge list, vertices are 1-indexed.
+- The first line is the number of vertices and the number of edges respectively.
+- The remaining lines are the list of edges, vertices are 1-indexed.
 
-Example:
-5 8
-1 2
-1 3
-1 4
-2 3
-2 4
-3 4
-3 5
-4 5
+Example:  
+5 8  
+1 2  
+1 3  
+1 4  
+2 3  
+2 4  
+3 4  
+3 5  
+4 5  
 
 Find densest subgraph (by global, common definition) and its density:
 

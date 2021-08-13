@@ -50,11 +50,11 @@ Some small, preprocessed real-world data graphs are in /Example_SCC/:
 A = readIN("eucore.in", "../Example_SCC/")
 ```
 
-This algorithm can work on any unweighted, undirected graph.  
-The accepted format of the input graph:
+This algorithm can work on larger unweighted, undirected graph you downloaded.  
+`readIN()` accepts the following format:
 
 - The first line is the number of vertices and the number of edges respectively.
-- The remaining lines are the list of edges, vertices are 1-indexed.
+- The remaining lines are the list of edges (only 1 direction is needed), vertices are 1-indexed.
 
 Example:  
 5 8  

@@ -41,9 +41,11 @@ Some small, preprocessed real-world data graphs are in /Example_SCC/:
 A = readIN("eucore.in", "../Example_SCC/")
 ```
 
+The loaded data graph (`A`) is in `SparseMatrixCSC` format.
+
 #### Accepted input graph by `readIN()`
 This algorithm can work on other data graphs you downloaded.  
-All our experimental data graphs can be found at SNAP (https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
+All our experimental data graphs can be found at [SNAP](https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
 
 Once you downloaded  (for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!)) and extracted the data,  
 `readIN()` accepts file of the following format:

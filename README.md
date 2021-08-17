@@ -81,8 +81,7 @@ Note `R` is a 1-indexed vector of indices of vertices in `A`.
 ------
 Acknowledgement (for code)
 
-- Fork of https://github.com/nveldt/HypergraphFlowClustering
-- Using maxflow.jl
+- Originally fork of https://github.com/nveldt/HypergraphFlowClustering, using maxflow.jl
 
 ------
 ## Troubleshooting

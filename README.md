@@ -9,8 +9,6 @@ README - Last update: 20210818
 ### Prerequisites
 (Linux) Install HDF5 if you don't already have.
 
- 
-
 ### Install 64-bit Julia
 
 ### Packages required
@@ -23,7 +21,9 @@ Pkg.add("StatsBase")
 ```
 
 ### Testing
-Under ./src, enter julia.
+Under `./src`, enter `julia`.
+
+Load all packages needed for testing:
 ```julia
 include("Query_test_yd.jl")
 ```

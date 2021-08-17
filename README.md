@@ -52,11 +52,10 @@ A = readIN("eucore.in", "../Example_SCC/")
 
 #### Accepted input graph
 This algorithm can work on any data graphs you downloaded.  
-The graph needs to be preprocessed as unweighted, undirected if it isn't.  
-`readIN()` accepts the following format:
+`readIN()` takes a file of edge lists. It assumes the graph is unweighted, undirected in this format:
 
 - The first line is the number of vertices and the number of edges respectively.
-- The remaining lines are the list of edges (only 1 direction is needed), vertices are 1-indexed.
+- The remaining lines are the list of edges (unidirectional), vertices are 1-indexed.
 
 Example:  
 5 8  

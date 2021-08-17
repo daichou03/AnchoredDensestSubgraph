@@ -50,7 +50,9 @@ Some small, preprocessed real-world data graphs are in /Example_SCC/:
 A = readIN("eucore.in", "../Example_SCC/")
 ```
 
-This algorithm can work on larger unweighted, undirected graph you downloaded.  
+#### Accepted input graph
+This algorithm can work on any data graphs you downloaded.  
+The graph needs to be preprocessed as unweighted, undirected if it isn't.  
 `readIN()` accepts the following format:
 
 - The first line is the number of vertices and the number of edges respectively.
@@ -67,19 +69,19 @@ Example:
 3 5  
 4 5  
 
-Find densest subgraph (by global, common definition) and its density:
+Find densest subgraph (by global, common definition) of `A` and its density:
 
 ```julia
 GlobalDensestSubgraph(A)
 ```
 
-Find local densest subgraph and its density with reference vertices:
+Find local densest subgraph of `A` and its density with reference vertices:
 
 ```julia
 R = [1,2]
 LocalAnchoredDensestSubgraph(A, R)
 ```
-Note R is a 1-indexed vector of indices of vertices in A.
+Note `R` is a 1-indexed vector of indices of vertices in `A`.
 
 ------
 Acknowledgement (for code)

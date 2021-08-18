@@ -44,14 +44,15 @@ A = readIN("eucore.in", "../Example_SCC/")
 The loaded data graph (`A`) is in `SparseMatrixCSC` format.
 
 #### Accepted input graph by `readIN()`
-This algorithm can work on other data graphs you downloaded.  
+This algorithm can work on other data graphs you downloaded, for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!).  
 All our experimental data graphs can be found at [SNAP](https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
 
-Once you downloaded  (for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!)) and extracted the data,  
-`readIN()` accepts file of the following format:
+In our experiment, we preprocessed all the data graphs we used so that they can be loaded by `readIN()` (see above for syntax):  
+- The first line is the number of vertices and the number of edges respectively.  
+- The remaining lines are the list of edges (unweighted, undirected), vertices are 1-indexed.  
+- A line starting with `#` and `%` is ignored.
 
-- The first line is the number of vertices and the number of edges respectively.
-- The remaining lines are the list of edges (unweighted, undirected, unidirectional), vertices are 1-indexed.
+You may need to preprocess the raw data first if it does not meet the above conditions.
 
 Example:  
 ```
@@ -66,22 +67,27 @@ Example:
 4 5  
 ```
 
-Find densest subgraph (by global, common definition) of `A` and its density:
+Alternatively, there is a `readRaw()` that does the same as `readIN()` but assumes the file does not have a header line for # vertices and # edges.  
+You pass the number of vertices and the number of edges as the parameters:
 
 ```julia
-GlobalDensestSubgraph(A)
+A = readRaw("zebra.txt", 27, 111, "../Example_raw")
 ```
 
-Find local densest subgraph of `A` and its density with reference vertices:
+This may come in handy when you downloaded a file with an unweighted, undirected edge list without the need of writing out a new file or modify the original file.
+
+#### Find densest Graph
+
+Find anchored densest subgraph of `A` with reference vertices `R` and its anchored density:
 
 ```julia
 R = [1,2]
-LocalAnchoredDensestSubgraph(A, R)
+LocalAnchoredDensestSubgraph(A, R) # The strongly-local implementation
 ```
 Note `R` is a 1-indexed vector of indices of vertices in `A`.
 
 ------
-Acknowledgement (for code)
+#### Acknowledgement (for code)
 
 - Originally fork of https://github.com/nveldt/HypergraphFlowClustering, using `maxflow.jl` with modifications.
 

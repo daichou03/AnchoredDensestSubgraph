@@ -3,9 +3,9 @@ using MAT
 using MatrixNetworks
 using LinearAlgebra
 
-# ydai992: read "IN" format.
+# read "IN" format.
 # Based on MatrixNetworks::readSMAT.
-# IN format assumes the graph is undirectional, unweighted, 1-indexed, has header for m and n.
+# IN format assumes the graph is undirectional, unweighted, 1-indexed, has header for n and m.
 
 # Example for IN format:
 # 5 7
@@ -18,16 +18,38 @@ using LinearAlgebra
 # 3 5
 # 4 5
 
-function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String="../Example_SCC/")
+DIR_EXAMPLE_SCC = "../Example_SCC/"
+
+function readRaw(FileName::AbstractString, N::Int, M::Int, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
+    f = open(string(Directory,FileName))
+    return doReadIN(f, N, M, Chance)
+end
+
+function readRaw(FileName::AbstractString, N::Int, M::Int, Directory::String=DIR_EXAMPLE_SCC)
+    return readRaw(FileName, N, M, 1.0, Directory)
+end
+
+function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
     f = open(string(Directory,FileName))
     header = split(readline(f))
-    nedges = parse(Int,header[2])
-    ei = zeros(Int64, nedges*2)
-    ej = zeros(Int64, nedges*2)
+    n = parse(Int,header[1])
+    m = parse(Int,header[2])
+    return doReadIN(f, n, m, Chance)
+end
+
+function readIN(FileName::AbstractString, Directory::String=DIR_EXAMPLE_SCC)
+    return readIN(FileName, 1.0, Directory)
+end
+
+COMMENT_HEADERS = ['#','%']
+
+function doReadIN(File::IOStream, N::Int, M::Int, Chance::Float64)
+    ei = zeros(Int64, M*2)
+    ej = zeros(Int64, M*2)
     count = 0
-    @inbounds for i = 1:nedges
-        curline = readline(f)
-        if Chance >= 1 || Chance >= rand()
+    @inbounds for i = 1:M
+        curline = readline(File)
+        if length(curline) > 0 && !(curline[1] in COMMENT_HEADERS) && (Chance >= 1 || Chance >= rand())
             count += 1
             parts = split(curline)
             ei[2*count-1] = parse(Int, parts[1])
@@ -36,15 +58,9 @@ function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String
             ej[2*count] = parse(Int, parts[1])
         end
     end
-    close(f)
-    A = sparse(ei[1:count*2], ej[1:count*2], ones(Float64, count*2),
-               parse(Int,header[1]), 
-               parse(Int,header[1]))
+    close(File)
+    A = sparse(ei[1:count*2], ej[1:count*2], ones(Float64, count*2), N, N)
     return A
-end
-
-function readIN(FileName::AbstractString, Directory::String="../Example_SCC/")
-    return readIN(FileName, 1.0, Directory)
 end
 
 function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")

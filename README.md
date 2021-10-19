@@ -32,7 +32,7 @@ Read graph file:
 Some toy data graphs are in /Example_small/:
 
 ```julia
-A = readIN("lobster.in", "../Example_small")
+A = readIN("lobster.in", "../Example_small/")
 ```
 
 Some small, preprocessed real-world data graphs are in /Example_SCC/:

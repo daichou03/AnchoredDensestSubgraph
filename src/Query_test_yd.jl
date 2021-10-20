@@ -650,3 +650,5 @@ function warmupLA()
         ImprovedGlobalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R, [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
         LocalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
         warmed_up_LA = true
+    end
+end

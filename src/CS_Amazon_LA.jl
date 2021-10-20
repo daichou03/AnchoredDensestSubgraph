@@ -168,6 +168,8 @@ function warmupGL()
         println("Warming up GL...")
         LScoreCommunity(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
         warmed_up_GL = true
+    end
+end
 
 function SimpleGLTest(rs)
     warmupGL()
@@ -188,6 +190,8 @@ function warmupMRW()
         println("Warming up MRW...")
         MRW_topK(SAMPLE_GRAPH, SAMPLE_GRAPH_V, 2)
         warmed_up_MRW = true
+    end
+end
 
 function SimpleMRWTest(vs, rs)
     warmupMRW()

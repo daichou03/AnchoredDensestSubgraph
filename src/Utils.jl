@@ -49,4 +49,10 @@ function TimerLapValue()
     return ret / 1000
 end
 
+# Math
+ALMOST_EQUAL_TOL = 1e-6
+function almostEqual(a, b, tol=ALMOST_EQUAL_TOL)
+    return abs(a-b) < tol
+end
+
 

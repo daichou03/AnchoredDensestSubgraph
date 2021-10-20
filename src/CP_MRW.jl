@@ -12,3 +12,94 @@ using Base
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Utils.jl")
+
+
+# Convert unweighted graph to transition graph
+function toTransitionGraph(B::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
+    P = copy(B)
+    N = size(P, 1)
+    for v = 1:N
+        vdeg = GetDegree(P, v)
+        if vdeg > 0
+            for pt = P.colptr[v] : P.colptr[v+1] - 1
+                P.nzval[pt] = 1 / vdeg
+            end
+        end
+    end
+    return P
+end
+
+
+MRW_ALPHA = 0.1
+MRW_BETA = 0.6
+MRW_K = 5
+
+
+# P: transition graph
+# alpha, beta: decay parameters as per paper
+# K: sliding window length
+# tol: tolerance (of score difference only)
+# verbose: print t etc.
+function MRW(P, q, alpha=MRW_ALPHA, beta=MRW_BETA, K=MRW_K, tol=1e-6, verbose=false)
+    # Initialize
+    N = size(P, 1)
+    t = 1
+    x_0 = zeros(N)
+    x_0[q] = 1.0
+    x_old = copy(x_0)
+    e = Any[]
+    push!(e, fill(1/N, N))
+    v_old = fill(1/N, N)
+    converge = false
+    # Theorem 2's cutoff
+    cutoff_t = log(tol) / log(beta)
+    while !converge && (t <= cutoff_t)
+        # Update x
+        x_new = alpha * (P * x_old) + (1 - alpha) * v_old
+        # Add newest e
+        keyWeight = 0.0
+        keyIndices = []
+        # TODO: the array does not look like sparse at all, performance has to be N related.
+        for i = 1:N
+            if almostEqual(x_new[i], keyWeight)
+                push!(keyIndices, i)
+            elseif keyWeight < x_new[i]
+                keyWeight = x_new[i]
+                keyIndices = [i]
+            end
+        end
+        push!(e, zeros(N))
+        for i in keyIndices
+            e[t+1][i] = 1 / length(keyIndices)
+        end
+        # Calculate sum of sliding window
+        e_window_sum = zeros(N)
+        for k in 1:K
+            if t + 2 - k < 1
+                e_window_sum += x_0
+            else
+                e_window_sum += e[t + 2 - k]
+            end
+        end
+        # Update v
+        v_new = beta ^ (t - 1) * e_window_sum / K + (1 - beta ^ (t - 1)) * v_old
+        # Check convergence
+        converge = true
+        for i = 1:N
+            if !almostEqual(x_new[i], x_old[i], tol)
+                converge = false
+                break
+            end
+        end
+        # Next loop
+        t += 1
+        x_old = x_new
+        v_old = v_new
+    end
+    if verbose
+        println("Number of iterations: " + (t - 1))
+    end
+    return x_old
+end
+
+# partialsortperm(x, 1:k, rev=true) to get first k results.

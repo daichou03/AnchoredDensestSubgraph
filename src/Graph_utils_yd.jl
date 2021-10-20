@@ -17,19 +17,10 @@ include("Helper_io.jl")
 # ----------------------------------
 # Credit:
 # https://github.com/danspielman/Laplacians.jl/blob/master/src/graphUtils.jl
-# To heavy to load the entire package, copy the specific function here instead.
+# Too heavy to load the entire package, copy the specific function here instead.
 
 # Unweighted degree.
 GetDegree(mat::SparseMatrixCSC{Tv,Ti}, v::Ti) where {Tv,Ti} = mat.colptr[v+1]-mat.colptr[v]
-
-# Weighted degree.
-function GetWeightedDegree(mat::SparseMatrixCSC{Tv,Ti}, v::Ti) where {Tv,Ti}
-    sum = 0
-    for i in 1:deg(mat,v)
-        sum = sum + weighti(mat,v,i)
-    end
-    return sum
-end
 
 # --------------------------------
 # Laplacians package functions end

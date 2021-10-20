@@ -638,11 +638,15 @@ end
 # lastfm = readIN("lastfm.in")
 # eucore = readIN("eucore.in")
 
-println("Warming up each core algorithm...")
-sample_graph = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5) # lobster.in
-GlobalDensestSubgraph(sample_graph)
-GlobalAnchoredDensestSubgraph(sample_graph, [1,2])
-ImprovedGlobalAnchoredDensestSubgraph(sample_graph, [1,2], [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
-LocalAnchoredDensestSubgraph(sample_graph, [1,2])
+warmed_up_LA = false
 
-println("Done.")
+function warmupLA()
+    global warmed_up_LA
+    if !warmed_up_LA
+        println("Warming up each core algorithm...")
+
+        GlobalDensestSubgraph(SAMPLE_GRAPH)
+        GlobalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
+        ImprovedGlobalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R, [3,3,4,4,2], [(5,2),(1,3),(2,3),(3,4),(4,4)])
+        LocalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
+        warmed_up_LA = true

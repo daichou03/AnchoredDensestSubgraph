@@ -160,7 +160,17 @@ function SimpleLATest(rs)
     return res
 end
 
+warmed_up_GL = false
+
+function warmupGL()
+    global warmed_up_GL
+    if !warmed_up_GL
+        println("Warming up GL...")
+        LScoreCommunity(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
+        warmed_up_GL = true
+
 function SimpleGLTest(rs)
+    warmupGL()
     res = []
     TimerReset()
     for j = 1:length(rs)
@@ -170,7 +180,17 @@ function SimpleGLTest(rs)
     return res
 end
 
+warmed_up_MRW = false
+
+function warmupMRW()
+    global warmed_up_MRW
+    if !warmed_up_MRW
+        println("Warming up MRW...")
+        MRW_topK(SAMPLE_GRAPH, SAMPLE_GRAPH_V, 2)
+        warmed_up_MRW = true
+
 function SimpleMRWTest(vs, rs)
+    warmupMRW()
     res = []
     TimerReset()
     for j = 1:length(rs)

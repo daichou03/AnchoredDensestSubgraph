@@ -17,6 +17,7 @@ AMAZON_GRAPH_FILE = string(CS_AMAZON_FOLDER, "IN/com-amazon.ungraph.in")
 
 println("Reading Amazon data...")
 B = readIN(AMAZON_GRAPH_FILE)
+P = toTransitionGraph(B)
 
 function ExportIndicesByDegree(Last::Int64=40)
     ios = Any[]
@@ -51,6 +52,8 @@ function ReadIndicesByDegree(Last::Int64=40)
     return inds
 end
 
+# For Stratified effectiveness tests
+
 function ExportRs(Rs::Any, Name::String="0")
     folder = string(CS_AMAZON_FOLDER, "R-", Name, "/")
     mkpath(folder)
@@ -84,4 +87,39 @@ function ImportRs(Name::String="0")
     end
     println(string(i, " set of Rs imported."))
     return rs
+end
+
+# For simple effectiveness tests
+
+function ExportSimpleRs(Vs::Vector{Int64}, Rs::Any, Name::String="SimpleRs")
+    folder = string(CS_AMAZON_FOLDER, Name, "/")
+    mkpath(folder)
+    io_v = open(string(folder,"v.txt"), "w")
+    io_r = open(string(folder,"r.txt"), "w")
+    for i in 1:length(Vs)
+        write(io_v, string(Vs[i], "\n"))
+        write(io_r, string(join(Rs[i], ","), "\n"))
+    end
+    close(io_v)
+    close(io_r)
+end
+
+function ImportSimpleRs(Name::String="SimpleRs")
+    folder = string(CS_AMAZON_FOLDER, Name, "/")
+    vs = Int64[]
+    rs = Any[]
+
+    io_v = open(string(folder,"v.txt"))
+    while !eof(io_v)
+        push!(vs, parse(Int64, readline(io_v)))
+    end
+    close(io_v)
+
+    io_r = open(string(folder,"r.txt"))
+    while !eof(io_r)
+        push!(rs, map(x->parse(Int64, x), split(readline(io_r), ",")))
+    end
+        
+    println(string(length(vs), " Rs imported."))
+    return vs, rs
 end

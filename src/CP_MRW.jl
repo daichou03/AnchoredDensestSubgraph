@@ -14,22 +14,6 @@ include("Graph_utils_yd.jl")
 include("Utils.jl")
 
 
-# Convert unweighted graph to transition graph
-function toTransitionGraph(B::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
-    P = copy(B)
-    N = size(P, 1)
-    for v = 1:N
-        vdeg = GetDegree(P, v)
-        if vdeg > 0
-            for pt = P.colptr[v] : P.colptr[v+1] - 1
-                P.nzval[pt] = 1 / vdeg
-            end
-        end
-    end
-    return P
-end
-
-
 MRW_ALPHA = 0.1
 MRW_BETA = 0.6
 MRW_K = 5
@@ -100,6 +84,11 @@ function MRW(P, q, alpha=MRW_ALPHA, beta=MRW_BETA, K=MRW_K, tol=1e-6, verbose=fa
         println("Number of iterations: " + (t - 1))
     end
     return x_old
+end
+
+function MRW_topK(P, q, topK, alpha=MRW_ALPHA, beta=MRW_BETA, K=MRW_K, tol=1e-6)
+    x = MRW(P, q, alpha, beta, K, tol)
+    return collect(partialsortperm(x, 1:topK, rev=true))
 end
 
 # partialsortperm(x, 1:k, rev=true) to get first k results.

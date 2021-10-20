@@ -26,6 +26,23 @@ GetDegree(mat::SparseMatrixCSC{Tv,Ti}, v::Ti) where {Tv,Ti} = mat.colptr[v+1]-ma
 # Laplacians package functions end
 # --------------------------------
 
+
+# Convert unweighted graph to transition graph
+function toTransitionGraph(B::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
+    P = copy(B)
+    N = size(P, 1)
+    for v = 1:N
+        vdeg = GetDegree(P, v)
+        if vdeg > 0
+            for pt = P.colptr[v] : P.colptr[v+1] - 1
+                P.nzval[pt] = 1 / vdeg
+            end
+        end
+    end
+    return P
+end
+
+
 # YD 20200201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
 function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
     L = SparseArrays.nonzeroinds(B[:,V])

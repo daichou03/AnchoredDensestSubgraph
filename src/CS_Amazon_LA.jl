@@ -14,7 +14,7 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Amazon.jl")
-include("CP_GreedyL.jl")
+include("CP_MRW.jl")
 include("CS_Evaluation.jl")
 include("Test_degeneracy_yd.jl")
 
@@ -115,19 +115,74 @@ function CSTest(V::Int64, Print::Bool=true)
         R = GenerateReferenceSetFixedWalks(B, C)
     end
     S_LA = LocalAnchoredDensestSubgraph(B,R).source_nodes
-    S_GL = LScoreCommunity(B,R)[1]
+    S_MRW = MRW_topK(P,V,length(R)) # Take |R| as cluster size
     if Print
         println(string("V = ", V, " # ", allTitles[V]))
         println(string("R = ", R))
         println(string("S_LA = ", S_LA))
-        println(string("S_GL = ", S_GL))
+        println(string("S_MRW = ", S_MRW))
         println(V)
         println(length(R))
         println(ReportCommunity(B,R,S_LA))
-        println(ReportCommunity(B,R,S_GL))
+        println(ReportCommunity(B,R,S_MRW))
     end
-    return (R, S_LA, S_GL, ReportCommunity(B,R,S_LA), ReportCommunity(B,R,S_GL))
+    return (R, S_LA, S_MRW, ReportCommunity(B,R,S_LA), ReportCommunity(B,R,S_MRW))
 end
+
+# Simple effectiveness tests
+
+function safeSampleV(Samples::Int64=100)
+    N = size(B, 1)
+    vs = fill(0, Samples)
+    for i = 1:Samples
+        v = rand(1:N)
+        while !ConnectedComponentSizeAtLeast(B, [v], CC_SIZE_THRESHOLD)
+            v = rand(1:N)
+        end
+        vs[i] = v
+    end
+    return vs
+end
+
+function SampleR(Samples::Int64=100)
+    vs = safeSampleV(Samples)
+    rs = map(v->GetStepRandomWalkFixedWalks(B, [v], 15, 4, [1.0, 1.0, 1.0, 1.0]), vs)
+    return vs, rs
+end
+
+function SimpleLATest(rs)
+    res = []
+    TimerReset()
+    for j = 1:length(rs)
+        push!(res, LocalAnchoredDensestSubgraph(B, rs[j]).source_nodes)
+    end
+    println(TimerLapValue())
+    return res
+end
+
+function SimpleGLTest(rs)
+    res = []
+    TimerReset()
+    for j = 1:length(rs)
+        push!(res, LScoreCommunity(B, rs[j])[1])
+    end
+    println(TimerLapValue())
+    return res
+end
+
+function SimpleMRWTest(vs, rs)
+    res = []
+    TimerReset()
+    for j = 1:length(rs)
+        push!(res, MRW_topK(P, vs[j], length(rs[j])))
+    end
+    println(TimerLapValue())
+    return res
+end
+
+# TODO: Perform tests.
+
+# Stratified effectiveness tests
 
 function SampleRByDegree(Indices, Samples::Int64=100)
     rs = Any[]
@@ -143,7 +198,6 @@ function SampleRByDegree(Indices, Samples::Int64=100)
     return rs
 end
 
-# Stratified tests
 function StratifiedLATest(RSS)
     res = Any[]
     for i = 1:length(RSS)
@@ -159,9 +213,9 @@ function StratifiedLATest(RSS)
     return res
 end
 
-S_LA = StratifiedLATest(rss)
-println("------GL below ------")
-S_GL = StratifiedGLTest(rss)
+# S_LA = StratifiedLATest(rss)
+# println("------GL below ------")
+# S_GL = StratifiedGLTest(rss)
 
 function StratifiedGLTest(RSS)
     res = Any[]

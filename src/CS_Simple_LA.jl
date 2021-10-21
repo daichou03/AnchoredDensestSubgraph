@@ -35,7 +35,7 @@ function SampleR(B::SparseMatrixCSC, Samples::Int64=100)
         return vs
     end
 
-    vs = safeSampleV(Samples)
+    vs = safeSampleV(B, Samples)
     rs = map(v->GetStepRandomWalkFixedWalks(B, [v], 15, 4, [1.0, 1.0, 1.0, 1.0]), vs)
     return vs, rs
 end
@@ -111,12 +111,23 @@ end
 
 
 # Code
-# B = readIN("")
-# P = toTransitionGraph(B)
-# # Generate and import vs, rs (skip if already exported)
+DATA_GRAPH_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orkut"]
 
-# # vs, rs already exported
-# vs, rs = ImportSimpleRs()
-# # MRW
-# ss_mrw, times_mrw = SimpleMRWTest(P, vs, rs)
-# ExportSimpleResults(ss_mrw, times_mrw, "AM", "MRW")
+function BulkTestExport()
+    for dataName in DATA_GRAPH_NAMES
+        B = readIN(string(dataName, ".in"))
+        P = toTransitionGraph(B)
+        # Generate and import vs, rs (skip if already exported)
+        vs, rs = SampleR(B, 1000)
+        ExportSimpleRs(vs, rs, dataName)
+        # vs, rs already exported
+        # vs, rs = ImportSimpleRs(dataName)
+        # LA
+        ss_la, times_la = SimpleLATest(B, rs)
+        ExportSimpleResults(ss_la, times_la, dataName, "LA")
+        # MRW
+        ss_mrw, times_mrw = SimpleMRWTest(P, vs, rs)
+        ExportSimpleResults(ss_mrw, times_mrw, dataName, "MRW")
+    end
+end
+

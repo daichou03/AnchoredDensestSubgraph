@@ -139,10 +139,10 @@ function ExportSimpleResults(Ss::Any, Times::Any, TestName::String, DataName::St
     io_time = open(string(folder_time, AlgName, ".txt"), "w")
     for j in 1:length(Ss)
         write(io_s, string(join(Ss[j], ","), "\n"))
-        write(io_time, string(Times[i], "\n"))
+        write(io_time, string(Times[j], "\n"))
     end
     close(io_s)
-    colse(io_time)
+    close(io_time)
 end
 
 function ImportSimpleResults(TestName::String, DataName::String, AlgName::String)

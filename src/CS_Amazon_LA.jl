@@ -1,4 +1,3 @@
-using Base: Bool
 using SparseArrays
 using MAT
 using MatrixNetworks
@@ -127,84 +126,6 @@ function CSTest(V::Int64, Print::Bool=true)
         println(ReportCommunity(B,R,S_MRW))
     end
     return (R, S_LA, S_MRW, ReportCommunity(B,R,S_LA), ReportCommunity(B,R,S_MRW))
-end
-
-# Simple effectiveness tests
-
-function safeSampleV(Samples::Int64=100)
-    N = size(B, 1)
-    vs = fill(0, Samples)
-    for i = 1:Samples
-        v = rand(1:N)
-        while !ConnectedComponentSizeAtLeast(B, [v], CC_SIZE_THRESHOLD)
-            v = rand(1:N)
-        end
-        vs[i] = v
-    end
-    return vs
-end
-
-function SampleR(Samples::Int64=100)
-    vs = safeSampleV(Samples)
-    rs = map(v->GetStepRandomWalkFixedWalks(B, [v], 15, 4, [1.0, 1.0, 1.0, 1.0]), vs)
-    return vs, rs
-end
-
-function SimpleLATest(rs)
-    res = []
-    times = []
-    TimerReset()
-    for j = 1:length(rs)
-        push!(res, LocalAnchoredDensestSubgraph(B, rs[j]).source_nodes)
-        push!(times, TimerLapValue())
-    end
-    return res, times
-end
-
-warmed_up_GL = false
-
-function warmupGL()
-    global warmed_up_GL
-    if !warmed_up_GL
-        println("Warming up GL...")
-        LScoreCommunity(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
-        warmed_up_GL = true
-    end
-end
-
-function SimpleGLTest(rs)
-    warmupGL()
-    res = []
-    times = []
-    TimerReset()
-    for j = 1:length(rs)
-        push!(res, LScoreCommunity(B, rs[j])[1])
-        push!(times, TimerLapValue())
-    end
-    return res, times
-end
-
-warmed_up_MRW = false
-
-function warmupMRW()
-    global warmed_up_MRW
-    if !warmed_up_MRW
-        println("Warming up MRW...")
-        MRW_topK(SAMPLE_GRAPH, SAMPLE_GRAPH_V, 2)
-        warmed_up_MRW = true
-    end
-end
-
-function SimpleMRWTest(vs, rs)
-    warmupMRW()
-    res = []
-    times = []
-    TimerReset()
-    for j = 1:length(rs)
-        push!(res, MRW_topK(P, vs[j], length(rs[j])))
-        push!(times, TimerLapValue())
-    end
-    return res, times
 end
 
 # Stratified effectiveness tests

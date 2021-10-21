@@ -33,6 +33,25 @@ function emptyStringArray(len::Int64)
     return ret
 end
 
+# Concatenate folder strings
+#function folderString()
+
+function folderString(x::String, y::String...)
+    a = x
+    if string(last(a)) != "/"
+        a = string(a, "/")
+    end
+    if length(y) == 0
+        return a
+    end
+
+    b = y[1]
+    if string(b[1]) == "/"
+        b = b[2:end]
+    end
+    return folderString(string(a, b), y[2:end]...)
+end
+
 # Timer
 TIMER_DATETIME = now()
 

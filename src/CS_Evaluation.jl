@@ -17,6 +17,8 @@ include("CS_Amazon.jl")
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0
 
+# TODO: This shouldn't rely on any amazon specific anymore.
+
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)
 end

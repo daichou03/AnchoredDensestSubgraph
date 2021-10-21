@@ -115,6 +115,7 @@ DATA_GRAPH_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orku
 
 function BulkTestExport()
     for dataName in DATA_GRAPH_NAMES
+        println(string("Loading ", dataName, "..."))
         B = readIN(string(dataName, ".in"))
         P = toTransitionGraph(B)
         # Generate and import vs, rs (skip if already exported)
@@ -123,8 +124,10 @@ function BulkTestExport()
         # vs, rs already exported
         # vs, rs = ImportSimpleRs(dataName)
         # LA
+        println(string("Testing LA:"))
         ss_la, times_la = SimpleLATest(B, rs)
         ExportSimpleResults(ss_la, times_la, dataName, "LA")
+        println(string("Testing MRW:"))
         # MRW
         ss_mrw, times_mrw = SimpleMRWTest(P, vs, rs)
         ExportSimpleResults(ss_mrw, times_mrw, dataName, "MRW")

@@ -89,7 +89,11 @@ function ImportRs(Name::String="0")
     return rs
 end
 
-# For simple effectiveness tests
+##################################
+# For simple effectiveness tests #
+##################################
+
+# I/O R and V
 
 function ExportSimpleRs(Vs::Vector{Int64}, Rs::Any, Name::String="SimpleRs")
     folder = string(CS_AMAZON_FOLDER, Name, "/")
@@ -122,4 +126,40 @@ function ImportSimpleRs(Name::String="SimpleRs")
         
     println(string(length(vs), " Rs imported."))
     return vs, rs
+end
+
+# I/O result set and time
+
+function ExportSimpleResults(Ss::Any, Times::Any, TestName::String, DataName::String, AlgName::String)
+    folder_s = string(CS_AMAZON_FOLDER, "Result/", TestName, "/", DataName, "/")
+    folder_time = string(CS_AMAZON_FOLDER, "Time/", TestName, "/", DataName, "/")
+    mkpath(folder_s)
+    mkpath(folder_time)
+    io_s = open(string(folder_s, AlgName, ".txt"), "w")
+    io_time = open(string(folder_time, AlgName, ".txt"), "w")
+    for j in 1:length(Ss)
+        write(io_s, string(join(Ss[j], ","), "\n"))
+        write(io_time, string(Times[i], "\n"))
+    end
+    close(io_s)
+    colse(io_time)
+end
+
+function ImportSimpleResults(TestName::String, DataName::String, AlgName::String)
+    ss = Any[]
+    io_s = open(string(string(CS_AMAZON_FOLDER, "Result/", TestName, "/", DataName, "/"),AlgName,".txt"))
+    while !eof(io_s)
+        push!(ss, map(x->parse(Int64, x), split(readline(io_s), ",")))
+    end
+    close(io_s)
+
+    times = Any[]
+    io_time = open(string(string(CS_AMAZON_FOLDER, "Time/", TestName, "/", DataName, "/"),AlgName,".txt"))
+    while !eof(io_time)
+        push!(times, parse(Float64, readline(io_time)))
+    end
+    close(io_time)
+
+    println(string(length(ss), " results imported."))
+    return ss, times
 end

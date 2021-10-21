@@ -36,6 +36,29 @@ function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, StrongR::Vector{Int64}=I
     return (S_FS, ReportCommunity(B,R,S_FS))
 end
 
+warmed_up_FS = false
+
+function warmupFS()
+    global warmed_up_FS
+    if !warmed_up_FS
+        println("Warming up FS...")
+        LocalCond(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
+        warmed_up_FS = true
+    end
+end
+
+function SimpleFSTest(RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
+    warmupFS()
+    res = Any[]
+    times = Int[]
+    TimerReset()
+    for j = 1:length(RS)
+        push!(res, LocalCond(B, RS[j], PenalityR, StrongR, epsilon)[1])
+        push!(times, TimerLapValue())
+    end
+    return res, times
+end
+
 function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     res = Any[]
     for i = 1:length(RSS)

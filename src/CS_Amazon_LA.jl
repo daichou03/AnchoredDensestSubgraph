@@ -152,12 +152,13 @@ end
 
 function SimpleLATest(rs)
     res = []
+    times = []
     TimerReset()
     for j = 1:length(rs)
         push!(res, LocalAnchoredDensestSubgraph(B, rs[j]).source_nodes)
+        push!(times, TimerLapValue())
     end
-    println(TimerLapValue())
-    return res
+    return res, times
 end
 
 warmed_up_GL = false
@@ -174,12 +175,13 @@ end
 function SimpleGLTest(rs)
     warmupGL()
     res = []
+    times = []
     TimerReset()
     for j = 1:length(rs)
         push!(res, LScoreCommunity(B, rs[j])[1])
+        push!(times, TimerLapValue())
     end
-    println(TimerLapValue())
-    return res
+    return res, times
 end
 
 warmed_up_MRW = false
@@ -196,15 +198,14 @@ end
 function SimpleMRWTest(vs, rs)
     warmupMRW()
     res = []
+    times = []
     TimerReset()
     for j = 1:length(rs)
         push!(res, MRW_topK(P, vs[j], length(rs[j])))
+        push!(times, TimerLapValue())
     end
-    println(TimerLapValue())
-    return res
+    return res, times
 end
-
-# TODO: Perform tests.
 
 # Stratified effectiveness tests
 

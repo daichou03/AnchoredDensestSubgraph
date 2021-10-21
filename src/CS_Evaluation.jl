@@ -58,7 +58,7 @@ function ReportCommunity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
         GetAnchoredDensity(B,R,S),
         GetConductance(B,S),
         GetLocalConductance(B,R,S),
-        GetLScore(B,S),
+        #GetLScore(B,S),
         GetPropRinS(R,S),
         GetPropSinR(R,S)], "|")
 end
@@ -66,6 +66,20 @@ end
 ###############
 # Bulk Report #
 ###############
+
+# Simple tests
+
+function BulkReportCommunitySimple(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
+    folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/EV-", AlgName, "/")
+    mkpath(folder)
+    io = open(string(folder,"result.txt"), "w")
+    for j in 1:length(Rs)
+        write(io, string(ReportCommunity(B, Rs[j], Ss[j]), "\n"))
+    end
+    close(io)
+end
+
+# Stratified tests
 
 function BulkReportCommunity(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
     folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/EV-", AlgName, "/")
@@ -96,21 +110,20 @@ end
 # Integrate report #
 ####################
 
-ALG_REPORT_NAMES = ["EV-LA", "EV-GL", "EV-FS"]
-# REPORT_METRICS = ["Length", "Density", "R-Subgraph Density", "Conductance", "Local Conductance", "L", "% R in S", "% S in R"]
-REPORT_METRICS = ["length", "density", "rsdensity", "conductance", "lconductance", "lscore", "rins", "sinr"]
-IND_RINS = 7
-IND_SINR = 8
+ALG_REPORT_NAMES = ["EV-LA", "EV-MRW", "EV-FS"]
+REPORT_METRICS = ["length", "density", "rsdensity", "conductance", "lconductance", "rins", "sinr"]
+IND_RINS = 6
+IND_SINR = 7
 CALCULATED_METRICS = ["f1score"]
 IND_F1SCORE = 1
 
-IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0, 0.0]
+IMPUTE_VALUES = [0.0, 0.0, 0.0, 1.0, 999999.0, 0.0, 0.0]
 
 NUM_REPORTS = 41
 
 function ImputeNaNs(Values::Vector{Float64}, ImputeValues = IMPUTE_VALUES)
     ret = copy(Values)
-    for i in 1:length(Values)
+    for i in 1:length(ret)
         if isnan(ret[i]) || isinf(ret[i])
             ret[i] = ImputeValues[i]
         end

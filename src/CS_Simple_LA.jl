@@ -14,7 +14,7 @@ include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Simple.jl")
 include("CP_MRW.jl")
-include("CS_Evaluation.jl")
+include("CS_Evaluation_Simple.jl")
 include("Test_degeneracy_yd.jl")
 
 # This part of the code will run our algorithm or any reimplemented baseline algorithms.

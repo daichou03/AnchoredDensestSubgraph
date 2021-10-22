@@ -14,7 +14,7 @@ include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Amazon.jl")
 include("CP_MRW.jl")
-include("CS_Evaluation.jl")
+include("CS_Evaluation_Amazon.jl")
 include("Test_degeneracy_yd.jl")
 
 println("Reading Amazon product info...")

@@ -11,13 +11,9 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
-include("CP_GreedyL.jl")
-include("CS_Amazon.jl")
 
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0
-
-# TODO: This shouldn't rely on any amazon specific anymore.
 
 function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
     return GetVolume(B[S,S]) / length(S)
@@ -69,16 +65,25 @@ end
 # Bulk Report #
 ###############
 
-# Simple tests
-
-function BulkReportCommunitySimple(B::SparseMatrixCSC, Rs::Any, Ss::Any, TestName::String, AlgName::String)
-    folder = string(CS_AMAZON_FOLDER, "Report/", TestName, "/EV-", AlgName, "/")
+function ReportCommunitySimple(B::SparseMatrixCSC, Rs::Any, Ss::Any, Times::Float64[], DataName::String, AlgName::String)
+    folder = folderString(CS_SIMPLE_FOLDER, DataName, "Report")
     mkpath(folder)
-    io = open(string(folder,"result.txt"), "w")
+    io = open(string(folder, AlgName), "w")
     for j in 1:length(Rs)
-        write(io, string(ReportCommunity(B, Rs[j], Ss[j]), "\n"))
+        write(io, string(join([Times[j], ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
     end
     close(io)
+end
+
+function BulkReportCommunitySimple()
+    for dataName in SIMPLE_TEST_DATA_NAMES
+        B = readIN(string(dataName, ".in"))
+        vs, rs = ImportSimpleRs(dataName)
+        for algName in ALGORITHM_NAMES
+            ss, times = ImportSimpleResults(dataName, algName)
+            ReportCommunitySimple(B, rs, ss, times, dataName, algName)
+        end
+    end
 end
 
 # Stratified tests

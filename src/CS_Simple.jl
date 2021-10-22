@@ -17,6 +17,8 @@ CS_SIMPLE_FOLDER = "../CaseStudy/Simple/"
 # For simple effectiveness tests #
 ##################################
 
+SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orkut"]
+
 # I/O R and V
 
 function ExportSimpleRs(Vs::Vector{Int64}, Rs::Any, DataName::String)

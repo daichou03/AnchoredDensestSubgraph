@@ -2,62 +2,8 @@
 # There are conflicts with our Core_algorithm_yd, so do not load that together with this code.
 # Credit: FlowSeed: https://github.com/nveldt/FlowSeed
 
-using MAT
 include("CS_Amazon.jl")
-include("../CS_Competitors/FlowSeed-master/algorithms/FlowSeed-1.0.jl")
-include("CS_Evaluation.jl")
-
-# PenalityR: Penalty for not including R. 1.0 is their default, but 0.0 is closer to our anchored density definition.
-# Strong nodes: flowseed can specify nodes that MUST be included.
-# epsilon: 0.1 is their default, 1.0 is closer to our anchored density definition.
-function LocalCond(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
-    numR = length(R)
-    RinS = zeros(numR,1)
-    pR = zeros(numR,1)
-    for r = 1:numR
-        # Strictly penalize the exclusion of nodes that are known
-        # to be in the target set
-        if in(R[r],StrongR)
-            RinS[r] = 1
-        else
-            # Place a soft penalty on excluding other seed nodes
-            pR[r] = PenalityR
-        end
-    end
-   return FlowSeed(B,R,epsilon,pR,RinS)
-end
-
-function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, StrongR::Vector{Int64}=Int64[], epsilon=1.0, Print::Bool=true)
-    S_FS = LocalCond(B,R,StrongR,epsilon)[1]
-    if Print
-        println(string("S_FS = ", S_FS))
-        println(ReportCommunity(B,R,S_FS))
-    end
-    return (S_FS, ReportCommunity(B,R,S_FS))
-end
-
-warmed_up_FS = false
-
-function warmupFS()
-    global warmed_up_FS
-    if !warmed_up_FS
-        println("Warming up FS...")
-        LocalCond(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
-        warmed_up_FS = true
-    end
-end
-
-function SimpleFSTest(RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
-    warmupFS()
-    res = Any[]
-    times = Int[]
-    TimerReset()
-    for j = 1:length(RS)
-        push!(res, LocalCond(B, RS[j], PenalityR, StrongR, epsilon)[1])
-        push!(times, TimerLapValue())
-    end
-    return res, times
-end
+include("CS_Simple_flowseed.jl")
 
 function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     res = Any[]
@@ -73,5 +19,3 @@ function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=In
     end
     return res
 end
-
-# TODO: Move this to somewhere else and still refer to here. Have a document saying it is referring external codes plus credit.

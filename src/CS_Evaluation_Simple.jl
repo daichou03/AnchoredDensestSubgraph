@@ -11,6 +11,7 @@ include("Graph_utils_yd.jl")
 include("Core_algorithm_yd.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
+include("CS_Simple.jl")
 
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0
@@ -65,10 +66,10 @@ end
 # Bulk Report #
 ###############
 
-function ReportCommunitySimple(B::SparseMatrixCSC, Rs::Any, Ss::Any, Times::Float64[], DataName::String, AlgName::String)
+function ReportCommunitySimple(B::SparseMatrixCSC, Rs, Ss, Times, DataName::String, AlgName::String)
     folder = folderString(CS_SIMPLE_FOLDER, DataName, "Report")
     mkpath(folder)
-    io = open(string(folder, AlgName), "w")
+    io = open(string(folder, AlgName, ".txt"), "w")
     for j in 1:length(Rs)
         write(io, string(join([Times[j], ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
     end

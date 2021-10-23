@@ -114,7 +114,7 @@ function CSTest(V::Int64, Print::Bool=true)
         R = GenerateReferenceSetFixedWalks(B, C)
     end
     S_LA = LocalAnchoredDensestSubgraph(B,R).source_nodes
-    S_MRW = MRW_topK(P,V,length(R)) # Take |R| as cluster size
+    S_MRW = MRW_topK(P,V,15) # Take 15 as cluster size
     if Print
         println(string("V = ", V, " # ", allTitles[V]))
         println(string("R = ", R))

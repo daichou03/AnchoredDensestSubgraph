@@ -84,8 +84,10 @@ function BulkReportCommunitySimple()
         vs, rs = ImportSimpleRs(dataName)
         for algName in ALGORITHM_NAMES
             ss, times = ImportSimpleResults(dataName, algName)
+            # Can choose to truncate MRW's result set here
             if algName == "MRW"
-                ss = map(s->s[1:min(length(s), 15)], ss)
+                # ss = map(i->ss[i][1:min(length(ss[i]), length(rs[i]))], 1:length(ss)) # Size of R
+                ss = map(s->s[1:min(length(s), 15)], ss) # Size = 15
             end
             ReportCommunitySimple(B, rs, ss, times, dataName, algName)
         end

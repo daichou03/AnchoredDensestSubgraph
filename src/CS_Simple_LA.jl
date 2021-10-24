@@ -103,7 +103,7 @@ function SimpleMRWTest(P::SparseMatrixCSC, vs, rs)
     times = []
     TimerReset()
     for j = 1:length(rs)
-        push!(ss, MRW_topK(P, vs[j], 15)) # Take 15 as set size
+        push!(ss, MRW_topK(P, rs[j], 15)) # Take 15 as set size
         push!(times, TimerLapValue())
     end
     return ss, times

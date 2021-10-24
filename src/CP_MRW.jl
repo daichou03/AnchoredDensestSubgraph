@@ -19,7 +19,11 @@ MRW_BETA = 0.6
 MRW_K = 5
 
 
+# Revised version of SINGLE-QUERY MRW.
+# When accepting multiple nodes as the query set, the restart point is considered to be all of these nodes with equal chance.
+
 # P: transition graph
+# q: query node set
 # alpha, beta: decay parameters as per paper
 # K: sliding window length
 # tol: tolerance (of score difference only)
@@ -29,7 +33,13 @@ function MRW(P, q, alpha=MRW_ALPHA, beta=MRW_BETA, K=MRW_K, tol=1e-6, verbose=fa
     N = size(P, 1)
     t = 1
     x_0 = zeros(N)
-    x_0[q] = 1.0
+    if typeof(q) == Int
+        x_0[q] = 1.0
+    else
+        for i in q
+            x_0[i] = 1.0 / length(q)
+        end
+    end
     x_old = copy(x_0)
     e = Any[]
     push!(e, fill(1/N, N))

@@ -19,6 +19,7 @@ CS_SIMPLE_FOLDER = "../CaseStudy/Simple/"
 
 SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orkut"]
 # SIMPLE_TEST_DATA_NAMES = ["digg", "flickr", "google", "flixster"]
+SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "digg", "flickr", "youtube", "google", "flixster", "skitter", "livejournal", "orkut"]
 ALGORITHM_NAMES = ["LA", "FS", "MRW"]
 
 # I/O R and V

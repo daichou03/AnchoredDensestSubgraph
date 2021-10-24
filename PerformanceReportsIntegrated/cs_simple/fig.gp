@@ -20,7 +20,7 @@ set encoding utf8
 unset xlabel
 set xtics rotate by -30 font "Times-Roman,18"
 
-
+set yrange [0:10]
 set output 'density.eps'
 plot 'density.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 	'' using 3 notitle lt -1 fs pattern 4,\
@@ -62,7 +62,7 @@ plot 'f1score.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 	'' using 4 notitle lt -1 fs pattern 2
 
 
-set yrange [0:50]
+set yrange [0:60]
 set output 'length.eps'
 plot 'length.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 	'' using 3 notitle lt -1 fs pattern 4,\

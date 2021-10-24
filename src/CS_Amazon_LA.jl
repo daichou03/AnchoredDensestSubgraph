@@ -33,7 +33,7 @@ function RetrieveProductInfoAsArray(InfoTypes::Vector{String}=["title","group"])
             for infoType in InfoTypes
                 if startswith(line, string("  ", infoType))
                     if info[current_id] != ""
-                        info[current_id] = string(info[current_id], " | ")
+                        info[current_id] = string(info[current_id], "|")
                     end
                     info[current_id] = string(info[current_id], line[length(infoType) + 5 : end])
                 end
@@ -69,28 +69,28 @@ function RetrieveTopSales(TopNum::Int64=1000)
     return info
 end
 
-allTitles = RetrieveProductInfoAsArray(["title","group"])
+AMAZON_PRODUCT_INFO = RetrieveProductInfoAsArray(["title","group"])
 
 function DisplayAdjacent(V::Int64)
     adjs = GetAdjacency(B,V)
     for adj in adjs
-        println(string(adj, ": ", allTitles[adj]))
+        println(string(adj, ": ", AMAZON_PRODUCT_INFO[adj]))
     end
     return adjs
 end
 
 function GetRefinedSetAmazon(C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
-    GetRefinedSet(B, C, allTitles, Repeats, Steps)
+    GetRefinedSet(B, C, AMAZON_PRODUCT_INFO, Repeats, Steps)
 end
 
 function GetRAmazon(C::Vector{Int64}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)
     R = GenerateReferenceSetFixedWalks(B, C, Repeats, Steps)
-    DisplaySubset(R, allTitles)
+    DisplaySubset(R, AMAZON_PRODUCT_INFO)
     return R
 end
 
 function GetRefinedSetFromRAmazon(R::Vector{Int64})
-    GetRefinedSetFromR(B, R, allTitles)
+    GetRefinedSetFromR(B, R, AMAZON_PRODUCT_INFO)
 end
 
 # Can't ensure we get expansive (non-degenerate) result every time, so for case study retry until we get an expansive example.
@@ -116,7 +116,7 @@ function CSTest(V::Int64, Print::Bool=true)
     S_LA = LocalAnchoredDensestSubgraph(B,R).source_nodes
     S_MRW = MRW_topK(P,V,15) # Take 15 as cluster size
     if Print
-        println(string("V = ", V, " # ", allTitles[V]))
+        println(string("V = ", V, " # ", AMAZON_PRODUCT_INFO[V]))
         println(string("R = ", R))
         println(string("S_LA = ", S_LA))
         println(string("S_MRW = ", S_MRW))

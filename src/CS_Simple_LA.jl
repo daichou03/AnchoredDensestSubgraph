@@ -103,7 +103,7 @@ function SimpleMRWTest(P::SparseMatrixCSC, vs, rs)
     times = []
     TimerReset()
     for j = 1:length(rs)
-        push!(ss, MRW_topK(P, vs[j], length(rs[j])))
+        push!(ss, MRW_topK(P, vs[j], 15)) # Take 15 as set size
         push!(times, TimerLapValue())
     end
     return ss, times
@@ -111,17 +111,19 @@ end
 
 
 # Code
-function BulkTestExport()
+function BulkTestExport(RegenerateR::Bool=false)
     for dataName in SIMPLE_TEST_DATA_NAMES
         println(string("Loading ", dataName, "..."))
         B = readIN(string(dataName, ".in"))
         P = toTransitionGraph(B)
-        # Generate and import vs, rs (skip if already exported)
-        # vs, rs = SampleR(B, 1000)
-        # ExportSimpleRs(vs, rs, dataName)
-        # vs, rs already exported
-        vs, rs = ImportSimpleRs(dataName)
-        # LA
+        if RegenerateR
+            println("Generating R:")
+            vs, rs = SampleR(B, 1000)
+            ExportSimpleRs(vs, rs, dataName)
+        else
+            println("Importing R:")
+            vs, rs = ImportSimpleRs(dataName)
+        end
         println(string("Testing LA:"))
         ss_la, times_la = SimpleLATest(B, rs)
         ExportSimpleResults(ss_la, times_la, dataName, "LA")

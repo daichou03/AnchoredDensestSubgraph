@@ -209,7 +209,7 @@ end
 # For Gephi #
 #############
 
-function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_FOLDER, "GraphEditor/"))
+function ExportGraphEditor(R, Ss, Name::String, Folder::String=folderString(CS_AMAZON_FOLDER, "Single", "GraphEditor"))
     RUnion = copy(R)
     for s in Ss
         RUnion = union(RUnion, s)
@@ -222,8 +222,7 @@ function ExportGraphEditor(R, Ss, Name::String, Folder::String=string(CS_AMAZON_
     RsubsetInds = orderedSubsetIndices(RUnionN, sort(R))
     SsubsetIndss = Any[]
     for i in 1:length(Ss)
-        append!(SsubsetIndss, 0)
-        SsubsetIndss[i] = orderedSubsetIndices(RUnionN, sort(Ss[i]))
+        push!(SsubsetIndss, orderedSubsetIndices(RUnionN, sort(Ss[i])))
     end
     Bsubset = B[RUnionN, RUnionN]
 

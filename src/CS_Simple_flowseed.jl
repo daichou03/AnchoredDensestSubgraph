@@ -62,15 +62,18 @@ function SimpleFSTest(B, RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int6
     return res, times
 end
 
-function BulkTestExportFS()
+function BulkTestExportFS(RegenerateR::Bool=false)
     for dataName in SIMPLE_TEST_DATA_NAMES
         println(string("Loading ", dataName, "..."))
         B = readIN(string(dataName, ".in"))
-        # Generate and import vs, rs (skip if already exported)
-        # vs, rs = SampleR(B, 1000)
-        # ExportSimpleRs(vs, rs, dataName)
-        # vs, rs already exported
-        vs, rs = ImportSimpleRs(dataName)
+        if RegenerateR
+            println("Generating R:")
+            vs, rs = SampleR(B, 1000)
+            ExportSimpleRs(vs, rs, dataName)
+        else
+            println("Importing R:")
+            vs, rs = ImportSimpleRs(dataName)
+        end
         # FS
         println(string("Testing FS:"))
         ss_fs, times_fs = SimpleFSTest(B, rs)

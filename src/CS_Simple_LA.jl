@@ -55,12 +55,14 @@ function SimpleLATest(B::SparseMatrixCSC, rs)
     warmupLA()
     ss = []
     times = []
+    spaces = []
     TimerReset()
     for j = 1:length(rs)
         push!(ss, LocalAnchoredDensestSubgraph(B, rs[j]).source_nodes)
         push!(times, TimerLapValue())
+        push!(spaces, PopMaxMemoryUsage())
     end
-    return ss, times
+    return ss, times, spaces
 end
 
 warmed_up_GL = false
@@ -78,12 +80,15 @@ function SimpleGLTest(B::SparseMatrixCSC, rs)
     warmupGL()
     ss = []
     times = []
+    spaces = []
+    PopMaxMemoryUsage()
     TimerReset()
     for j = 1:length(rs)
         push!(ss, LScoreCommunity(B, rs[j])[1])
         push!(times, TimerLapValue())
+        push!(spaces, PopMaxMemoryUsage())
     end
-    return ss, times
+    return ss, times, spaces
 end
 
 warmed_up_MRW = false
@@ -101,12 +106,15 @@ function SimpleMRWTest(P::SparseMatrixCSC, vs, rs)
     warmupMRW()
     ss = []
     times = []
+    spaces = []
+    PopMaxMemoryUsage()
     TimerReset()
     for j = 1:length(rs)
         push!(ss, MRW_topK(P, rs[j], 100)) # 100 should be large enough, we can always truncate the result sets before reporting.
         push!(times, TimerLapValue())
+        push!(spaces, PopMaxMemoryUsage())
     end
-    return ss, times
+    return ss, times, spaces
 end
 
 
@@ -124,12 +132,13 @@ function BulkTestExport(RegenerateR::Bool=false)
             println("Importing R:")
             vs, rs = ImportSimpleRs(dataName)
         end
+        # LA
         println(string("Testing LA:"))
-        ss_la, times_la = SimpleLATest(B, rs)
-        ExportSimpleResults(ss_la, times_la, dataName, "LA")
-        println(string("Testing MRW:"))
+        ss_la, times_la, spaces_la = SimpleLATest(B, rs)
+        ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
         # MRW
-        ss_mrw, times_mrw = SimpleMRWTest(P, vs, rs)
-        ExportSimpleResults(ss_mrw, times_mrw, dataName, "MRW")
+        println(string("Testing MRW:"))
+        ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
+        ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
     end
 end

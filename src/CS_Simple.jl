@@ -59,11 +59,14 @@ end
 
 # I/O result set and time
 
-function ExportSimpleResults(Ss::Any, Times::Any, DataName::String, AlgName::String)
+function ExportSimpleResults(Ss::Any, Times::Any, Spaces::Any, DataName::String, AlgName::String)
     function DoExportSimpleResults(Result::Any, DataName::String, ResLabel::String, AlgName::String)
+        if length(Result) == 0
+            return
+        end
         folder = folderString(CS_SIMPLE_FOLDER, DataName, ResLabel)
         mkpath(folder)
-        io = open(string((CS_SIMPLE_FOLDER, DataName, ResLabel))
+        io = open(string(folder, AlgName, ".txt"), "w")
         for j in 1:length(Result)
             line = Result[j]
             if isa(line, Vector)
@@ -76,6 +79,7 @@ function ExportSimpleResults(Ss::Any, Times::Any, DataName::String, AlgName::Str
 
     DoExportSimpleResults(Ss, DataName, "Result", AlgName)
     DoExportSimpleResults(Times, DataName, "Time", AlgName)
+    DoExportSimpleResults(Spaces, DataName, "Spaces", AlgName)
 end
 
 function ImportSimpleResults(DataName::String, AlgName::String)

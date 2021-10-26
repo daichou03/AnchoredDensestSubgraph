@@ -1,9 +1,9 @@
-# This relies on competitor codes in root/CS_Competitors. That folder is ignored in git.
-# There are conflicts with our Core_algorithm_yd, so do not load that together with this code.
+# This relies on competitor codes, now copied to the same folder as CP_FlowSeed.jl.
+# By now there are conflicts with our Core_algorithm_yd, so do not load that together with this code.
 # Credit: FlowSeed: https://github.com/nveldt/FlowSeed
 
 using MAT
-include("../CS_Competitors/FlowSeed-master/algorithms/FlowSeed-1.0.jl")
+include("CP_FlowSeed.jl")
 include("Helper_io.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")

@@ -9,9 +9,11 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Simple.jl")
+include("Memory_tracker.jl")
+
 
 # PenalityR: Penalty for not including R. 1.0 is their default, but 0.0 is closer to our anchored density definition.
-# Strong nodes: flowseed can specify nodes that MUST be included.
+# StrongR: flowseed can specify nodes that MUST be included.
 # epsilon: 0.1 is their default, 1.0 is closer to our anchored density definition.
 function LocalCond(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     numR = length(R)
@@ -54,12 +56,15 @@ function SimpleFSTest(B, RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int6
     warmupFS()
     res = Any[]
     times = Float64[]
+    spaces = []
+    PopMaxMemoryUsage()
     TimerReset()
     for j = 1:length(RS)
         push!(res, LocalCond(B, RS[j], PenalityR, StrongR, epsilon)[1])
         push!(times, TimerLapValue())
+        push!(spaces, PopMaxMemoryUsage())
     end
-    return res, times
+    return res, times, spaces
 end
 
 function BulkTestExportFS(RegenerateR::Bool=false)
@@ -76,7 +81,7 @@ function BulkTestExportFS(RegenerateR::Bool=false)
         end
         # FS
         println(string("Testing FS:"))
-        ss_fs, times_fs = SimpleFSTest(B, rs)
-        ExportSimpleResults(ss_fs, times_fs, dataName, "FS")
+        ss_fs, times_fs, spaces_fs = SimpleFSTest(B, rs)
+        ExportSimpleResults(ss_fs, times_fs, spaces_fs, dataName, "FS")
     end
 end

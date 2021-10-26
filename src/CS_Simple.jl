@@ -60,18 +60,22 @@ end
 # I/O result set and time
 
 function ExportSimpleResults(Ss::Any, Times::Any, DataName::String, AlgName::String)
-    folder_s = folderString(CS_SIMPLE_FOLDER, DataName, "Result")
-    folder_time = folderString(CS_SIMPLE_FOLDER, DataName, "Time")
-    mkpath(folder_s)
-    mkpath(folder_time)
-    io_s = open(string(folder_s, AlgName, ".txt"), "w")
-    io_time = open(string(folder_time, AlgName, ".txt"), "w")
-    for j in 1:length(Ss)
-        write(io_s, string(join(Ss[j], ","), "\n"))
-        write(io_time, string(Times[j], "\n"))
+    function DoExportSimpleResults(Result::Any, DataName::String, ResLabel::String, AlgName::String)
+        folder = folderString(CS_SIMPLE_FOLDER, DataName, ResLabel)
+        mkpath(folder)
+        io = open(string((CS_SIMPLE_FOLDER, DataName, ResLabel))
+        for j in 1:length(Result)
+            line = Result[j]
+            if isa(line, Vector)
+                line = join(line, ",")
+            end
+            write(io, string(line, "\n"))
+        end
+        close(io)
     end
-    close(io_s)
-    close(io_time)
+
+    DoExportSimpleResults(Ss, DataName, "Result", AlgName)
+    DoExportSimpleResults(Times, DataName, "Time", AlgName)
 end
 
 function ImportSimpleResults(DataName::String, AlgName::String)

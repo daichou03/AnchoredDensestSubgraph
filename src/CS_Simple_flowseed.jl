@@ -67,6 +67,7 @@ function SimpleFSTest(B, RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int6
     return res, times, spaces
 end
 
+# Bool=ture not actually working as no reference to ExportSimpleRs - generate them from CS_Simple_LA first.
 function BulkTestExportFS(RegenerateR::Bool=false)
     for dataName in SIMPLE_TEST_DATA_NAMES
         println(string("Loading ", dataName, "..."))

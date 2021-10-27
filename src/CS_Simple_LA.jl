@@ -44,7 +44,7 @@ warmed_up_LA = false
 
 function warmupLA()
     global warmed_up_LA
-    if warmed_up_LA
+    if !warmed_up_LA
         println("Warming up LA...")
         LocalAnchoredDensestSubgraph(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
         warmed_up_LA = true

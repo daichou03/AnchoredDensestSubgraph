@@ -31,8 +31,11 @@ include("Memory_tracker.jl")
 
 
 Memory_item_FS = "FS"
-Memory_item_FS_Main = "FS_Main"
+Memory_item_FSMain = "FSMain"
 Memory_item_LocalPushRelabel = "LPR"
+Memory_item_LocalPushRelabel_while = "LPR_while"
+Memory_item_MainPushRelabel = "MPR"
+Memory_item_Cutval = "CUTVAL"
 
 
 # This computes the precision, recall, and F1 score for a set Returned
@@ -112,21 +115,26 @@ function cutval(A::SparseMatrixCSC{Float64,Int64},S::Vector{Int64},
     R::Vector{Int64},d::Array{Float64,2},alpha::Float64,epsilon::Float64,
     volA::Float64,pR::Array{Float64},RinS::Array{Float64})
 
+    stamp = RegisterFunctionStamp()
+
     n = size(A,1)
     if volA == 0.0
         volA = sum(A.nzval)
     end
 
     strongR = R[findall(x->x!=0,RinS)]
+    RegisterMemoryItem(Memory_item_Cutval, stamp, strongR, @varname strongR)
     @assert(length(setdiff(strongR,S)) == 0)    # S should contain strongR
 
     @assert(minimum(S) >= 1)
     @assert(maximum(S) <= size(A,1))
     AS = A[:,S];
+    RegisterMemoryItem(Memory_item_Cutval, stamp, AS, @varname AS)
 
 
     volS = sum(AS.nzval);
     SAS = AS[S,:]
+    RegisterMemoryItem(Memory_item_Cutval, stamp, SAS, @varname SAS)
     edges = sum(SAS.nzval);
     cutS = volS-edges
 
@@ -135,11 +143,15 @@ function cutval(A::SparseMatrixCSC{Float64,Int64},S::Vector{Int64},
     # penalty vector, should only be nonzero for R nodes
     penalty = zeros(n)
     penalty[R] = pR.*d[R]
+    RegisterMemoryItem(Memory_item_Cutval, stamp, penalty, @varname penalty)
 
     RS = intersect(R,S)
+    RegisterMemoryItem(Memory_item_Cutval, stamp, RS, @varname RS)
     volRS = sum(d[RS])
     RnotinS = setdiff(R,RS)   # the set of nodes in R that aren't in S
+    RegisterMemoryItem(Memory_item_Cutval, stamp, RnotinS, @varname RnotinS)
     pRnotinS = sum(penalty[RnotinS])    # the penalty for excluding R nodes from A
+    RegisterMemoryItem(Memory_item_Cutval, stamp, pRnotinS, @varname pRnotinS)
 
     cutScore = cutS - alpha*volRS + alpha*volR + alpha*epsilon*(volS-volRS) + alpha*pRnotinS
 
@@ -147,6 +159,7 @@ function cutval(A::SparseMatrixCSC{Float64,Int64},S::Vector{Int64},
 
     relcond = cutS/(volRS - epsilon*(volS-volRS) - pRnotinS)
 
+    ReclaimFunctionMemoryUsage(Memory_item_Cutval, stamp)
     return relcond
 end
 
@@ -242,10 +255,10 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
 
     # Call nodes that must be S the "strong seed nodes"
     localStrong = findall(x->x!=0,RinS)
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, localStrong, @varname localStrong)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, localStrong, @varname localStrong)
 
     StrongSeeds = R[localStrong]
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, StrongSeeds, @varname StrongSeeds)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, StrongSeeds, @varname StrongSeeds)
     numstrong = length(StrongSeeds)
 
     # If something is marked as a strong seed, put an infinite penalty
@@ -269,13 +282,13 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     alphaBest = alphaCurrent
 
     source = zeros(n)
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, source, @varname source)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, source, @varname source)
     sink = zeros(n)
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, sink, @varname sink)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, sink, @varname sink)
     dr = d[R]
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, dr, @varname dr)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, dr, @varname dr)
     drc = d[Rc]
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, drc, @varname drc)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, drc, @varname drc)
 
     while alphaCurrent < alph0
 
@@ -325,12 +338,12 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     end
 
     SL = BestS
-    RegisterMemoryItem(Memory_item_FS_Main, stamp, SL, @varname SL)
+    RegisterMemoryItem(Memory_item_FSMain, stamp, SL, @varname SL)
     sizeSL = length(SL)
     cond = alphaBest
     # println("------------------------------------------------------")
     # println("Final Answer: Conductance = $cond, Size = $sizeSL ")
-    ReclaimFunctionMemoryUsage(Memory_item_FS_Main, stamp)
+    ReclaimFunctionMemoryUsage(Memory_item_FSMain, stamp)
     return SL, cond
 end
 
@@ -350,11 +363,15 @@ end
 function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     sWeights::Array{Float64},tWeights::Array{Float64},Rn::Array{Int64})
 
+    stamp = RegisterFunctionStamp()
+
     timer = 0.0
 
     n = size(A,1)
     rp = A.rowval
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, rp, @varname rp) # YD PENDING: This creates |E| memory usage. Could remove this and more.
     ci = A.colptr
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, ci, @varname ci)
 
     # Now we want to locally compute maximum flows
     # C = indices of "complete" nodes in the local graph L, which are nodes
@@ -364,13 +381,17 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
 
     # Initialize the complete set to be the set of nodes adjacent to the source
     C_global = R
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, C_global, @varname C_global)
     I_global = Rn           # everything else is incomplete
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, I_global, @varname I_global)
     Ac = A[C_global,:]      # set of edges from the complete set to the rest of the graph
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, Ac, @varname Ac)
 
     # We will maintain a map from indices in a local subgraph, to global indices in A.
     # These don't include the sink node in the flow graph, we are considering
     # just a growing local subgraph of A
     Local2Global = [C_global; I_global]
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, Local2Global, @varname Local2Global)
     # Node i in the local graph corresponds to the node with index
     # Local2Glocal[i] in the global graph A
 
@@ -379,15 +400,20 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
 
     # Indices, in the local graph, of complete and incomplete nodes
     C_local = collect(1:length(R))
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, C_local, @varname C_local)
     I_local = collect(length(R)+1:Lsize)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, I_local, @varname I_local)
     numI = length(I_global)     # number of incomplete nodes
 
     # Build the initial local graph
 
     AcToI = Ac[:,I_global]     # edges between complete and incomplete nodes
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, AcToI, @varname AcToI)
     AcToc = Ac[:,C_global]     # edges between complete nodes
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, AcToc, @varname AcToc)
     L = [AcToc AcToI;
         AcToI' spzeros(numI,numI)]   # adjacency matrix for local graph
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, L, @varname L)
 
     # We distinguish between L the "local graph", and Lf, the "local flow graph"
     # which additionally contains the sink node t (as node 1).
@@ -395,22 +421,29 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     # In the local flow graph, each non-terminal node has either a source-side
     # or sink-side edge.
     tToL = reshape(tWeights[Local2Global],Lsize)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, tToL, @varname tToL)
     sToL = reshape(sWeights[Local2Global],Lsize)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, sToL, @varname sToL)
 
     # By adding the edges to the sink,
     # we transform the local graph L into the local flow graph Lf
 
     Lf = [spzeros(1,1) sparse(tToL');
          sparse(tToL) L]
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, Lf, @varname Lf)
 
     # Initialize the flow matrix; allocate space for non-zero flow values
     nLf = size(Lf,1)
     F = SparseMatrixCSC(nLf,nLf,Lf.colptr,Lf.rowval,zeros(length(Lf.rowval)))
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, F, @varname F)
     # Find the minimum cut for Lf.
     #
     # The first node in Lf is the sink, so offset indices of R by 1.
     start = time()
     S_local,F,excess = Main_Push_Relabel(Lf,F,collect(2:length(R)+1),[0; sToL])
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, S_local, @varname S_local)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, F, @varname F)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, excess, @varname excess)
     timer += time()-start
 
     # F is a preflow that is returned. It is NOT the maximum flow for Lf.
@@ -419,18 +452,23 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
 
     # We "expand" L around nodes in S that were previously "incomplete"
     E_local = setdiff(S_local,C_local)         # Nodes to expand around
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, E_local, @varname E_local)
     E_global = Local2Global[E_local]           # their global indices
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, E_global, @varname E_global)
 
     # Keep track of which nodes are in the local graph L
     inL = zeros(Bool,n)
+    RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, inL, @varname inL)
     inL[Local2Global] .= true
 
     # As long as we have new nodes to expand around, we haven't yet found
     # the global minimum s-t cut, so we continue.
     while length(E_local) > 0
+        stamp_while = RegisterFunctionStamp()
 
         # Update which nodes are complete and which are incomplete
         C_local = [C_local; E_local]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, C_local, @varname C_local)
         C_global = Local2Global[C_local]
 
         # Take these away from I_local
@@ -459,23 +497,29 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
             end
         end
         numNew = length(Lnew)
+        RegisterMemoryItem(Memory_item_LocalPushRelabel_while, stamp_while, Lnew, @varname Lnew)
 
         # We must add
 
         # Store local indices for new nodes added to L
         Lnew_local = collect((Lsize+1):(Lsize+numNew))
+        RegisterMemoryItem(Memory_item_LocalPushRelabel_while, stamp_while, Lnew_local, @varname Lnew_local)
 
         # These are going to be "incomplete" nodes
         I_local = [I_local; Lnew_local]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, I_local, @varname I_local)
 
         # Expand L by adding edges from the old local graph to Lnew.
         # Note that we don't include any edges between nodes in Lnew.
         P = A[Local2Global,Lnew]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel_while, stamp_while, P, @varname P)
         L = [L P;
             P' spzeros(numNew,numNew)]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, L, @varname L)
 
         # Update the set of indices in L
         Local2Global = [Local2Global; Lnew]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, Local2Global, @varname Local2Global)
 
         # excess stores the amount of "excess" flow after a flow computation.
         #
@@ -483,19 +527,24 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
         # Since Lnew were not present in the last flow computation, they
         # have zero excess.
         excess = [excess; zeros(numNew)]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, excess, @varname excess)
 
         # For the next local min-cut computation, we need to know which
         # nodes come with nonzero excess. These are "active" nodes.
         ExcessNodes = findall(x->x!=0,excess)
+        RegisterMemoryItem(Memory_item_LocalPushRelabel_while, stamp_while, ExcessNodes, @varname ExcessNodes)
 
         # Update the capacity to the sink.
         tToL = [tToL; tWeights[Lnew]]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, tToL, @varname tToL)
         # Now we construct a new local flow graph, and repeat
 
         Lf = [spzeros(1,1) sparse(tToL');
              sparse(tToL) L]
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, tToL, @varname tToL)
 
         Fold = F    # Old flow, saved as a warm start
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, Fold, @varname Fold)
 
         # Construct an initial flow F that includes the previous flow Fold
         # as a warm start. First, we allocate space for future
@@ -504,21 +553,27 @@ function LocalPushRelabel(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
         nLf = size(Lf,1)
 
         F = SparseMatrixCSC(nLf,nLf,Lf.colptr,Lf.rowval,zeros(length(Lf.rowval)))
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, F, @varname F)
         F[1:Lsize+1,1:Lsize+1] = Fold
 
         Lsize = size(L,1)
 
         # Compute min s-t cut for local flow graph and see if we need to expand
         S_local,F,excess = Main_Push_Relabel(Lf,F,ExcessNodes,excess)
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, S_local, @varname S_local)
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, F, @varname F)
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, excess, @varname excess)
 
         E_local = setdiff(S_local,C_local)     # the nodes that need completing
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, E_local, @varname E_local)
         E_global = Local2Global[E_local]       # their global indices
-
+        RegisterMemoryItem(Memory_item_LocalPushRelabel, stamp, E_global, @varname E_global)
+        ReclaimFunctionMemoryUsage(Memory_item_LocalPushRelabel_while, stamp_while)
     end
 
     # return the global indices of the minimum cut set
+    ReclaimFunctionMemoryUsage(Memory_item_LocalPushRelabel, stamp)
     return Local2Global[S_local]
-
 end
 
 # A non-local version of the min-cut code that works by calling the same
@@ -565,6 +620,8 @@ end
 function Main_Push_Relabel(C::SparseMatrixCSC{Float64,Int64},
     F::SparseMatrixCSC{Float64,Int64},ExcessNodes::Array{Int64},excess::Array{Float64})
 
+    stamp = RegisterFunctionStamp()
+
     # check excess node list
     # assert(countnz(excess) == length(ExcessNodes))
 
@@ -572,12 +629,16 @@ function Main_Push_Relabel(C::SparseMatrixCSC{Float64,Int64},
     n = size(C,1)
 
     height = zeros(Int64,n)      # label/height of each node
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, height, @varname height)
     inQ = zeros(Bool,n)          # list whether or not nodes are in the queue
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, inQ, @varname inQ)
 
     # Store adjacency list. There are ways to update this if calling
     # this function multiple times for growing local graphs, but it
     # does not appear to be a bottleneck to simply recompute frequently
     Neighbs,d = ConstructAdj(C,n)
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, Neighbs, @varname Neighbs)
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, d, @varname d)
 
     # We will maintain a queue of active nodes.
     Queue = Vector{Int64}()
@@ -590,12 +651,14 @@ function Main_Push_Relabel(C::SparseMatrixCSC{Float64,Int64},
     for v = ExcessNodes
         push!(Queue,v)
     end
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, Queue, @varname Queue)
     inQ[ExcessNodes] .= true
 
     # count the number of nodes that have been relabeled
     relabelings::Int64 = 0
 
     height = relabeling_bfs(C,F)     # compute initial distance from sink
+    RegisterMemoryItem(Memory_item_MainPushRelabel, stamp, height, @varname height)
 
     # In the code and comments, height = distance from sink = label of node
 
@@ -639,6 +702,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC{Float64,Int64},
     end
 
     excess[1] = 0.0     # ignore whatever excess there was at the sink.
+    ReclaimFunctionMemoryUsage(Memory_item_MainPushRelabel, stamp)
     return S, F, excess
 
 end

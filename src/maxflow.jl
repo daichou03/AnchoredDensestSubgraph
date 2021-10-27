@@ -410,6 +410,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     # Compute final distances from sink using BFS. Anything with distance
     # n is disconnected from the sink. Thus it's part of the minimium cut set
     finalHeight = relabeling_bfs(C,F,flowtol,n)
+    RegisterMemoryItem(Memory_item_MainPR, stamp, finalHeight, @varname finalHeight)
     S = Vector{Int64}()
     push!(S,1)          # Include the source node
     for i = 2:n

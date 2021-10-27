@@ -31,6 +31,8 @@ include("Memory_tracker.jl")
 
 
 Memory_item_FS = "FS"
+Memory_item_FS_Main = "FS_Main"
+Memory_item_LocalPushRelabel = "LPR"
 
 
 # This computes the precision, recall, and F1 score for a set Returned
@@ -192,6 +194,7 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     stamp = RegisterFunctionStamp()
     
     d = sum(A,dims = 2)
+    RegisterMemoryItem(Memory_item_FS, stamp, d, @varname d)
     volA = sum(A.nzval)
     volR = sum(d[R])
     n = size(A,1)
@@ -199,13 +202,17 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     # Find one-hop neighbors of R, and get the complement set
     Rn = neighborhood(A,R,1)    # get the immediate neighbors of R...
     Rn = setdiff(Rn,R)          # ...but we exclude R itself
+    RegisterMemoryItem(Memory_item_FS, stamp, Rn, @varname Rn)
     inRc = ones(n)
+    RegisterMemoryItem(Memory_item_FS, stamp, inRc, @varname inRc)
     inRc[R] .= 0
     Rc = findall(x->x!=0,inRc)             # complement of R
+    RegisterMemoryItem(Memory_item_FS, stamp, Rc, @varname Rc)
 
     time()
-    FlowSeed(A,R,Rn,Rc,epsilon,pR,RinS,d,volA,volR,relcondFlag,localFlag)
-
+    result = FlowSeed(A,R,Rn,Rc,epsilon,pR,RinS,d,volA,volR,relcondFlag,localFlag)
+    ReclaimFunctionMemoryUsage(Memory_item_FS, stamp)
+    return result
 end
 
 # More in depth parameters, in case one wants to run the method multiple times
@@ -214,6 +221,8 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     Rn::Vector{Int64},Rc::Vector{Int64},epsilon::Float64,pR::Array{Float64},
     RinS::Array{Float64},d::Array{Float64},volA::Float64=0.0,volR::Float64=0.0,
     relcondFlag::Bool= true,localFlag::Bool=true)
+
+    stamp = RegisterFunctionStamp()
 
     fR = volR/(volA - volR)
     if epsilon < fR
@@ -233,8 +242,10 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
 
     # Call nodes that must be S the "strong seed nodes"
     localStrong = findall(x->x!=0,RinS)
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, localStrong, @varname localStrong)
 
     StrongSeeds = R[localStrong]
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, StrongSeeds, @varname StrongSeeds)
     numstrong = length(StrongSeeds)
 
     # If something is marked as a strong seed, put an infinite penalty
@@ -258,9 +269,13 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     alphaBest = alphaCurrent
 
     source = zeros(n)
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, source, @varname source)
     sink = zeros(n)
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, sink, @varname sink)
     dr = d[R]
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, dr, @varname dr)
     drc = d[Rc]
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, drc, @varname drc)
 
     while alphaCurrent < alph0
 
@@ -310,11 +325,12 @@ function FlowSeed(A::SparseMatrixCSC{Float64,Int64},R::Vector{Int64},
     end
 
     SL = BestS
+    RegisterMemoryItem(Memory_item_FS_Main, stamp, SL, @varname SL)
     sizeSL = length(SL)
     cond = alphaBest
     # println("------------------------------------------------------")
     # println("Final Answer: Conductance = $cond, Size = $sizeSL ")
-
+    ReclaimFunctionMemoryUsage(Memory_item_FS_Main, stamp)
     return SL, cond
 end
 

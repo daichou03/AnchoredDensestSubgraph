@@ -472,7 +472,7 @@ end
 # This loads the original graph rather than existing half-edged graphs.
 function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThreshold=128)
     for iter = 1:5
-        B = biggestComp(readIN(string(ds_name, ".in"), 0.5 ^ iter))
+        B = RetrieveLargestConnectedComponent(readIN(string(ds_name, ".in"), 0.5 ^ iter))
         if size(B, 1) < GraphSizeThreshold
             println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
             break

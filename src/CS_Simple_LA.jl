@@ -142,3 +142,32 @@ function BulkTestExport(RegenerateR::Bool=false)
         ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
     end
 end
+
+# RegenerateR = true
+# dataName = "uk2007"
+# dataName = "wikipedia"
+# dataName = "friendster"
+# B = readIN(string(dataName, ".in"))
+# P = toTransitionGraph(B)
+# if RegenerateR
+#     println("Generating R:")
+#     vs, rs = SampleR(B, 100)
+#     ExportSimpleRs(vs, rs, dataName)
+# else
+#     println("Importing R:")
+#     vs, rs = ImportSimpleRs(dataName)
+# end
+# ExportSimpleRs(vs, rs, dataName)
+
+# println(string("Testing LA:"))
+# ss_la, times_la, spaces_la = SimpleLATest(B, rs)
+# ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
+# # MRW
+# println(string("Testing MRW:"))
+# ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
+# ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
+
+# ss_mrw_15 = map(s->s[1:min(length(s), 15)], ss) # Size = 15
+
+# ReportCommunitySimple(B, rs, ss_la, times, dataName, "LA")
+# ReportCommunitySimple(B, rs, ss_mrw_15, times, dataName, "LA")

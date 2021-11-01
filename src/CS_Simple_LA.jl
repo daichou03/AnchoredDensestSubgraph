@@ -143,10 +143,10 @@ function BulkTestExport(RegenerateR::Bool=false)
     end
 end
 
-# RegenerateR = true
 # dataName = "uk2007"
-# dataName = "wikipedia"
 # dataName = "friendster"
+#dataName = "wikipedia"
+# RegenerateR = true
 # B = readIN(string(dataName, ".in"))
 # P = toTransitionGraph(B)
 # if RegenerateR
@@ -167,7 +167,7 @@ end
 # ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
 # ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
 
-# ss_mrw_15 = map(s->s[1:min(length(s), 15)], ss) # Size = 15
+# ss_mrw_15 = map(s->s[1:min(length(s), 15)], ss_mrw) # Size = 15
 
-# ReportCommunitySimple(B, rs, ss_la, times, dataName, "LA")
-# ReportCommunitySimple(B, rs, ss_mrw_15, times, dataName, "LA")
+# ReportCommunitySimple(B, rs, ss_la, times_la, dataName, "LA")
+# ReportCommunitySimple(B, rs, ss_mrw_15, times_mrw, dataName, "MRW")

@@ -17,64 +17,35 @@ include("CS_generic.jl")
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.
 
-function ConvertDBLPCitationToIN(FileName::AbstractString, OutputFileName::AbstractString, RawDirectory::String="../CaseStudy/DBLP/Raw/", OutputDirectory::String="../CaseStudy/DBLP/IN/")
-    io_read = open(string(RawDirectory,FileName))
-    N = parse(Int64, readline(io_read))
-    M = 0
-    node1 = -1
-    v1 = Int64[]
-    v2 = Int64[]
-    while !eof(io_read)
-        line = readline(io_read)
-        if startswith(line, "#index")
-            node1 = parse(Int64, line[7:length(line)]) + 1
-        elseif startswith(line, "#%")
-            node2 = parse(Int64, line[3:length(line)]) + 1
-            if node1 != node2
-                M += 1
-                push!(v1, node1)
-                push!(v2, node2)
-            end
-        end
-    end
-    close(io_read)
-    # Write
-    mkpath(OutputDirectory)
-    io_write = open(string(OutputDirectory,OutputFileName), "w")
-    write(io_write, string(N, " ", M, "\n"))
-    for i = 1:M
-        write(io_write, string(v1[i], " ", v2[i], "\n"))
-    end
-    close(io_write)
-end
+CS_DBLP_FOLDER = "../CaseStudy/DBLP/"
+CS_DBLP_RAW_FOLDER = folderString(CS_DBLP_FOLDER, "Raw")
+CS_DBLP_IN_FOLDER = folderString(CS_DBLP_FOLDER, "IN")
+
+DBLP_NAME_FILE = "ent.author"
+DBLP_CI_FILE = "csdblp.in"
+DBLP_AUTHOR_TOTAL = 1824701
 
 # TODO:
 # Read raw to make an array of all nodes so that can index -> article title.
 
-function LoadDBLPTitleAsArray(FileName::AbstractString, RawDirectory::String="../CaseStudy/DBLP/Raw/")
-    io_read = open(string(RawDirectory,FileName))
-    titles = String[]
+function LoadDBLPNameAsArray()
+    io_read = open(string(CS_DBLP_RAW_FOLDER,DBLP_NAME_FILE))
+    names = emptyStringArray(DBLP_AUTHOR_TOTAL)
     while !eof(io_read)
         line = readline(io_read)
-        if startswith(line, "#*")
-            push!(titles, chop(line,head=2,tail=0))
+        if !startswith(line, "%")
+            lineSplit = split(line, " ")
+            ind, name = parse(Int64, lineSplit[1]), lineSplit[2]
+            names[ind] = name
         end
     end
     close(io_read)
-    return titles
+    return names
 end
 
-# TODO:
-# In case we find a small CC, report. make a function that checks if this node is in a CC of at least k nodes. Maybe not necessary if we always cherry pick starting nodes.
-
-DBLP_RAW_FILE = "DBLP-citation-Jan8.txt"
-DBLP_CI_FILE = "dblpciv4.in"
-
-# ConvertDBLPCitationToIN("DBLP-citation-Jan8.txt", DBLP_CI_FILE)
-
 println("Reading DBLP citation data...")
-B = readIN(DBLP_CI_FILE)
-allTitles = LoadDBLPTitleAsArray(DBLP_RAW_FILE)
+B = readIN(DBLP_CI_FILE, CS_DBLP_IN_FOLDER)
+allNames = LoadDBLPNameAsArray()
 
 # V = 95485
 # C = GenerateUserInputSet(B,V,2,4)

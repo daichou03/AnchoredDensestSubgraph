@@ -84,5 +84,6 @@ function BulkTestExportFS(RegenerateR::Bool=false)
         println(string("Testing FS:"))
         ss_fs, times_fs, spaces_fs = SimpleFSTest(B, rs)
         ExportSimpleResults(ss_fs, times_fs, spaces_fs, dataName, "FS")
+        #ReportCommunitySimple(B, rs, ss_fs, times_fs, dataName, "FS")
     end
 end

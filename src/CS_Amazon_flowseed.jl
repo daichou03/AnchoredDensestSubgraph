@@ -3,7 +3,7 @@
 # Credit: FlowSeed: https://github.com/nveldt/FlowSeed
 
 include("CS_Amazon.jl")
-include("CS_Simple_flowseed.jl")
+include("CP_flowseed.jl")
 
 function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
     res = Any[]

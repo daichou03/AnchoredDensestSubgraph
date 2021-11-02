@@ -45,6 +45,7 @@ end
 
 println("Reading DBLP citation data...")
 B = readIN(DBLP_CI_FILE, CS_DBLP_IN_FOLDER)
+P = toTransitionGraph(B)
 allNames = LoadDBLPNameAsArray()
 
 # V = 95485

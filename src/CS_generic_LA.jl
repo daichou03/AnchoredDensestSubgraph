@@ -29,7 +29,7 @@ function SearchNonDegRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, MaxRetry::
 end
 
 
-function CSTest(B::SparseMatrixCSC, V::Int64, Print::Bool=true)
+function CSTest(B::SparseMatrixCSC, P::SparseMatrixCSC, V::Int64, NodeNames::Vector{String}, Print::Bool=true)
     C = [V]
     # Try to get an expansive result for LA for some tries, otherwise just any R
     R = SearchNonDegRefinedSet(B, C, 25)[1]
@@ -39,7 +39,7 @@ function CSTest(B::SparseMatrixCSC, V::Int64, Print::Bool=true)
     S_LA = LocalAnchoredDensestSubgraph(B,R).source_nodes
     S_MRW = MRW_topK(P,V,15) # Take 15 as cluster size
     if Print
-        println(string("V = ", V, " # ", AMAZON_PRODUCT_INFO[V]))
+        println(string("V = ", V, " # ", NodeNames[V]))
         println(string("R = ", R))
         println(string("S_LA = ", S_LA))
         println(string("S_MRW = ", S_MRW))

@@ -17,10 +17,10 @@ include("Test_degeneracy_yd.jl")
 include("CS_Evaluation_single.jl")
 
 # Can't ensure we get expansive (non-degenerate) result every time, so for case study retry until we get an expansive example.
-function SearchNonDegRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, MaxRetry::Int64=100)
+function SearchNonDegRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, DegreeCap::Union{Int64, rNodeDegreeCap}=NULL_R_NODE_DEGREE_CAP, MaxRetry::Int64=100)
     R = []
     for i = 1:MaxRetry
-        R = GetStepRandomWalkFixedWalks(B, C, 15, 4, [1.0, 1.0, 1.0, 1.0])
+        R = GetStepRandomWalkFixedWalks(B, C, 15, 4, [1.0, 1.0, 1.0, 1.0], DegreeCap)
         gds = GlobalDensestSubgraph(B[R,R]).source_nodes
         lds = LocalAnchoredDensestSubgraph(B,R).source_nodes
         if length(setdiff(lds, R[gds])) > 0

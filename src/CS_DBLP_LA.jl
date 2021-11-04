@@ -24,6 +24,8 @@ N_JW = GetAdjacency(B, V_JW, true)
 N2R_JW = GetComponentAdjacency(B, N_JW, false)
 # CandidateSearch(B, V_JW, N2R_JW[1])
 
+CS_DBLP_CANDIDATE_FOLDER = folderString(CS_DBLP_FOLDER, "candidate")
+
 function CandidateSearch(V, V2)
     println(string("Degree: ", GetDegree(B, V2)))
     refinedSet = SearchNonDegRefinedSet(B, [V2], 20)
@@ -38,36 +40,63 @@ function CandidateSearch(V, V2)
     return (R, [S_LA, [], S_MRW]) # Blank for filling S_FS
 end
 
-function CandidateSearchForce(V, Candidates)
+# V: JW
+# Candidates: JW's 1-hop or 2-hops
+# Name: test series name (folder name)
+# SizeMin, SizeMax: restriction on seed node's degree
+# AttemptNonDegLimit: try to get non-degenerate LA result
+# ForceNonDeg: skip this seed if can't get non-degenerate LA result within AttemptNonDegLimit
+# DegCap: in random walk, only take nodes with degree <= max(10, deg(seedNode) ^ 2)
+function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=15, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
+    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, Name)
+    mkpath(folder)
+    i = 0
     for v2 in Candidates
-        if (GetDegree(B, v2) < 3) || (GetDegree(B, v2) > 10)
+        i += 1
+        if (GetDegree(B, v2) < SizeMin) || (GetDegree(B, v2) > SizeMax)
             continue
         end
-        refinedSet = SearchNonDegRefinedSet(B, [v2], 10)
-        if refinedSet[2] < 0
+        if DegCap
+            refinedSet = SearchNonDegRefinedSet(B, [v2], max(10, GetDegree(B, v2)^2), AttemptNonDegLimit)
+        else
+            refinedSet = SearchNonDegRefinedSet(B, [v2], AttemptNonDegLimit)
+        end
+        if ForceNonDeg && (refinedSet[2] < 0)
             continue
         end
         R = refinedSet[1]
-        # if !(V in R)
-        #     continue
-        # end
+        # Do not include JW in R
+        if V in R
+            continue
+        end
+        io = open(string(folder,v2,".txt"), "w")
+        write(io, string(v2, "\n"))
         S_LA = LocalAnchoredDensestSubgraph(B, R).source_nodes
         S_FS = LocalCond(B, R)[1]
         S_MRW = MRW_topK(P, R, 30) # Can truncate later
-        println(string("LA: ", ReportCommunity(B, R, S_LA)))
-        println(string("FS: ", ReportCommunity(B, R, S_LA)))
-        println(string("MRW: ", ReportCommunity(B, R, S_MRW)))
-        return (v2, R, [S_LA, S_FS, S_MRW]) # Blank for filling S_FS
+        write(io, string(join(S_LA, ","), "\n"))
+        write(io, string(join(S_FS, ","), "\n"))
+        write(io, string(join(S_MRW, ","), "\n"))
+        write(io, string(ReportCommunity(B, R, S_LA), "\n"))
+        write(io, string(ReportCommunity(B, R, S_FS), "\n"))
+        write(io, string(ReportCommunity(B, R, S_MRW), "\n"))
+        println(string(Name, ": Node ", v2, " passed the test and report saved. Current at #", i))
+        close(io)
     end
     return []
 end
 
+# Output:
+# v2, R, SS (SS in 3 lines. For R and each line of SS, comma-delimited), report for each
+# Folder:
+# Candidate/Name/v2/
+
 # Execution plan
 # Type 1 - RW expansion
-# Find from either JW's 1-hop or 2-hops
+# Choose: Find from either JW's 1-hop or 2-hops
 # Do not include JW in R
 # Size of seed node < 15
-# Ban or not ban high degree nodes: In RW, only include nodes with degree <= max(25, deg(V) ^ 2)
+# Choose: Either ban or not ban high degree nodes: In RW, only include nodes with degree <= max(10, deg(V) ^ 2)
 
 # Type 2 - Manual selection: get highest collaborated
 # Retrieve this from the original (multi) graph

@@ -14,6 +14,7 @@ include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Simple.jl")
 include("CP_MRW.jl")
+include("CP_FlowSeed.jl")
 include("CS_Evaluation_Simple.jl")
 include("Test_degeneracy_yd.jl")
 
@@ -117,6 +118,31 @@ function SimpleMRWTest(P::SparseMatrixCSC, vs, rs)
     return ss, times, spaces
 end
 
+warmed_up_FS = false
+
+function warmupFS()
+    global warmed_up_FS
+    if !warmed_up_FS
+        println("Warming up FS...")
+        LocalCond(SAMPLE_GRAPH, SAMPLE_GRAPH_R)
+        warmed_up_FS = true
+    end
+end
+
+function SimpleFSTest(B, RS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
+    warmupFS()
+    res = Any[]
+    times = Float64[]
+    spaces = []
+    PopMaxMemoryUsage()
+    TimerReset()
+    for j = 1:length(RS)
+        push!(res, LocalCond(B, RS[j], PenalityR, StrongR, epsilon)[1])
+        push!(times, TimerLapValue())
+        push!(spaces, PopMaxMemoryUsage())
+    end
+    return res, times, spaces
+end
 
 # Code
 function BulkTestExport(RegenerateR::Bool=false)
@@ -137,6 +163,11 @@ function BulkTestExport(RegenerateR::Bool=false)
         ss_la, times_la, spaces_la = SimpleLATest(B, rs)
         ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
         ReportCommunitySimple(B, rs, ss_la, times_la, dataName, "LA")
+        # FS
+        println(string("Testing FS:"))
+        ss_fs, times_fs, spaces_fs = SimpleFSTest(B, rs)
+        ExportSimpleResults(ss_fs, times_fs, spaces_fs, dataName, "FS")
+        ReportCommunitySimple(B, rs, ss_fs, times_fs, dataName, "FS")
         # MRW
         println(string("Testing MRW:"))
         ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
@@ -144,6 +175,17 @@ function BulkTestExport(RegenerateR::Bool=false)
         ReportCommunitySimple(B, rs, ss_mrw, times_mrw, dataName, "MRW")
     end
 end
+
+
+function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0, Print::Bool=true)
+    S_FS = LocalCond(B,R,PenalityR,StrongR,epsilon)[1]
+    if Print
+        println(string("S_FS = ", S_FS))
+        println(ReportCommunity(B,R,S_FS))
+    end
+    return (S_FS, ReportCommunity(B,R,S_FS))
+end
+
 
 # dataName = "uk2007"
 # dataName = "friendster"

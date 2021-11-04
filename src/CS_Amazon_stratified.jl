@@ -14,6 +14,7 @@ include("Utils.jl")
 include("CS_generic.jl")
 include("CS_Amazon.jl")
 include("CP_MRW.jl")
+include("CP_flowseed.jl")
 include("Test_degeneracy_yd.jl")
 include("CS_generic_LA.jl")
 
@@ -63,6 +64,21 @@ function StratifiedGLTest(RSS)
         for j = 1:length(RSS[i])
             append!(res[i], 0)
             res[i][j] = LScoreCommunity(B, RSS[i][j])[1]
+        end
+        println(TimerLapValue())
+    end
+    return res
+end
+
+function StratifiedFSTest(RSS, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0)
+    res = Any[]
+    for i = 1:length(RSS)
+        append!(res, 0)
+        res[i] = []
+        TimerReset()
+        for j = 1:length(RSS[i])
+            append!(res[i], 0)
+            res[i][j] = LocalCond(B, RSS[i][j], PenalityR, StrongR, epsilon)[1]
         end
         println(TimerLapValue())
     end

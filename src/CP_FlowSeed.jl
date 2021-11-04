@@ -1,5 +1,3 @@
-# This relies on competitor codes, now copied to the same folder as CX_FlowSeed.jl.
-# By now there are conflicts with our Core_algorithm_yd, so do not load that together with this code.
 # Credit: FlowSeed: https://github.com/nveldt/FlowSeed
 
 using MAT

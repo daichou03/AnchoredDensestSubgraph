@@ -68,7 +68,7 @@ end
 # Output all 3 colours simultaneously for filtering
 # Does not take neighbour nodes anymore. Instead, having degree and residual degree (from untaken neighbours) as labels.
 
-function ExportGraphEditorDBLP(B::SparseMatrixCSC, R, Ss, Name::String, Folder::String)
+function ExportGraphEditorForDBLP(B::SparseMatrixCSC, R, Ss, Name::String, Folder::String)
     RUnion = copy(R)
     for s in Ss
         RUnion = union(RUnion, s)

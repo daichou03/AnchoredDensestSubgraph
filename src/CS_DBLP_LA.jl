@@ -14,6 +14,7 @@ include("Utils.jl")
 include("CS_generic.jl")
 include("CS_DBLP.jl")
 include("CP_MRW.jl")
+include("CP_FlowSeed.jl")
 include("Test_degeneracy_yd.jl")
 include("CS_generic_LA.jl")
 include("CS_Evaluation_Simple.jl")
@@ -51,13 +52,25 @@ function CandidateSearchForce(V, Candidates)
         #     continue
         # end
         S_LA = LocalAnchoredDensestSubgraph(B, R).source_nodes
+        S_FS = LocalCond(B, R)[1]
         S_MRW = MRW_topK(P, R, 30) # Can truncate later
         println(string("LA: ", ReportCommunity(B, R, S_LA)))
+        println(string("FS: ", ReportCommunity(B, R, S_LA)))
         println(string("MRW: ", ReportCommunity(B, R, S_MRW)))
-        return (v2, R, [S_LA, [], S_MRW]) # Blank for filling S_FS
+        return (v2, R, [S_LA, S_FS, S_MRW]) # Blank for filling S_FS
     end
     return []
 end
+
+# Execution plan
+# Type 1 - RW expansion
+# Find from either JW's 1-hop or 2-hops
+# Do not include JW in R
+# Size of seed node < 15
+# Ban or not ban high degree nodes: In RW, only include nodes with degree <= max(25, deg(V) ^ 2)
+
+# Type 2 - Manual selection: get highest collaborated
+# Retrieve this from the original (multi) graph
 
 # Stub to call that in CS_Evaluation_Simple
 function ExportGraphEditorDBLP(R, Ss, Name)

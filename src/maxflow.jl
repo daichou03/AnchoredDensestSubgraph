@@ -1,9 +1,13 @@
+# Credit: https://github.com/nveldt/HypergraphFlowClustering
+# With changes and renames (add _HFC when conflict)
+
 using MatrixNetworks
 using SparseArrays
 
 include("Memory_tracker.jl")
 
 # Push Relabel solver for maximum s-t flow, minimum s-t cut problems
+# From HyperLocal code, credit: 
 
 mutable struct stFlow
     flowvalue::Float64 # gives you the max-flow value
@@ -90,7 +94,7 @@ function maxflowPR(B::Union{SparseMatrixCSC,MatrixNetwork},s::Int,t::Int, flowto
         F[v,1] = -C[1,v]
     end
     excess = [0;sWeights;0]
-    source_nodes, FlowMat, value = Main_Push_Relabel(C,F,ExcessNodes,excess,flowtol)
+    source_nodes, FlowMat, value = Main_Push_Relabel_HFC(C,F,ExcessNodes,excess,flowtol)
 
     smap = sortperm(Map)
     F = stFlow(value, value, sort(Map[source_nodes]),C[smap,smap],FlowMat[smap,smap],s,t)
@@ -159,7 +163,7 @@ function maxflowYD(B::SparseMatrixCSC)
     end
     excess = [0;sWeights;0]
     RegisterMemoryItem(Memory_item_maxflow, stamp, excess, @varname excess)
-    source_nodes, FlowMat, value = Main_Push_Relabel(C,F,ExcessNodes,excess,flowtol)
+    source_nodes, FlowMat, value = Main_Push_Relabel_HFC(C,F,ExcessNodes,excess,flowtol)
     RegisterMemoryItem(Memory_item_maxflow, stamp, source_nodes, @varname source_nodes)
     RegisterMemoryItem(Memory_item_maxflow, stamp, FlowMat, @varname FlowMat)
     F = stFlow(value, value, source_nodes,C,FlowMat,s,t)
@@ -209,7 +213,7 @@ function maxflowPR(A::Union{SparseMatrixCSC,MatrixNetwork},svec::Vector{Float64}
         F[v,1] = -C[1,v]
     end
     excess = [0;svec;0]
-    source_nodes, FlowMat, value = Main_Push_Relabel(C,F,ExcessNodes,excess,flowtol)
+    source_nodes, FlowMat, value = Main_Push_Relabel_HFC(C,F,ExcessNodes,excess,flowtol)
 
     F = stFlow(value,value,source_nodes,C,FlowMat,1,N)
 end
@@ -229,7 +233,7 @@ function source_nodes(F::stFlow,flowtol::Union{Float64,Int}= 1e-6)
     # Run a bfs from the sink node. Anything with distance
     # n is disconnected from the sink. Thus it's part of the minimium cut set
     n = size(F.C,2)
-    finalHeight = relabeling_bfs(F.C,F.F,flowtol, F.t)
+    finalHeight = relabeling_bfs_HFC(F.C,F.F,flowtol, F.t)
     S = Vector{Int64}()
     for i = 1:n
         if finalHeight[i] == n
@@ -249,7 +253,7 @@ function source_nodes_min(F::stFlow,flowtol::Union{Float64,Int}= 1e-6)
     # Run a bfs from the source node. Anything with distance
     # <n is connected to the source. Thus it's part of the minimium cut set
     n = size(F.C,2)
-    finalHeight = relabeling_bfs(SparseMatrixCSC(F.C'),SparseMatrixCSC(F.F'),flowtol,F.s)
+    finalHeight = relabeling_bfs_HFC(SparseMatrixCSC(F.C'),SparseMatrixCSC(F.F'),flowtol,F.s)
     S = Vector{Int64}()
     for i = 1:n
         if finalHeight[i] < n
@@ -271,7 +275,7 @@ the sink
 function sink_nodes(F::stFlow,flowtol::Union{Float64,Int}= 1e-6)
     # Run a bfs from the sink node. Anything with distance < n is sink-attached.
     n = size(F.C,2)
-    finalHeight = relabeling_bfs(F.C,F.F,flowtol,F.t)
+    finalHeight = relabeling_bfs_HFC(F.C,F.F,flowtol,F.t)
     T = Vector{Int64}()
     for i = 2:n
         if finalHeight[i] < n
@@ -292,7 +296,7 @@ Gives the cut as a list of edges.
 function cut_edges(F::stFlow,flowtol::Union{Float64,Int}= 1e-6)
     # Run a bfs from the sink node to get source and sink sets
     n = size(F.C,2)
-    finalHeight = relabeling_bfs(F.C,F.F,flowtol,F.t)
+    finalHeight = relabeling_bfs_HFC(F.C,F.F,flowtol,F.t)
     T = Vector{Int64}()
     S = Vector{Int64}()
     for i = 1:n
@@ -327,7 +331,7 @@ function cut_edges_nonterminal(F::stFlow,flowtol::Union{Float64,Int}= 1e-6)
     return [S T]
 end
 
-# Main_Push_Relabel returns a maximum flow F and the min s-t cut set S for the
+# Main_Push_Relabel_HFC returns a maximum flow F and the min s-t cut set S for the
 # flow graph C.
 #
 # C = the capacity matrix for the flow problem.
@@ -340,7 +344,7 @@ end
 # excess = the vector of excess values at the start of the algorithm. If F = 0,
 #   this is the vector of edge capacities from the implicit source to the graph.
 #   If F != 0, then it's the excess from a previous run of the algorithm
-function Main_Push_Relabel(C::SparseMatrixCSC,
+function Main_Push_Relabel_HFC(C::SparseMatrixCSC,
     F::SparseMatrixCSC,ExcessNodes::Array{Int64},excess::Array{Float64},flowtol::Union{Float64,Int}= 1e-6)
     stamp = RegisterFunctionStamp()
 
@@ -355,7 +359,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     # Store adjacency list. Because flow can be sent either direction on an
     # arc during the course of the algorithm, it's important to list all neighbors
     # or each node, counting both incoming and outgoing edges
-    Neighbs,d = ConstructAdj(C+C',n)
+    Neighbs,d = ConstructAdj_HFC(C+C',n)
     RegisterMemoryItem(Memory_item_MainPR, stamp, Neighbs, @varname Neighbs)
     RegisterMemoryItem(Memory_item_MainPR, stamp, d, @varname d)
 
@@ -377,7 +381,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
     # count the number of nodes that have been relabeled
     relabelings = 0
 
-    height = relabeling_bfs(C,F,flowtol,n)  # compute initial distance from sink
+    height = relabeling_bfs_HFC(C,F,flowtol,n)  # compute initial distance from sink
     RegisterMemoryItem(Memory_item_MainPR, stamp, height, @varname height)
     # In the code and comments, height = distance from sink = label of node
 
@@ -389,7 +393,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
         inQ[u] = false      # Take it out of the queue
 
         # discharge flow through node u
-        relabelings += discharge!(C,F,Queue,u,Neighbs[u],height,excess,n,d[u],inQ,flowtol)
+        relabelings += discharge_HFC!(C,F,Queue,u,Neighbs[u],height,excess,n,d[u],inQ,flowtol)
 
         # if u is still active, put it back into the queue
         if excess[u] > flowtol
@@ -401,7 +405,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
         # This periodically recomputes distances between nodes and the sink
         if relabelings == n
             relabelings = 0
-            dist = relabeling_bfs(C,F,flowtol)
+            dist = relabeling_bfs_HFC(C,F,flowtol)
             height = dist
         end
 
@@ -409,7 +413,7 @@ function Main_Push_Relabel(C::SparseMatrixCSC,
 
     # Compute final distances from sink using BFS. Anything with distance
     # n is disconnected from the sink. Thus it's part of the minimium cut set
-    finalHeight = relabeling_bfs(C,F,flowtol,n)
+    finalHeight = relabeling_bfs_HFC(C,F,flowtol,n)
     RegisterMemoryItem(Memory_item_MainPR, stamp, finalHeight, @varname finalHeight)
     S = Vector{Int64}()
     push!(S,1)          # Include the source node
@@ -430,7 +434,7 @@ end
 
 # Discharege operation: pushes flow away from node u across admissible edges.
 # If excess[u] > 0 but no admissible edges exist, we relabel u.
-function discharge!(C::SparseMatrixCSC,F::SparseMatrixCSC,
+function discharge_HFC!(C::SparseMatrixCSC,F::SparseMatrixCSC,
     Queue::Vector{Int64},u::Int64,uNeighbs::Array{Int64},height::Array{Int64},
     excess::Array{Float64},n::Int64,du::Int64,inQ::Array{Bool},
     flowtol::Union{Float64,Int}= 1e-6)
@@ -448,7 +452,7 @@ function discharge!(C::SparseMatrixCSC,F::SparseMatrixCSC,
             # ... if edge (u,v) is admissible, push more flow.
             # Otherwise, move to the next neighbor of u
             if hu > height[v] && C[u,v] - F[u,v] > flowtol
-                pushflow!(C,F,Queue,u,v,excess,height,inQ,n)
+                pushflow_HFC!(C,F,Queue,u,v,excess,height,inQ,n)
                 vLocal += 1
             else
                 vLocal += 1
@@ -459,7 +463,7 @@ function discharge!(C::SparseMatrixCSC,F::SparseMatrixCSC,
     # so that at least one admissible edge is created
     if vLocal > du
         relabeled = 1
-        relabel!(C,F,Queue,u,uNeighbs,height,du,n,flowtol)
+        relabel_HFC!(C,F,Queue,u,uNeighbs,height,du,n,flowtol)
     end
 
     return relabeled
@@ -468,7 +472,7 @@ end
 # Relabel sets the label/height of node u to be equal to the minimum label
 # such that an admissible edge exists. An edge (u,v) is admissible if
 # height[u] = height[v] + 1
-function relabel!(C::SparseMatrixCSC,F::SparseMatrixCSC,
+function relabel_HFC!(C::SparseMatrixCSC,F::SparseMatrixCSC,
     Queue::Vector{Int64},u::Int64,uNeighbs::Array{Int64},height::Array{Int64},
     du::Int64,n::Int64,flowtol::Union{Float64,Int}= 1e-6)
    # find smallest new height making a push possible, if such a push is possible
@@ -487,7 +491,7 @@ function relabel!(C::SparseMatrixCSC,F::SparseMatrixCSC,
 end
 
 # Push flow from an active node u to a node v via an admissible edge (u,v)
-function pushflow!(C::SparseMatrixCSC,F::SparseMatrixCSC,
+function pushflow_HFC!(C::SparseMatrixCSC,F::SparseMatrixCSC,
     Queue::Vector{Int},u::Int64,v::Int64,excess::Array{Float64},height::Array{Int64},
     inQ::Array{Bool},n::Int64)
 
@@ -506,7 +510,7 @@ function pushflow!(C::SparseMatrixCSC,F::SparseMatrixCSC,
 end
 
 # From the adjacency matrix, build an adjacency list for the graph
-function ConstructAdj(C::SparseMatrixCSC,n::Int64)
+function ConstructAdj_HFC(C::SparseMatrixCSC,n::Int64)
     rp = C.rowval
     ci = C.colptr
     Neighbs = Vector{Vector{Int64}}()
@@ -527,7 +531,7 @@ end
 # Given initial capacity matrix C and flow matrix F, compute the distance
 # from each node to the specified "start" node.
 # Start defaults to node n, which is assumed to be the sink node
-function relabeling_bfs(C::SparseMatrixCSC,F::SparseMatrixCSC,flowtol::Union{Float64,Int}=1e-6,start::Int64=0)
+function relabeling_bfs_HFC(C::SparseMatrixCSC,F::SparseMatrixCSC,flowtol::Union{Float64,Int}=1e-6,start::Int64=0)
     stamp = RegisterFunctionStamp()
 
     if flowtol >= .1

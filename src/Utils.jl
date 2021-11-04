@@ -68,6 +68,11 @@ function TimerLapValue()
     return ret / 1000
 end
 
+# Only up to second
+function TimeAsName()
+    return split(replace(string(now()), ":"=>"-"), ".")[1]
+end
+
 # Math
 ALMOST_EQUAL_TOL = 1e-6
 function almostEqual(a, b, tol=ALMOST_EQUAL_TOL)

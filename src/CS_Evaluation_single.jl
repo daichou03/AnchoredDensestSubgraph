@@ -63,3 +63,57 @@ function ExportGraphEditor(B::SparseMatrixCSC, R, Ss, Name::String, Folder::Stri
         close(io_inds)
     end
 end
+
+# Changes:
+# Output all 3 colours simultaneously for filtering
+# Does not take neighbour nodes anymore. Instead, having degree and residual degree (from untaken neighbours) as labels.
+
+function ExportGraphEditorDBLP(B::SparseMatrixCSC, R, Ss, Name::String, Folder::String)
+    RUnion = copy(R)
+    for s in Ss
+        RUnion = union(RUnion, s)
+    end
+    sort!(RUnion)
+
+    # RIndices, edgelist, R, S1, S2, ...
+    RsubsetInds = orderedSubsetIndices(RUnion, sort(R))
+    SsubsetIndss = Any[]
+    for i in 1:length(Ss)
+        push!(SsubsetIndss, orderedSubsetIndices(RUnion, sort(Ss[i])))
+    end
+    Bsubset = B[RUnion, RUnion]
+    folderName = folderString(Folder,Name)
+
+    mkpath(folderName)
+    io_edgelist = open(string(folderName,"edgelist.csv"), "w")
+    for v1 in RsubsetInds
+        v1N = GetAdjacency(Bsubset, v1, false)
+        for v2 in v1N
+            if v1 < v2
+                write(io_edgelist, string(v1, ",", v2, "\n"))
+            end
+        end
+    end
+    close(io_edgelist)
+
+    io_inds = open(string(folderName,"indices.csv"), "w")
+    for v in RUnion
+        write(io_inds, string(v, "\n"))
+    end
+    close(io_inds)
+
+    io_inds = open(string(folderName,"S.csv"), "w")
+    write(io_inds, string("Id,Label,Node,Color,Polygon,Deg,LogDeg,ResDeg", "\n"))
+    for v in 1:length(RUnion)
+        color = "#"
+        for i in 1:length(SsubsetIndss)
+            color = string(color, v in SsubsetIndss[i] ? "FF" : "00")
+        end
+        polygon = ((v in RsubsetInds) ? 0 : 3)
+        deg = GetDegree(B, RUnion[v])
+        logDeg = log(deg)
+        resDeg = deg - GetDegree(Bsubset, v)
+        write(io_inds, string(join([v, v, v, color, polygon, deg, logDeg, resDeg], ","), "\n"))
+    end
+    close(io_inds)
+end

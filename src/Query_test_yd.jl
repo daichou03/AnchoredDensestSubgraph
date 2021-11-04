@@ -469,10 +469,17 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
     BatchPerformHalfEdgeTest(ds_name, Tests)
 end
 
-# This loads the original graph rather than existing half-edged graphs.
-function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, GraphSizeThreshold=128)
+# If choose false, this loads the original graph in 0.5 ^ iter-th and to try to get the LCC of rather than existing half-edged graphs.
+# This is for when the graph is very large and writing half-edge graphs are very time consuming.
+function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, LoadHalfEdge::Bool=true, GraphSizeThreshold=128)
     for iter = 1:5
-        B = RetrieveLargestConnectedComponent(readIN(string(ds_name, ".in"), 0.5 ^ iter))
+        B = []
+        if LoadHalfEdge
+            ds_name_half_edge = string(ds_name, "-H", iter)
+            B = readIN(string(ds_name_half_edge, ".in"))
+        else
+            B = RetrieveLargestConnectedComponent(readIN(string(ds_name, ".in"), 0.5 ^ iter))
+        end
         if size(B, 1) < GraphSizeThreshold
             println(string("Iteration ", iter, " size smaller than ", GraphSizeThreshold, ", stop testing for sampling from ", ds_name, "."))
             break

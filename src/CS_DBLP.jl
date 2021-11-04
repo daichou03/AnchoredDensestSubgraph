@@ -13,6 +13,7 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 include("Query_test_yd.jl")
 include("CS_generic.jl")
+include("Test_degeneracy_yd.jl")
 
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.

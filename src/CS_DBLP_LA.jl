@@ -47,7 +47,7 @@ end
 # AttemptNonDegLimit: try to get non-degenerate LA result
 # ForceNonDeg: skip this seed if can't get non-degenerate LA result within AttemptNonDegLimit
 # DegCap: in random walk, only take nodes with degree <= max(10, deg(seedNode) ^ 2)
-function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=20, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
+function CandidateSearchStore(V::Int64, Candidates, Name::String, SizeMin=0, SizeMax=20, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
     folder = folderString(CS_DBLP_CANDIDATE_FOLDER, Name)
     mkpath(folder)
     i = 0
@@ -69,24 +69,28 @@ function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=20, Attemp
         if V in R
             continue
         end
-        io = open(string(folder,v2,".txt"), "w")
-        write(io, string(v2, "\n"))
-        write(io, string(join(R, ","), "\n"))
         Ss = ComputeSS(R)
-        for i = 1:3
-            write(io, string(join(Ss[i], ","), "\n"))
-        end
-        for i = 1:3
-            write(io, string(ReportCommunity(B, R, Ss[i]), "\n"))
-        end
+        DoWriteSearchResults(v2, R, Ss, Folder)
         println(string(Name, ": Node ", v2, " passed the test and report saved. Current at #", i))
-        close(io)
     end
     return []
 end
 
 function ComputeSS(R::Vector{Int64})
     return [LocalAnchoredDensestSubgraph(B, R).source_nodes, LocalCond(B, R)[1], MRW_topK(P, R, 30)] # Can truncate MRW later
+end
+
+function DoWriteSearchResults(V::Int64, R, Ss, Folder::String)
+    io = open(string(Folder, V,".txt"), "w")
+    write(io, string(V, "\n"))
+    write(io, string(join(R, ","), "\n"))
+    for j = 1:3
+        write(io, string(join(Ss[j], ","), "\n"))
+    end
+    for j = 1:3
+        write(io, string(ReportCommunity(B, R, Ss[j]), "\n"))
+    end
+    close(io)
 end
 
 # Generate R by collaboration
@@ -108,6 +112,7 @@ function ReferenceSetByCollab(V::Int64, NeighbourLimit::Vector{Int64}=[10, 5], C
 end
 
 function ReferenceSetByCollabRec(V::Int64, NeighbourLimit::Vector{Int64}, CollabThreshold::Vector{Float64}, Layer::Int64, R::Vector{Int64})
+    degThreshold = GetDegree(B, V) ^ 2
     if Layer > length(NeighbourLimit)
         return R
     end
@@ -115,7 +120,7 @@ function ReferenceSetByCollabRec(V::Int64, NeighbourLimit::Vector{Int64}, Collab
     for nw in GetNeighbourAndWeight(V)
         if count >= NeighbourLimit[Layer] || nw[2] < CollabThreshold[Layer]
             break
-        else
+        elseif GetDegree(B, nw[1]) <= degThreshold # Skip if too unreachable
             union!(R, nw[1])
             R = ReferenceSetByCollabRec(nw[1], NeighbourLimit, CollabThreshold, Layer+1, R)
             count += 1
@@ -123,6 +128,27 @@ function ReferenceSetByCollabRec(V::Int64, NeighbourLimit::Vector{Int64}, Collab
     end
     return R
 end
+
+# Use PrimeSeed to make this search is trackable, and are kinda random to choose old and new seeds alike.
+function CollabCandidateStore(PrimeSeed::Int64=65537, StartPos::Int64=1)
+    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, "collab")
+    mkpath(folder)
+    N = size(B, 1)
+    for i = StartPos:N
+        v = mod(i * PrimeSeed, N) + 1
+        if GetDegree(B,v) < 5 || GetDegree(B,v) >= 25
+            continue
+        end
+        R = ReferenceSetByCollab(v)
+        if length(R) < 15
+            continue
+        end
+        Ss = ComputeSS(R)
+        DoWriteSearchResults(v, R, Ss, folder)
+        println(string("Node ", v, " passed the test for collab and report saved. Current at #", i))
+    end
+end
+
 
 ###################
 # Export to Gephi #

@@ -421,8 +421,7 @@ function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
             current = v
             for step = 1:Steps
                 current = rand(GetAdjacency(B, current, false))
-                println(string(GetDegree(B, current), ",", RNodeSimpleDegreeCap))
-                if (GetDegree(B, current) <= RNodeSimpleDegreeCap) && (rand() < ChanceToSelect[step])
+                if (GetDegree(B, current) <= rDegreeCap) && (rand() < ChanceToSelect[step])
                     r = union(r, current)
                 end
             end

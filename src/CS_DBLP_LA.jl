@@ -59,7 +59,7 @@ function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=20, Attemp
         if DegCap
             refinedSet = SearchNonDegRefinedSet(B, [v2], max(10, GetDegree(B, v2)^2), AttemptNonDegLimit)
         else
-            refinedSet = SearchNonDegRefinedSet(B, [v2], AttemptNonDegLimit)
+            refinedSet = SearchNonDegRefinedSet(B, [v2], NULL_R_NODE_DEGREE_CAP, AttemptNonDegLimit)
         end
         if ForceNonDeg && (refinedSet[2] < 0)
             continue

@@ -218,7 +218,7 @@ end
 
 function GetVolume(B::SparseMatrixCSC)
     N = size(B,1)
-    sum(map(v->GetDegree(B,v), 1:N))
+    GetVolume(B, 1:N)
 end
 
 function GetAllDegrees(B::SparseMatrixCSC)

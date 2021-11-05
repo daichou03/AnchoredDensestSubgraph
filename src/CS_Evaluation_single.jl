@@ -103,7 +103,7 @@ function ExportGraphEditorForDBLP(B::SparseMatrixCSC, R, Ss, Name::String, Folde
     close(io_inds)
 
     io_inds = open(string(folderName,"S.csv"), "w")
-    write(io_inds, string("Id,Label,Node,Color,Polygon,Deg,LogDeg,ResDeg", "\n"))
+    write(io_inds, string("Id,Label,Node,Color,Polygon,Deg,LogDeg,ResDeg,OriginInd,OriginName", "\n"))
     for v in 1:length(RUnion)
         color = "#"
         for i in 1:length(SsubsetIndss)
@@ -113,7 +113,7 @@ function ExportGraphEditorForDBLP(B::SparseMatrixCSC, R, Ss, Name::String, Folde
         deg = GetDegree(B, RUnion[v])
         logDeg = log(deg)
         resDeg = deg - GetDegree(Bsubset, v)
-        write(io_inds, string(join([v, v, v, color, polygon, deg, logDeg, resDeg], ","), "\n"))
+        write(io_inds, string(join([v, v, v, color, polygon, deg, logDeg, resDeg, RUnion[v], allNames[RUnion[v]]], ","), "\n"))
     end
     close(io_inds)
 end

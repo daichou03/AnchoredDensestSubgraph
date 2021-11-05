@@ -83,6 +83,7 @@ function PopMaxMemoryUsage(ResetStackAndStamp::Bool=true)
     global GLOBAL_current_stamp
     memory_usage = GLOBAL_max_memory_usage
     GLOBAL_max_memory_usage = 0
+    GLOBAL_memory_dict = Dict{String,Dict{String,Int64}}()
     if ResetStackAndStamp
         GLOBAL_current_stack = 1
         GLOBAL_current_stamp = 1

@@ -71,32 +71,62 @@ function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=20, Attemp
         end
         io = open(string(folder,v2,".txt"), "w")
         write(io, string(v2, "\n"))
-        S_LA = LocalAnchoredDensestSubgraph(B, R).source_nodes
-        S_FS = LocalCond(B, R)[1]
-        S_MRW = MRW_topK(P, R, 30) # Can truncate later
         write(io, string(join(R, ","), "\n"))
-        write(io, string(join(S_LA, ","), "\n"))
-        write(io, string(join(S_FS, ","), "\n"))
-        write(io, string(join(S_MRW, ","), "\n"))
-        write(io, string(ReportCommunity(B, R, S_LA), "\n"))
-        write(io, string(ReportCommunity(B, R, S_FS), "\n"))
-        write(io, string(ReportCommunity(B, R, S_MRW), "\n"))
+        Ss = ComputeSS(R)
+        for i = 1:3
+            write(io, string(join(Ss[i], ","), "\n"))
+        end
+        for i = 1:3
+            write(io, string(ReportCommunity(B, R, Ss[i]), "\n"))
+        end
         println(string(Name, ": Node ", v2, " passed the test and report saved. Current at #", i))
         close(io)
     end
     return []
 end
 
+function ComputeSS(R::Vector{Int64})
+    return [LocalAnchoredDensestSubgraph(B, R).source_nodes, LocalCond(B, R)[1], MRW_topK(P, R, 30)] # Can truncate MRW later
+end
+
+# Generate R by collaboration
+
+N_JW_deg = map(v->GetDegree(B, v), N_JW)
+N_JW_deg = sort(collect(zip(N_JW, N_JW_deg)), by=x->x[2], rev=true)
+
 function GetNeighbourAndWeight(V)
-    vn = GetAdjacency(BW, V)
+    vn = GetAdjacency(B, V, false)
     weights = map(v->BW[V,v], vn)
     vnw = sort(collect(zip(vn, weights)), by=x->x[2], rev=true)
     return vnw
 end
 
-N_JW_deg = map(v->GetDegree(B, v), N_JW)
-N_JW_deg = sort(collect(zip(N_JW, N_JW_deg)), by=x->x[2], rev=true)
+# NeighbourLimit: find at most x neighbours for each hop
+# CollabThreshold: only neighbours of at least x weight for each hop
+function ReferenceSetByCollab(V::Int64, NeighbourLimit::Vector{Int64}=[10, 5], CollabThreshold::Vector{Float64}=[4.0, 8.0])
+    return ReferenceSetByCollabRec(V, NeighbourLimit, CollabThreshold, 1, [V])
+end
 
+function ReferenceSetByCollabRec(V::Int64, NeighbourLimit::Vector{Int64}, CollabThreshold::Vector{Float64}, Layer::Int64, R::Vector{Int64})
+    if Layer > length(NeighbourLimit)
+        return R
+    end
+    count = 0
+    for nw in GetNeighbourAndWeight(V)
+        if count >= NeighbourLimit[Layer] || nw[2] < CollabThreshold[Layer]
+            break
+        else
+            union!(R, nw[1])
+            R = ReferenceSetByCollabRec(nw[1], NeighbourLimit, CollabThreshold, Layer+1, R)
+            count += 1
+        end
+    end
+    return R
+end
+
+###################
+# Export to Gephi #
+###################
 
 # Output:
 # v2, R, SS (SS in 3 lines. For R and each line of SS, comma-delimited), report for each
@@ -112,6 +142,20 @@ N_JW_deg = sort(collect(zip(N_JW, N_JW_deg)), by=x->x[2], rev=true)
 
 # Type 2 - Manual selection: get highest collaborated
 # Retrieve this from the original (multi) graph
+
+# Export chosen candidate
+function ExportCandidate(CandidateName::String, CandidateV::Int64)
+    folder = folderString(CS_DBLP_FOLDER, CandidateName)
+    io = open(string(CandidateV, ".txt"))
+    v = parse(Int64, readline(io))
+    RSs = []
+    for i = 1:4
+        push!(RSs, map(x->parse(Int64, x), split(readline(io), ",")))
+    end
+    ExportGraphEditorDBLP(RSs[1], RSs[2:4], string(CandidateName, "-", CandidateV))
+    close(io)
+end
+
 
 # Stub to call that in CS_Evaluation_Simple
 function ExportGraphEditorDBLP(R, Ss, Name)

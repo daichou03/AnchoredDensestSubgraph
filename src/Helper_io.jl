@@ -63,6 +63,45 @@ function doReadIN(File::IOStream, N::Int, M::Int, Chance::Float64)
     return A
 end
 
+# Undirected and assumes input is undirected
+# N, M can be lowerbound rather than accurate.
+function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::String=DIR_EXAMPLE_SCC)
+    io = open(string(Directory,FileName))
+    ei = zeros(Int64, M)
+    ej = zeros(Int64, M)
+    weights = zeros(Float64, M)
+    edgeIndex = map(x->Dict(), 1:N)
+    count = 0
+    while !eof(io)
+        lineRaw = readline(io)
+        if length(lineRaw) == 0 || lineRaw[1:1] in ["#", "%"]
+            continue
+        end
+        lineRaw = replace(lineRaw, "\t"=>" ")
+        line = split(lineRaw, " ")
+        v1 = parse(Int, line[1])
+        v2 = parse(Int, line[2])
+        if v1 == v2
+            continue
+        elseif v1 > v2
+            v1, v2 = v2, v1
+        end
+        weight = (length(line) >= 3) ? parse(Float64, line[3]) : 1.0
+        if haskey(edgeIndex[v1], v2)
+            weights[edgeIndex[v1][v2]] += weight
+        else
+            count += 1
+            ei[count] = v1
+            ej[count] = v2
+            weights[count] = weight
+            edgeIndex[v1][v2] = count
+        end
+    end
+    close(io)
+    A = sparse([ei[1:count];ej[1:count]], [ej[1:count];ei[1:count]], [weights[1:count];weights[1:count]], N, N)
+    return A
+end
+
 function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")
     io = open(string(Directory,FileName), "w")
     N = size(B,1)

@@ -25,6 +25,7 @@ CS_DBLP_IN_FOLDER = folderString(CS_DBLP_FOLDER, "IN")
 DBLP_NAME_FILE = "ent.author"
 DBLP_CI_FILE = "csdblp.in"
 DBLP_AUTHOR_TOTAL = 1824701
+DBLP_COLLAB_TOTAL = 8344615
 
 # TODO:
 # Read raw to make an array of all nodes so that can index -> article title.
@@ -47,6 +48,7 @@ end
 println("Reading DBLP citation data...")
 B = readIN(DBLP_CI_FILE, CS_DBLP_IN_FOLDER)
 P = toTransitionGraph(B)
+BW = readMulti("out.dblp_coauthor", DBLP_AUTHOR_TOTAL, DBLP_COLLAB_TOTAL, CS_DBLP_RAW_FOLDER)
 allNames = LoadDBLPNameAsArray()
 
 # V = 95485
@@ -59,3 +61,4 @@ function GetRefinedSetDBLP(C::Vector{Int64})
     # Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
     return GetRefinedSet(B, C, allTitles)
 end
+

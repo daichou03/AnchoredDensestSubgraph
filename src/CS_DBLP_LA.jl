@@ -74,6 +74,7 @@ function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=15, Attemp
         S_LA = LocalAnchoredDensestSubgraph(B, R).source_nodes
         S_FS = LocalCond(B, R)[1]
         S_MRW = MRW_topK(P, R, 30) # Can truncate later
+        write(io, string(join(R, ","), "\n"))
         write(io, string(join(S_LA, ","), "\n"))
         write(io, string(join(S_FS, ","), "\n"))
         write(io, string(join(S_MRW, ","), "\n"))

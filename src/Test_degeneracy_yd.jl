@@ -409,7 +409,7 @@ end
 
 function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
     Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=ones(DEF_AHCHOR_STEPS),
-    RNodeDegreeCap::union{rNodeDegreeCap, Int64}=NULL_R_NODE_DEGREE_CAP)
+    RNodeDegreeCap::Union{rNodeDegreeCap, Int64}=NULL_R_NODE_DEGREE_CAP)
     if typeof(RNodeDegreeCap) == rNodeDegreeCap
         rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
     else

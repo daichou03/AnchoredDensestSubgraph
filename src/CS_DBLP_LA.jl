@@ -145,19 +145,19 @@ end
 
 # Export chosen candidate
 function ExportCandidate(CandidateName::String, CandidateV::Int64)
-    folder = folderString(CS_DBLP_FOLDER, CandidateName)
-    io = open(string(CandidateV, ".txt"))
+    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, CandidateName)
+    io = open(string(folder, CandidateV, ".txt"))
     v = parse(Int64, readline(io))
     RSs = []
     for i = 1:4
         push!(RSs, map(x->parse(Int64, x), split(readline(io), ",")))
     end
-    ExportGraphEditorDBLP(RSs[1], RSs[2:4], string(CandidateName, "-", CandidateV))
+    ExportGraphEditorDBLP(v, RSs[1], RSs[2:4], string(CandidateName, "-", CandidateV))
     close(io)
 end
 
 
 # Stub to call that in CS_Evaluation_Simple
-function ExportGraphEditorDBLP(R, Ss, Name)
-    return ExportGraphEditorForDBLP(B, R, Ss, Name, folderString(CS_DBLP_FOLDER, "Single", "GraphEditor"))
+function ExportGraphEditorDBLP(V, R, Ss, Name)
+    return ExportGraphEditorForDBLP(B, V, R, Ss, Name, folderString(CS_DBLP_FOLDER, "Single", "GraphEditor"))
 end

@@ -61,4 +61,3 @@ function GetRefinedSetDBLP(C::Vector{Int64})
     # Raw$ awk 'FNR>=6809987 && FNR<=6810020' DBLP-citation-Jan8.txt
     return GetRefinedSet(B, C, allTitles)
 end
-

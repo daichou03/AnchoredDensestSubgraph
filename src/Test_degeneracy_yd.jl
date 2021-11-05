@@ -408,14 +408,20 @@ function GetStepRandomWalkUntilSize(B::SparseMatrixCSC, Size::Int64)
 end
 
 function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
-    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=[1.0, 1.0],
-    RNodeSimpleDegreeCap::Int64=2^32)
+    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=ones(DEF_AHCHOR_STEPS),
+    RNodeDegreeCap::union{rNodeDegreeCap, Int64}=NULL_R_NODE_DEGREE_CAP)
+    if typeof(RNodeDegreeCap) == rNodeDegreeCap
+        rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
+    else
+        rDegreeCap = RNodeDegreeCap
+    end
     r = copy(C)
     for v in C
         for i = 1:Repeats
             current = v
             for step = 1:Steps
                 current = rand(GetAdjacency(B, current, false))
+                println(string(GetDegree(B, current), ",", RNodeSimpleDegreeCap))
                 if (GetDegree(B, current) <= RNodeSimpleDegreeCap) && (rand() < ChanceToSelect[step])
                     r = union(r, current)
                 end
@@ -423,13 +429,6 @@ function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
         end
     end
     return r
-end
-
-function GetStepRandomWalkFixedWalks(B::SparseMatrixCSC, C::Vector{Int64},
-    Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS, ChanceToSelect::Vector{Float64}=[1.0, 1.0],
-    RNodeDegreeCap::rNodeDegreeCap=NULL_R_NODE_DEGREE_CAP)
-    rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
-    return GetStepRandomWalkFixedWalks(B, C, Repeats, Steps, ChanceToSelect, rDegreeCap)
 end
 
 # Same with step random walk, but starts only from a single node, and number of steps is proportional to the size of the node's degree.

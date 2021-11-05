@@ -47,7 +47,7 @@ end
 # AttemptNonDegLimit: try to get non-degenerate LA result
 # ForceNonDeg: skip this seed if can't get non-degenerate LA result within AttemptNonDegLimit
 # DegCap: in random walk, only take nodes with degree <= max(10, deg(seedNode) ^ 2)
-function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=15, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
+function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=20, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
     folder = folderString(CS_DBLP_CANDIDATE_FOLDER, Name)
     mkpath(folder)
     i = 0
@@ -86,6 +86,17 @@ function CandidateSearchStore(V, Candidates, Name, SizeMin=0, SizeMax=15, Attemp
     end
     return []
 end
+
+function GetNeighbourAndWeight(V)
+    vn = GetAdjacency(BW, V)
+    weights = map(v->BW[V,v], vn)
+    vnw = sort(collect(zip(vn, weights)), by=x->x[2], rev=true)
+    return vnw
+end
+
+N_JW_deg = map(v->GetDegree(B, v), N_JW)
+N_JW_deg = sort(collect(zip(N_JW, N_JW_deg)), by=x->x[2], rev=true)
+
 
 # Output:
 # v2, R, SS (SS in 3 lines. For R and each line of SS, comma-delimited), report for each

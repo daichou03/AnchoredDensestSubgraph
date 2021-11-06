@@ -72,7 +72,7 @@ function ReportCommunitySimple(B::SparseMatrixCSC, Rs, Ss, Times, Spaces, DataNa
     mkpath(folder)
     io = open(string(folder, AlgName, ".txt"), "w")
     for j in 1:length(Rs)
-        write(io, string(join([Times[j], Spaces[j], ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
+        write(io, string(join([Times[j], Spaces[j] / 1000000, ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
     end
     close(io)
 end
@@ -107,6 +107,30 @@ function TinkSpaceIntoReport(Spaces, DataName::String, AlgName::String)
             arr = [arr[1];space;arr[2:end]]
         else
             arr[2] = space
+        end
+        arr = join(arr, "|")
+        push!(arrs, arr)
+    end
+    close(io)
+    io = open(string(folder, AlgName, ".txt"), "w")
+    for j in 1:length(arrs)
+        write(io, string(arrs[j], "\n"))
+    end
+    close(io)
+end
+
+function TinkTimeIntoReport(Times, DataName::String, AlgName::String)
+    folder = folderString(CS_SIMPLE_FOLDER, DataName, "Report")
+    mkpath(folder)
+    io = open(string(folder, AlgName, ".txt"))
+    arrs = []
+    for j in 1:length(Times)
+        arr = split(readline(io), "|")
+        time = string(Times[j])
+        if length(arr) == 8
+            arr = [time;arr[2:end]]
+        else
+            arr[1] = time
         end
         arr = join(arr, "|")
         push!(arrs, arr)

@@ -1,5 +1,5 @@
 reset
-set terminal postscript eps color "Times-Roman" 18 enhanced
+set terminal postscript eps color "Times-Roman" 24 enhanced
 set size 1,0.65
 
 set style data histogram
@@ -18,9 +18,9 @@ unset mytics
 set encoding utf8
 
 unset xlabel
-set xtics rotate by -30 font "Times-Roman,18"
+set xtics rotate by -30 font "Times-Roman,24"
 
-set yrange [0:10]
+set yrange [0:20]
 set output 'density.eps'
 plot 'density.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 	'' using 3 notitle lt -1 fs pattern 4,\
@@ -100,7 +100,7 @@ plot 'time.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 set logscale y
 set format y "10^{%L}
 set yrange [0.01:100000]
-set ytics ('10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 100, '10^{4}' 100, '10^{5}' 100, '10^{6}' 100)
+set ytics ('10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 1000, '10^{4}' 10000, '10^{5}' 100000)
 set output 'space.eps'
 plot 'space.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 	'' using 3 notitle lt -1 fs pattern 4,\

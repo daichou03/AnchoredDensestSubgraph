@@ -37,6 +37,7 @@ function SampleR(B::SparseMatrixCSC, Samples::Int64=100)
     end
 
     vs = safeSampleV(B, Samples)
+    rs = map(v->GetStepRandomWalkFixedWalks(B, [v], 15, 4, [1.0, 1.0, 1.0, 1.0], DEFAULT_R_NODE_DEGREE_CAP), vs) # 20211107: Note has 8 times degree cap from seed node?
     rs = map(v->GetStepRandomWalkFixedWalks(B, [v], 15, 4, [1.0, 1.0, 1.0, 1.0]), vs)
     return vs, rs
 end
@@ -176,42 +177,8 @@ function BulkTestExport(RegenerateR::Bool=false)
     end
 end
 
-
-function CSTestFS(B::SparseMatrixCSC, R::Vector{Int64}, PenalityR::Float64=0.0, StrongR::Vector{Int64}=Int64[], epsilon=1.0, Print::Bool=true)
-    S_FS = LocalCond(B,R,PenalityR,StrongR,epsilon)[1]
-    if Print
-        println(string("S_FS = ", S_FS))
-        println(ReportCommunity(B,R,S_FS))
-    end
-    return (S_FS, ReportCommunity(B,R,S_FS))
-end
-
-
-# dataName = "uk2007"
-# dataName = "friendster"
-#dataName = "wikipedia"
-# RegenerateR = true
+# include("CS_Simple_LA.jl")
+# dataName="yahoo"
 # B = readIN(string(dataName, ".in"))
-# P = toTransitionGraph(B)
-# if RegenerateR
-#     println("Generating R:")
-#     vs, rs = SampleR(B, 100)
-#     ExportSimpleRs(vs, rs, dataName)
-# else
-#     println("Importing R:")
-#     vs, rs = ImportSimpleRs(dataName)
-# end
-# ExportSimpleRs(vs, rs, dataName)
-
-# println(string("Testing LA:"))
-# ss_la, times_la, spaces_la = SimpleLATest(B, rs)
-# ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
-# # MRW
-# println(string("Testing MRW:"))
-# ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
-# ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
-
-# ss_mrw_15 = map(s->s[1:min(length(s), 15)], ss_mrw) # Size = 15
-
-# ReportCommunitySimple(B, rs, ss_la, times_la, dataName, "LA")
-# ReportCommunitySimple(B, rs, ss_mrw_15, times_mrw, dataName, "MRW")
+# vs, rs = ImportSimpleRs(dataName)
+# @time LocalAnchoredDensestSubgraph(B,rs[1])

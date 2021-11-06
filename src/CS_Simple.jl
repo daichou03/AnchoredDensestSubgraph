@@ -18,9 +18,8 @@ CS_SIMPLE_FOLDER = "../CaseStudy/Simple/"
 ##################################
 
 SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orkut"]
-# SIMPLE_TEST_DATA_NAMES = ["digg", "flickr", "google", "flixster"]
 SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "digg", "flickr", "youtube", "google", "flixster", "skitter", "livejournal", "orkut"]
-SIMPLE_TEST_DATA_NAMES = ["amazon","dblp","notredame","digg","citeseer","livemocha","flickr","hyves","yahoo","youtube","google","trec","flixster","skitter","indian","libimseti","pokec","usaroad","livejournal","orkut"]
+SIMPLE_TEST_DATA_NAMES = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","yahoo","youtube","google","trec","flixster","dblp","skitter","indian","libimseti","pokec","usaroad","livejournal","orkut","wikipedia","friendster","uk2007"]
 ALGORITHM_NAMES = ["LA", "FS", "MRW"]
 
 # I/O R and V
@@ -98,6 +97,13 @@ function ImportSimpleResults(DataName::String, AlgName::String)
     end
     close(io_time)
 
+    spaces = Any[]
+    io_space = open(string(folderString(CS_SIMPLE_FOLDER, DataName, "Spaces"), AlgName, ".txt"))
+    while !eof(io_space)
+        push!(spaces, parse(Float64, readline(io_space)))
+    end
+    close(io_space)
+
     println(string(length(ss), " results imported."))
-    return ss, times
+    return ss, times, spaces
 end

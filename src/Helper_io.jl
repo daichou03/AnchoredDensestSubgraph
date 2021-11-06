@@ -34,7 +34,7 @@ function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String
     header = split(readline(f))
     n = parse(Int,header[1])
     m = parse(Int,header[2])
-    return doReadIN(f, n, m, Chance)
+    return doReadIN(f, n, m, Chance, false)
 end
 
 function readIN(FileName::AbstractString, Directory::String=DIR_EXAMPLE_SCC)
@@ -43,38 +43,16 @@ end
 
 COMMENT_HEADERS = ['#','%']
 
-function doReadIN(File::IOStream, N::Int, M::Int, Chance::Float64)
-    ei = zeros(Int64, M*2)
-    ej = zeros(Int64, M*2)
-    count = 0
-    @inbounds for i = 1:M
-        curline = readline(File)
-        if length(curline) > 0 && !(curline[1] in COMMENT_HEADERS) && (Chance >= 1 || Chance >= rand())
-            count += 1
-            parts = split(curline)
-            ei[2*count-1] = parse(Int, parts[1])
-            ej[2*count-1] = parse(Int, parts[2])
-            ei[2*count] = parse(Int, parts[2])
-            ej[2*count] = parse(Int, parts[1])
-        end
-    end
-    close(File)
-    A = sparse(ei[1:count*2], ej[1:count*2], ones(Float64, count*2), N, N)
-    return A
-end
-
-# Undirected and assumes input is undirected
-# N, M can be lowerbound rather than accurate.
-function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::String=DIR_EXAMPLE_SCC)
-    io = open(string(Directory,FileName))
+# Any header info has been read, File now only has body content remaining
+function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted::Bool)
     ei = zeros(Int64, M)
     ej = zeros(Int64, M)
     weights = zeros(Float64, M)
     edgeIndex = map(x->Dict(), 1:N)
     count = 0
-    while !eof(io)
-        lineRaw = readline(io)
-        if length(lineRaw) == 0 || lineRaw[1:1] in ["#", "%"]
+    while !eof(File)
+        lineRaw = readline(File)
+        if length(lineRaw) == 0 || (lineRaw[1:1] in COMMENT_HEADERS) || (Chance < rand())
             continue
         end
         lineRaw = replace(lineRaw, "\t"=>" ")
@@ -86,7 +64,7 @@ function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::Stri
         elseif v1 > v2
             v1, v2 = v2, v1
         end
-        weight = (length(line) >= 3) ? parse(Float64, line[3]) : 1.0
+        weight = (Weighted && (length(line) >= 3)) ? parse(Float64, line[3]) : 1.0
         if haskey(edgeIndex[v1], v2)
             weights[edgeIndex[v1][v2]] += weight
         else
@@ -97,9 +75,16 @@ function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::Stri
             edgeIndex[v1][v2] = count
         end
     end
-    close(io)
+    close(File)
     A = sparse([ei[1:count];ej[1:count]], [ej[1:count];ei[1:count]], [weights[1:count];weights[1:count]], N, N)
     return A
+end
+
+# Undirected and assumes input is undirected
+# N, M can be lowerbound rather than accurate.
+function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::String=DIR_EXAMPLE_SCC)
+    io = open(string(Directory,FileName))
+    return doReadIN(io, N, M, 1.0, true)
 end
 
 function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")

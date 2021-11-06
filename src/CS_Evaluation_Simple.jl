@@ -67,12 +67,12 @@ end
 # Bulk Report #
 ###############
 
-function ReportCommunitySimple(B::SparseMatrixCSC, Rs, Ss, Times, DataName::String, AlgName::String)
+function ReportCommunitySimple(B::SparseMatrixCSC, Rs, Ss, Times, Spaces, DataName::String, AlgName::String)
     folder = folderString(CS_SIMPLE_FOLDER, DataName, "Report")
     mkpath(folder)
     io = open(string(folder, AlgName, ".txt"), "w")
     for j in 1:length(Rs)
-        write(io, string(join([Times[j], ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
+        write(io, string(join([Times[j], Spaces[j], ReportCommunity(B, Rs[j], Ss[j])], "|"), "\n"))
     end
     close(io)
 end
@@ -83,26 +83,61 @@ function BulkReportCommunitySimple()
         B = readIN(string(dataName, ".in"))
         vs, rs = ImportSimpleRs(dataName)
         for algName in ALGORITHM_NAMES
-            ss, times = ImportSimpleResults(dataName, algName)
+            ss, times, spaces = ImportSimpleResults(dataName, algName)
             # Can choose to truncate MRW's result set here
             if algName == "MRW"
                 # ss = map(i->ss[i][1:min(length(ss[i]), length(rs[i]))], 1:length(ss)) # Size of R
                 ss = map(s->s[1:min(length(s), 15)], ss) # Size = 15
             end
-            ReportCommunitySimple(B, rs, ss, times, dataName, algName)
+            ReportCommunitySimple(B, rs, ss, times, spaces, dataName, algName)
         end
     end
 end
+
+# Fill up spaces. Temporary, later output space too.
+function TinkSpaceIntoReport(Spaces, DataName::String, AlgName::String)
+    folder = folderString(CS_SIMPLE_FOLDER, DataName, "Report")
+    mkpath(folder)
+    io = open(string(folder, AlgName, ".txt"))
+    arrs = []
+    for j in 1:length(Spaces)
+        arr = split(readline(io), "|")
+        space = string(Spaces[j] / 1000000)
+        if length(arr) == 8
+            arr = [arr[1];space;arr[2:end]]
+        else
+            arr[2] = space
+        end
+        arr = join(arr, "|")
+        push!(arrs, arr)
+    end
+    close(io)
+    io = open(string(folder, AlgName, ".txt"), "w")
+    for j in 1:length(arrs)
+        write(io, string(arrs[j], "\n"))
+    end
+    close(io)
+end
+
+function BulkTinkSpaceIntoReport()
+    for dataName in SIMPLE_TEST_DATA_NAMES
+        for algName in ALGORITHM_NAMES
+            ss, times, spaces = ImportSimpleResults(dataName, algName)
+            TinkSpaceIntoReport(spaces, dataName, algName)
+        end
+    end
+end
+
 
 ####################
 # Integrate report #
 ####################
 
 ALG_REPORT_NAMES = ["EV-LA", "EV-MRW", "EV-FS"]
-REPORT_METRICS = ["time", "length", "density", "rsdensity", "conductance", "lconductance", "rins", "sinr"]
-IND_LENGTH = 2
-IND_RINS = 7
-IND_SINR = 8
+REPORT_METRICS = ["time", "space", "length", "density", "rsdensity", "conductance", "lconductance", "rins", "sinr"]
+IND_LENGTH = 3
+IND_RINS = 8
+IND_SINR = 9
 CALCULATED_METRICS = ["f1score"]
 IND_F1SCORE = 1
 

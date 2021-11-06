@@ -114,7 +114,10 @@ function ExportGraphEditorForDBLP(B::SparseMatrixCSC, V::Int64, R::Vector{Int64}
         iskey = (v == orderedSubsetIndices(RUnion, [V])[1]) ? 2 : ((v in RsubsetInds) ? 1 : 0)
         logDeg = log(deg)
         resDeg = deg - GetDegree(Bsubset, v)
-        write(io_inds, string(join([v, v, v, color, polygon, deg, iskey, logDeg, resDeg, RUnion[v], allNames[RUnion[v]]], ","), "\n"))
+        originInd = RUnion[v]
+        originName = replace(allNames[originInd], "_"=>" ")
+        label = string(deg, " - ", originName)
+        write(io_inds, string(join([v, label, v, color, polygon, deg, iskey, logDeg, resDeg, originInd, originName], ","), "\n"))
     end
     close(io_inds)
 end

@@ -52,7 +52,7 @@ function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted:
     count = 0
     while !eof(File)
         lineRaw = readline(File)
-        if length(lineRaw) == 0 || (lineRaw[1:1] in COMMENT_HEADERS) || (Chance < rand())
+        if length(lineRaw) == 0 || (lineRaw[1] in COMMENT_HEADERS) || (Chance < rand())
             continue
         end
         lineRaw = replace(lineRaw, "\t"=>" ")

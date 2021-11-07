@@ -45,9 +45,11 @@ COMMENT_HEADERS = ['#','%']
 
 # Any header info has been read, File now only has body content remaining
 function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted::Bool)
-    ei = zeros(Int64, M)
-    ej = zeros(Int64, M)
-    weights = zeros(Float64, M)
+    ei = zeros(Int64, M*2)
+    ej = zeros(Int64, M*2)
+    if Weighted
+        weights = zeros(Float64, M*2)
+    end
     edgeIndex = map(x->Dict(), 1:N)
     count = 0
     while !eof(File)
@@ -64,21 +66,30 @@ function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted:
         elseif v1 > v2
             v1, v2 = v2, v1
         end
-        weight = (Weighted && (length(line) >= 3)) ? parse(Float64, line[3]) : 1.0
+        weight = Weighted ? ((length(line) >= 3) ? parse(Float64, line[3]) : 1.0) : 0.0
         if haskey(edgeIndex[v1], v2)
-            weights[edgeIndex[v1][v2]] += weight
+            if Weighted
+                weights[edgeIndex[v1][v2]*2-1] += weight
+                weights[edgeIndex[v1][v2]*2] += weight
+            end
         else
             count += 1
-            ei[count] = v1
-            ej[count] = v2
-            weights[count] = weight
+            ei[count*2-1] = v1
+            ej[count*2-1] = v2
+            ei[count*2] = v2
+            ej[count*2] = v1
+            if Weighted
+                weights[count*2-1] = weight
+                weights[count*2] = weight
+            end
             edgeIndex[v1][v2] = count
         end
     end
     close(File)
-    A = sparse([ei[1:count];ej[1:count]], [ej[1:count];ei[1:count]], [weights[1:count];weights[1:count]], N, N)
+    A = sparse(ei[1:count*2], ej[1:count*2], (Weighted ? weights[1:count*2] : ones(Float64, count*2)), N, N)
     return A
 end
+
 
 # Undirected and assumes input is undirected
 # N, M can be lowerbound rather than accurate.

@@ -361,6 +361,26 @@ function PerformQueryIGASmallAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, Da
     return PerformQueryAnchorSizeTest(B, Tests, DatasetName, MaxHops, UserTargetSize, AnchorTargetSize, Steps,
         [true, true, false], FileNameSuffix, RNodeDegreeCap, MaxRetriesMultiplier)
 end
+
+# Query for fixed anchor size comparison, but anchor is random.
+function PerformQueryLargeAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetName::String,
+        AnchorTargetSize::Int64, AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS, FileNameSuffix::String="-LargeAnchorSizeTest")
+    anchors = []
+    for i in 1:Tests
+        N = size(B, 1)
+        R = StatsBase.sample(1:N, AnchorTargetSize, replace=false)
+        # Efficient way to ensure R has at least one edge
+        nb = StatsBase.sample(GetAdjacency(B, R[1]), 1)[1]
+        if !(nb in R)
+            R[2] = nb
+        end
+        push!(anchors, R)
+    end
+    (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
+    filename = string(join([DatasetName, Tests, AnchorTargetSize], "-"), FileNameSuffix)
+    return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
+end
+
 # --------------
 # Complete Query
 # --------------
@@ -454,6 +474,16 @@ function BulkPerformDegreeCapTest(dataset_names::Array{String,1}, Tests::Int64)
         BatchPerformDegreeCapTest(dataset, ds_name, Tests)
     end
 end
+
+function BatchPerformQueryLargeAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, ds_name::String)
+    N = size(B, 1)
+    target_size = 128
+    while target_size < (N / 2)
+        PerformQueryLargeAnchorSizeTest(B, Tests, ds_name, target_size)
+        target_size *= 2
+    end
+end
+
 
 # For one data graph.
 function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64, LAOnly::Bool=false)

@@ -20,6 +20,8 @@ CS_SIMPLE_FOLDER = "../CaseStudy/Simple/"
 SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "youtube", "skitter", "livejournal", "orkut"]
 SIMPLE_TEST_DATA_NAMES = ["amazon", "dblp", "digg", "flickr", "youtube", "google", "flixster", "skitter", "livejournal", "orkut"]
 SIMPLE_TEST_DATA_NAMES = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","yahoo","youtube","google","trec","flixster","dblp","skitter","indian","libimseti","pokec","usaroad","livejournal","orkut","wikipedia","friendster","uk2007"]
+SIMPLE_TEST_DATA_NAMES = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut","wikipedia","friendster","uk2007"]
+SIMPLE_TEST_DATA_NAMES = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut","wikipedia","uk2007"]
 ALGORITHM_NAMES = ["LA", "FS", "MRW"]
 
 # I/O R and V

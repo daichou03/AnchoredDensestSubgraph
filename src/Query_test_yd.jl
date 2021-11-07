@@ -479,6 +479,7 @@ function BatchPerformQueryLargeAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, 
     N = size(B, 1)
     target_size = 128
     while target_size < (N / 2)
+        println(string("Testing size: ", target_size))
         PerformQueryLargeAnchorSizeTest(B, Tests, ds_name, target_size)
         target_size *= 2
     end

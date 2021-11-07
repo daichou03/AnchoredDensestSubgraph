@@ -18,11 +18,13 @@ using LinearAlgebra
 # 3 5
 # 4 5
 
+# Note: if reading data with multi-edges, M should count duplicate edges multiple times (not once).
+
 DIR_EXAMPLE_SCC = "../Example_SCC/"
 
 function readRaw(FileName::AbstractString, N::Int, M::Int, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
     f = open(string(Directory,FileName))
-    return doReadIN(f, N, M, Chance)
+    return doReadIN(f, N, M, Chance, false, false)
 end
 
 function readRaw(FileName::AbstractString, N::Int, M::Int, Directory::String=DIR_EXAMPLE_SCC)
@@ -34,7 +36,7 @@ function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String
     header = split(readline(f))
     n = parse(Int,header[1])
     m = parse(Int,header[2])
-    return doReadIN(f, n, m, Chance, false)
+    return doReadIN(f, n, m, Chance, false, false)
 end
 
 function readIN(FileName::AbstractString, Directory::String=DIR_EXAMPLE_SCC)
@@ -44,13 +46,15 @@ end
 COMMENT_HEADERS = ['#','%']
 
 # Any header info has been read, File now only has body content remaining
-function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted::Bool)
+# Multi: The input might have multi edges, combine them into weights (Sparse function does this by default). If false, force all weights = 1 afterwards.
+# Weighted: Attempts to read weight too. Note if Weighted = true, Multi is treated as true.
+function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Multi::Bool, Weighted::Bool)
     ei = zeros(Int64, M*2)
     ej = zeros(Int64, M*2)
+    weights = []
     if Weighted
         weights = zeros(Float64, M*2)
     end
-    edgeIndex = map(x->Dict(), 1:N)
     count = 0
     while !eof(File)
         lineRaw = readline(File)
@@ -66,36 +70,35 @@ function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Weighted:
         elseif v1 > v2
             v1, v2 = v2, v1
         end
-        weight = Weighted ? ((length(line) >= 3) ? parse(Float64, line[3]) : 1.0) : 0.0
-        if haskey(edgeIndex[v1], v2)
-            if Weighted
-                weights[edgeIndex[v1][v2]*2-1] += weight
-                weights[edgeIndex[v1][v2]*2] += weight
-            end
-        else
-            count += 1
-            ei[count*2-1] = v1
-            ej[count*2-1] = v2
-            ei[count*2] = v2
-            ej[count*2] = v1
-            if Weighted
-                weights[count*2-1] = weight
-                weights[count*2] = weight
-            end
-            edgeIndex[v1][v2] = count
+        weight = (Weighted && length(line) >= 3) ? parse(Float64, line[3]) : 1.0
+
+        count += 1
+        ei[count*2-1] = v1
+        ej[count*2-1] = v2
+        ei[count*2] = v2
+        ej[count*2] = v1
+        if Weighted
+            weights[count*2-1] = weight
+            weights[count*2] = weight
         end
     end
     close(File)
     A = sparse(ei[1:count*2], ej[1:count*2], (Weighted ? weights[1:count*2] : ones(Float64, count*2)), N, N)
+    if !Weighted && !Multi
+        # Force weight = 1
+        for i = 1:length(A.nzval)
+            A.nzval[i] = 1
+        end
+    end
     return A
 end
 
 
-# Undirected and assumes input is undirected
+# Assumes input is undirected and multi edge, try to merge these edges into a weighted graph.
 # N, M can be lowerbound rather than accurate.
 function readMulti(FileName::AbstractString, N::Int64, M::Int64, Directory::String=DIR_EXAMPLE_SCC)
     io = open(string(Directory,FileName))
-    return doReadIN(io, N, M, 1.0, true)
+    return doReadIN(io, N, M, 1.0, true, false)
 end
 
 function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Example_SCC/")

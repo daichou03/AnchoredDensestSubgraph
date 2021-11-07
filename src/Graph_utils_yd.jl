@@ -43,11 +43,11 @@ function toTransitionGraph(B::SparseMatrixCSC{Tv,Ti}) where {Tv,Ti}
 end
 
 
-# YD 20200201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
+# YD 20210201: https://github.com/JuliaLang/julia/blob/master/stdlib/SparseArrays/src/sparsevector.jl
 function GetAdjacency(B::SparseMatrixCSC, V::Int64, Self::Bool=true)
     L = SparseArrays.nonzeroinds(B[:,V])
     if Self
-        L = insert_and_dedup!(L, V) # Keep this list sorted
+        insert_and_dedup!(L, V) # Keep this list sorted
     end
     return L
 end

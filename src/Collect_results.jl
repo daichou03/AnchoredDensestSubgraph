@@ -125,7 +125,7 @@ function OutputIntegratedReport(ReportSubDir::String, ReportFiles::Array{String,
     mkpath(dir)
     lines = []
     for report in ReportFiles
-        if length(split(report, "-")) != 6 # Not a exclusive check, the error string itself is more explanatory.
+        if length(split(report, "-")) != 6 # Not an exclusive check, the error string itself is more explanatory.
             error(string("Unexpected report file name format: ", report, ", expected report file name format example: data-1000-2-8-3-2"))
         end
         report_name = split(report, "-")[1]

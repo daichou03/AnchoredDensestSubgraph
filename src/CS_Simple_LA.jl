@@ -163,22 +163,22 @@ function BulkTestExport(RegenerateR::Bool=false)
         println(string("Testing LA:"))
         ss_la, times_la, spaces_la = SimpleLATest(B, rs)
         ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
-        ReportCommunitySimple(B, rs, ss_la, times_la, dataName, "LA")
+        ReportCommunitySimple(B, rs, ss_la, times_la, spaces_la, dataName, "LA")
         # FS
         println(string("Testing FS:"))
         ss_fs, times_fs, spaces_fs = SimpleFSTest(B, rs)
         ExportSimpleResults(ss_fs, times_fs, spaces_fs, dataName, "FS")
-        ReportCommunitySimple(B, rs, ss_fs, times_fs, dataName, "FS")
+        ReportCommunitySimple(B, rs, ss_fs, times_fs, spaces_fs, dataName, "FS")
         # MRW
         println(string("Testing MRW:"))
         ss_mrw, times_mrw, spaces_mrw = SimpleMRWTest(P, vs, rs)
         ExportSimpleResults(ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
-        ReportCommunitySimple(B, rs, ss_mrw, times_mrw, dataName, "MRW")
+        ReportCommunitySimple(B, rs, ss_mrw, times_mrw, spaces_mrw, dataName, "MRW")
     end
 end
 
-# include("CS_Simple_LA.jl")
-# dataName="yahoo"
 # B = readIN(string(dataName, ".in"))
 # vs, rs = ImportSimpleRs(dataName)
-# @time LocalAnchoredDensestSubgraph(B,rs[1])
+# ss_la, times_la, spaces_la = SimpleLATest(B, rs)
+# ExportSimpleResults(ss_la, times_la, spaces_la, dataName, "LA")
+# ReportCommunitySimple(B, rs, ss_la, times_la, spaces_la, dataName, "LA")

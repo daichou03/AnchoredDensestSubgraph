@@ -177,6 +177,7 @@ function BulkTestExport(RegenerateR::Bool=false)
     end
 end
 
+# dataName = "friendster"
 # B = readIN(string(dataName, ".in"))
 # vs, rs = ImportSimpleRs(dataName)
 # ss_la, times_la, spaces_la = SimpleLATest(B, rs)

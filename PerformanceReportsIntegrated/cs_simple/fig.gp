@@ -73,7 +73,7 @@ plot 'lconductance.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\
 
 set logscale y
 set format y "10^{%L}
-set yrange [0.001:2000]
+set yrange [0.001:2500]
 set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, '10^{3}' 1000)
 set output 'time.eps'
 plot 'time.txt' using 2:xtic(1) notitle lt -1 fs pattern 8,\

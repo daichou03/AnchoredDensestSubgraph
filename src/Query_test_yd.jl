@@ -485,6 +485,17 @@ function BatchPerformQueryLargeAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, 
     end
 end
 
+function BatchPerformQueryLargeAnchorSizeTest2(B::SparseMatrixCSC, TargetSize::Int64, Tests::Int64, ds_name::String)
+    N = size(B, 1)
+    target_size = TargetSize
+    for i = 1:Tests
+        println(string("Testing size: ", target_size))
+        PerformQueryLargeAnchorSizeTest(B, 1, ds_name, target_size)
+        target_size += 1
+    end
+end
+    PerformQueryLargeAnchorSizeTest
+
 
 # For one data graph.
 function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64, LAOnly::Bool=false)

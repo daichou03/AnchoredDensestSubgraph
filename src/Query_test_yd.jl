@@ -485,16 +485,19 @@ function BatchPerformQueryLargeAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, 
     end
 end
 
-function BatchPerformQueryLargeAnchorSizeTest2(B::SparseMatrixCSC, TargetSize::Int64, Tests::Int64, ds_name::String)
+function BatchPerformQueryLargeAnchorSizeTest2(B::SparseMatrixCSC, TargetSize::Int64, Tests::Int64, AlgorithmMask::Vector{Bool}=ALL_ALGORITHMS, ds_name::String="orkut")
     N = size(B, 1)
     target_size = TargetSize
     for i = 1:Tests
         println(string("Testing size: ", target_size))
-        PerformQueryLargeAnchorSizeTest(B, 1, ds_name, target_size)
+        PerformQueryLargeAnchorSizeTest(B, 1, ds_name, target_size, AlgorithmMask)
         target_size += 1
     end
 end
-    PerformQueryLargeAnchorSizeTest
+
+# include("Query_test_yd.jl")
+# B = readIN("orkut.in")
+# BatchPerformQueryLargeAnchorSizeTest2(B, 131073, 5, "orkut")
 
 
 # For one data graph.

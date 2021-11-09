@@ -495,10 +495,6 @@ function BatchPerformQueryLargeAnchorSizeTest2(B::SparseMatrixCSC, TargetSize::I
     end
 end
 
-# include("Query_test_yd.jl")
-# B = readIN("orkut.in")
-# BatchPerformQueryLargeAnchorSizeTest2(B, 131073, 5, "orkut")
-
 
 # For one data graph.
 function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64, LAOnly::Bool=false)

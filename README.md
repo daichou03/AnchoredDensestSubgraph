@@ -35,6 +35,11 @@ Some toy data graphs are in /Example_small/:
 A = readIN("lobster.in", "../Example_small/")
 ```
 
+Loading this graph is equivalent to:
+```julia
+A = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5)
+```
+
 Some small, preprocessed real-world data graphs are in /Example_SCC/:
 
 ```julia
@@ -56,6 +61,7 @@ You may need to preprocess the raw data first if it does not meet the above cond
 
 Example of a legitimate .in file:  
 ```
+% "Lobster" toy graph
 # 4-clique:
 5 8  
 1 2  
@@ -64,12 +70,11 @@ Example of a legitimate .in file:
 2 3  
 2 4  
 3 4  
-% An extra extruding triangle:
+# + An extra extruding triangle:
 3 5  
 4 5  
 
-This is the "lobster" toy graph.
-This line and the line above are also comments.
+This line is also a comment.
 ```
 
 Alternatively, there is a `readRaw()` that does the same as `readIN()` but assumes the file does not have a header line for # vertices and # edges.  

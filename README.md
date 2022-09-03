@@ -48,14 +48,15 @@ This algorithm can work on other data graphs you downloaded, for example, [uk200
 All our experimental data graphs can be found at [SNAP](https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
 
 In our experiment, we preprocessed all the data graphs we used so that they can be loaded by `readIN()` (see above for syntax):  
-- The first line is the number of vertices and the number of edges respectively.  
-- The remaining lines are the list of edges (unweighted, undirected), vertices are 1-indexed.  
-- A line starting with `#` and `%` is ignored.
+- The first line contains two integers - the number of vertices (**n**) and the number of edges (**m**) respectively.
+- For the next **m** lines, each line contains two integers representing an (unweighted, undirected) edge, all vertices are 1-indexed.
+- Any contents after these **m** lines will not be processed; Any line starts with `#` and `%` is ignored. 
 
 You may need to preprocess the raw data first if it does not meet the above conditions.
 
-Example:  
+Example of a legitimate .in file:  
 ```
+# 4-clique:
 5 8  
 1 2  
 1 3  
@@ -63,12 +64,16 @@ Example:
 2 3  
 2 4  
 3 4  
+% An extra extruding triangle:
 3 5  
 4 5  
+
+This is the "lobster" toy graph.
+This line and the line above are also comments.
 ```
 
 Alternatively, there is a `readRaw()` that does the same as `readIN()` but assumes the file does not have a header line for # vertices and # edges.  
-You pass the number of vertices and the number of edges as the parameters:
+Instead, you pass the number of vertices and the number of edges as the parameters:
 
 ```julia
 A = readRaw("zebra.txt", 27, 111, "../Example_raw")

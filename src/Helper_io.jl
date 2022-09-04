@@ -56,7 +56,7 @@ function doReadIN(File::IOStream, N::Int64, M::Int64, Chance::Float64, Multi::Bo
         weights = zeros(Float64, M*2)
     end
     count = 0
-    while !eof(File)
+    while !eof(File) && (count < M)
         lineRaw = readline(File)
         if length(lineRaw) == 0 || (lineRaw[1] in COMMENT_HEADERS) || (Chance < rand())
             continue

@@ -75,6 +75,7 @@ function FlowNetAlpha(FlowNet::SparseMatrixCSC, alpha::Float64)
     return F
 end
 
+######
 # GA #
 ######
 

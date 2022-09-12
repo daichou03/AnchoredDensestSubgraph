@@ -75,6 +75,9 @@ function FlowNetAlpha(FlowNet::SparseMatrixCSC, alpha::Float64)
     return F
 end
 
+# GA #
+######
+
 # GA
 # InducedDS = GlobalDensestSubgraph(B[R,R])
 function GlobalAnchoredDensestSubgraph(B::SparseMatrixCSC, R::Vector{Int64}, InducedDS::densestSubgraph, ShowTrace::Bool=false)
@@ -136,7 +139,7 @@ end
 # IGA #
 #######
 
-# IGA_M
+# IGA
 # This implementation merges overdensed nodes to the sink when builidng the flow network, resulting in a smaller network.
 
 # GlobalDegree and OrderByDegreeIndices are information global to B. Pre-calculate them as below:

@@ -504,7 +504,7 @@ function BatchPerformAllTests(B::SparseMatrixCSC, ds_name::String, Tests::Int64,
     BatchPerformQueryAnchorSizeTest(B, ds_name, Tests)
     println("Cap test:")
     BatchPerformDegreeCapTest(B, ds_name, Tests)
-    println(string("Nodes expanded (standard output only): ", BatchRetrieveLAExpansionSize(B, Tests)))
+    println(string("Nodes expanded (standard output only): ", BatchRetrieveLASpecificStats(B, Tests, "expansion_size")))
     println("Half edge test - Graph size for each iteration including 0 (standard output only):")
     println(string(size(B, 1), "|", div(length(B.nzval), 2)))
     BatchPerformHalfEdgeTest(ds_name, Tests)
@@ -606,12 +606,12 @@ function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDi
     end
 end
 
-# ------
-# Others
-# ------
+# -----------------------------
+# Retrieve specific stats of LA
+# -----------------------------
 
 # Do LA but returns the size of the area expanded only.
-function LAExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph)
+function LASpecificStats(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::densestSubgraph, stats::String)
     if inducedDS.alpha_star < 1 # 20210122: This should only happen when no vertices in R connects to each other. In which case the density should be 0, and pick no vertices other than the source.
         return length(GetComponentAdjacency(B, R, true))
     end
@@ -622,6 +622,7 @@ function LAExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
     S = Int64[]
     SUnion = Int64[]
     L = Int64[]
+    iters = 0
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
@@ -630,13 +631,20 @@ function LAExpansionSizeOnly(B::SparseMatrixCSC, R::Vector{Int64}, inducedDS::de
         S = L[result_S.source_nodes]
         SUnion = union(SUnion, S)
         Frontier = setdiff(S, Expanded)
+        iters += 1
     end
-    return length(L)
+    # Which stat to retrieve?
+    if stats == "expansion_size"
+        return length(L)
+    elseif stats == "iterations"
+        return iters
+    end
+    error(string("Unexpected stats: ", stats)) 
 end
 
 # TODO: Specify the anchors instead to always use the same anchor node set for this test and baseline test.
 # TODO: Generate separate files for each data graph instead.
-function BatchRetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
+function BatchRetrieveLASpecificStats(B::SparseMatrixCSC, Tests::Int64, stats::String)
     user_inputs = BulkGenerateUserInputSet(B, Tests)
     anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
 
@@ -646,7 +654,7 @@ function BatchRetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
 
     sizes = []
     for i in 1:Tests
-        append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
+        append!(sizes, LASpecificStats(B,anchors[i], inducedDS_set[i], stats))
     end
     return StatsBase.mean(sizes)
 end
@@ -657,34 +665,15 @@ end
 #     io = open(string(PERFORMANCE_REPORTS_DIR, "exp_size/exp_size_all"), "w")
 #     for ds_name in dataset_names
 #         B = readIN(string(ds_name, ".in"))
-#         mean_size = BatchRetrieveLAExpansionSize(B, Tests)
+#         mean_size = BatchRetrieveLASpecificStats(B, Tests, "expansion_size")
 #         write(io, string(ds_name, ",", mean_size, "\n"))
 #     end
 #     close(io)
 # end
 
-function RetrieveLAExpansionSize(B::SparseMatrixCSC, Tests::Int64)
-    user_inputs = BulkGenerateUserInputSet(B, Tests)
-    anchors = BulkGenerateReferenceSetFixedWalks(B, user_inputs)
-
-    inducedDS_set = map(r -> GlobalDensestSubgraph(B[r,r]), anchors)
-    globalDegree = map(x -> GetDegree(B,x), 1:size(B,1))
-    orderByDegreeIndices = GetOrderByDegreeGraphIndices(B)
-
-    sizes = []
-    for i in 1:Tests
-        append!(sizes, LAExpansionSizeOnly(B,anchors[i],inducedDS_set[i]))
-    end
-    return sizes
-end
-
 # -----------
 # Preparation
 # -----------
-
-# println("Loading test datasets...")
-# lastfm = readIN("lastfm.in")
-# eucore = readIN("eucore.in")
 
 warmed_up_LA = false
 
@@ -700,3 +689,5 @@ function warmupLA()
         warmed_up_LA = true
     end
 end
+
+warmupLA()

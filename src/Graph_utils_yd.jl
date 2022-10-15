@@ -12,6 +12,11 @@ include("Helper_io.jl")
 # Graph Utils
 #------------
 
+mutable struct densestSubgraph
+    alpha_star::Float64 # The minimum alpha value that can saturate all source edges
+    source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
+end
+
 # ----------------------------------
 # Laplacians package functions start
 # ----------------------------------
@@ -272,4 +277,23 @@ NULL_R_NODE_DEGREE_CAP = rNodeDegreeCap(2.0^32, 2.0, 2.0^32)
 function GetRNodeDegreeCap(c_max::Int64, N::Int64, RNodeDegreeCap::rNodeDegreeCap)
     scale = min(RNodeDegreeCap.max_scale, (max(RNodeDegreeCap.min_scale, log(RNodeDegreeCap.log_scale, N / c_max))))
     return floor(Int64, scale * c_max)
+end
+
+
+# Modified from findnz()
+# Get an edge list from a CSC, assuming it was for undirected graph.
+# Only take edges (u, v) with u < v in the result.
+function CSCToEdgeListUndirected(B::SparseMatrixCSC)
+    us, vs, ws = findnz(B)
+    m = nnz(B)÷2
+    edgelist = Array{Tuple{Int, Int}}(undef, m)
+
+    ind = 1
+    @inbounds for i = 1 : (m*2)
+        if us[i] < vs[i]
+            edgelist[ind] = (us[i], vs[i])
+            ind += 1
+        end
+    end
+    return edgelist
 end

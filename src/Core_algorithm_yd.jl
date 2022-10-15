@@ -16,10 +16,6 @@ Memory_item_GA = "GA"
 Memory_item_IGA = "IGA"
 Memory_item_LA = "LA"
 
-mutable struct densestSubgraph
-    alpha_star::Float64 # The minimum alpha value that can saturate all source edges
-    source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
-end
 
 function GlobalDensestSubgraph(B::SparseMatrixCSC)
     stamp = RegisterFunctionStamp()

@@ -59,3 +59,26 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     return densestSubgraph(objective_value(model), findall(x->value(x)>0, x))
 end
 
+function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
+    Expanded = Int64[]
+    RSorted = sort(R)
+    Frontier = RSorted
+    alpha = 0
+    S = Int64[]
+    SUnion = Int64[]
+    L = Int64[]
+    while !isempty(Frontier)
+        Expanded = union(Expanded, Frontier)
+        L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
+        result_S = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted))
+        alpha = result_S.alpha_star
+        S = L[result_S.source_nodes]
+        if ShowTrace
+            println(densestSubgraph(result_S.alpha_star, S))
+        end
+        SUnion = union(SUnion, S)
+        Frontier = setdiff(S, Expanded)
+    end
+
+    return densestSubgraph(alpha, S)
+end

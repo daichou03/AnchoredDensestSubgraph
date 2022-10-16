@@ -9,6 +9,26 @@ include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Utils.jl")
 
+function SolveLPDensestSubgraph(B::SparseMatrixCSC)
+    model = Model(HiGHS.Optimizer)
+    edgelist = CSCToEdgeListUndirected(B)
+    n = B.n
+    m = length(edgelist)
+    @variable(model, x[i = 1:n] >= 0)
+    @variable(model, y[i = 1:m] >= 0)
+    wy = Array{Int}(undef, m)
+    @constraint(model, sum(x[i] for i in 1:n) <= 1)
+    @objective(model, Max, sum(y))
+    for i = 1:m
+        u, v = edgelist[i]
+        @constraint(model, y[i] <= x[u])
+        @constraint(model, y[i] <= x[v])
+    end
+    optimize!(model)
+    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x))
+end
+
+# Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (which can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64})
     model = Model(HiGHS.Optimizer)
     edgelist = CSCToEdgeListUndirected(B)

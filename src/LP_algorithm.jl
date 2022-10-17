@@ -9,6 +9,8 @@ include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Utils.jl")
 
+# Returns:
+# struct:densestSubgraph, time of LP.
 function SolveLPDensestSubgraph(B::SparseMatrixCSC)
     model = Model(HiGHS.Optimizer)
     edgelist = CSCToEdgeListUndirected(B)
@@ -25,7 +27,7 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC)
         @constraint(model, y[i] <= x[v])
     end
     optimize!(model)
-    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x))
+    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (which can't be LP engineered)
@@ -56,7 +58,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     end
     @objective(model, Max, sum(map(*, wy, y)))
     optimize!(model)
-    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x))
+    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
 function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, ShowTrace::Bool=false)
@@ -67,10 +69,12 @@ function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{
     S = Int64[]
     SUnion = Int64[]
     L = Int64[]
+    total_time = 0
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
-        result_S = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted))
+        result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted))
+        total_time += time_taken
         alpha = result_S.alpha_star
         S = L[result_S.source_nodes]
         if ShowTrace
@@ -80,5 +84,5 @@ function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{
         Frontier = setdiff(S, Expanded)
     end
 
-    return densestSubgraph(alpha, S)
+    return densestSubgraph(alpha, S), total_time
 end

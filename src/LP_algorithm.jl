@@ -13,6 +13,14 @@ include("Core_algorithm_yd.jl")
 SOLVER_FN_ADS = 1
 SOLVER_LP_ADSS = 2
 NUM_SOLVERS = 2
+SOLVER_NAMES = ["FNLA", "LPLAS"]
+
+STATS_DS = 1
+STATS_TIME = 2
+STATS_LSIZE = 3
+STATS_ITERS = 4
+STATS_LAST = STATS_ITERS
+STATS_NAMES = ["alpha", "time", "lsize", "iters"]
 
 
 # Returns:
@@ -113,17 +121,5 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
         return densestSubgraph(alpha, S), total_time, length(L), iters
     else
         return densestSubgraph(alpha, S)
-    end
-end
-
-warmed_up_solver = false
-
-function WarmUpSolvers()
-    global warmed_up_solver
-    if not warmed_up_solver
-        for i= 1:NUM_SOLVERS
-            DoSolveLocalADS(i,SAMPLE_GRAPH,SAMPLE_GRAPH_R)
-        end
-        warmed_up_solver = true
     end
 end

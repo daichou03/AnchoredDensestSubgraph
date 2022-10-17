@@ -61,11 +61,21 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
 end
 
 
-function ProcessAndOutputAlgorithms(B::SparseMatrixCSC, dataName::String, SolverMask::Vector{Bool}=[true, true], suffixName::String="")
+function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=[true, true], suffixName::String="")
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, "Baseline")
     statsAlgorithms = ProcessAlgorithms(B, anchors, SolverMask)
     OutputStatsAlgorithms(statsAlgorithms, dataName, suffixName)
+end
+
+
+dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
+
+function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="")
+    for dataName in dataset_names
+        proc = @timed ProcessAndOutputAlgorithms(dataName, ALL_SOLVERS, suffixName)
+        print(string(proc, ": ", proc.time))
+    end
 end
 
 

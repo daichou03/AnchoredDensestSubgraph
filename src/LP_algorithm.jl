@@ -13,6 +13,7 @@ include("Core_algorithm_yd.jl")
 SOLVER_FN_ADS = 1
 SOLVER_LP_ADSS = 2
 NUM_SOLVERS = 2
+ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 
 STATS_DS = 1

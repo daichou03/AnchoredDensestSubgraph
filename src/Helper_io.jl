@@ -21,6 +21,7 @@ using LinearAlgebra
 # Note: if reading data with multi-edges, M should count duplicate edges multiple times (not once).
 
 DIR_EXAMPLE_SCC = "../Example_SCC/"
+DIR_ANCHORNODES = "../AnchorNodes/"
 
 function readRaw(FileName::AbstractString, N::Int, M::Int, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
     f = open(string(Directory,FileName))
@@ -132,6 +133,23 @@ function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1}, Iteration::Int
     for ds_name in dataset_names
         ExportHalfEdgeGraphs(ds_name, Iteration)
     end
+end
+
+
+# Read Anchor nodes generated from Query_test_yd.GenerateAnchorNodesFile.
+function readAnchors(DatasetName::AbstractString, SubDirName::String)
+    io = open(string(folderString(DIR_ANCHORNODES, SubDirName), DatasetName, ".anchor"))
+    _ = readline(io) # Should be same as DatasetName, not checking
+    nums = parse(Int, readline(io))
+    anchors = Array{Array{Int,1},1}(undef, nums)
+    for i = 1:nums
+        lineRaw = readline(io)
+        line = split(lineRaw, ",")
+        line = map(x->parse(Int, x), line)
+        anchors[i] = line
+    end
+    close(io)
+    return anchors
 end
 
 #"lastfm","deezer","orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","catster","hamster","douban","gowalla","douban","gowalla","gowalla","douban","gowalla"

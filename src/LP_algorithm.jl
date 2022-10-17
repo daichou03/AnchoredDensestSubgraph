@@ -10,8 +10,10 @@ include("Graph_utils_yd.jl")
 include("Utils.jl")
 include("Core_algorithm_yd.jl")
 
-SOLVER_FN_ADS = 0
-SOLVER_LP_ADSS = 1
+SOLVER_FN_ADS = 1
+SOLVER_LP_ADSS = 2
+NUM_SOLVERS = 2
+
 
 # Returns:
 # struct:densestSubgraph, time of LP.
@@ -111,5 +113,17 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
         return densestSubgraph(alpha, S), total_time, length(L), iters
     else
         return densestSubgraph(alpha, S)
+    end
+end
+
+warmed_up_solver = false
+
+function WarmUpSolvers()
+    global warmed_up_solver
+    if not warmed_up_solver
+        for i= 1:NUM_SOLVERS
+            DoSolveLocalADS(i,SAMPLE_GRAPH,SAMPLE_GRAPH_R)
+        end
+        warmed_up_solver = true
     end
 end

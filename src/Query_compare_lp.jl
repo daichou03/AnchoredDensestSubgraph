@@ -74,9 +74,12 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
 end
 
 
-function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="")
+function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, "Baseline")
+    if sampleSize > 0
+        anchors = anchors[1:sampleSize]
+    end
     statsAlgorithms = ProcessAlgorithms(B, anchors, SolverMask)
     OutputStatsAlgorithms(statsAlgorithms, dataName, suffixName)
 end
@@ -84,10 +87,10 @@ end
 
 dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
 
-function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="")
+function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
         print(string(dataName, ":"))
-        proc = @timed ProcessAndOutputAlgorithms(dataName, ALL_SOLVERS, suffixName)
+        proc = @timed ProcessAndOutputAlgorithms(dataName, ALL_SOLVERS, suffixName, sampleSize)
         print(proc.time)
     end
 end

@@ -61,7 +61,7 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
 end
 
 
-function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=[true, true], suffixName::String="")
+function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="")
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, "Baseline")
     statsAlgorithms = ProcessAlgorithms(B, anchors, SolverMask)
@@ -73,10 +73,12 @@ dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","doub
 
 function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="")
     for dataName in dataset_names
+        print(string(dataName, ":"))
         proc = @timed ProcessAndOutputAlgorithms(dataName, ALL_SOLVERS, suffixName)
-        print(string(proc, ": ", proc.time))
+        print(string(proc.time))
     end
 end
+
 
 
 warmed_up_solver = false

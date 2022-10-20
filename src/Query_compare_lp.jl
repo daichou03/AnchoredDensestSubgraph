@@ -2,9 +2,11 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
-using StatsBase # TODO: To install
+using StatsBase
 using Random
 using Base
+using DataFrames
+using CSV
 include("maxflow.jl")
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
@@ -14,7 +16,22 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 
 
-# Comparing LA and Local-LP-ADS#
+STATS_DS = 1
+STATS_TIME = 2
+STATS_LSIZE = 3
+STATS_ITERS = 4
+STATS_LAST = STATS_ITERS
+STATS_NAMES = ["alpha", "time", "lsize", "iters"]
+
+RESULT_TYPE_STATS = 1
+RESULT_TYPE_SETS = 2
+RESULT_TYPE_NAMES = ["lpcompstats", "lpcompsets"]
+
+FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
+
+############################
+# Run LA and Local-LP-ADS# #
+############################
 function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true])
     statsAlgorithms = []
     for solver_index in 1:length(SolverMask)
@@ -36,14 +53,10 @@ end
 function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::String="")
     for solver_id = 1:NUM_SOLVERS
         if length(statsAlgorithms[solver_id]) > 0
-            mkpath("../LPCompResults")
-            filename = string("../LPCompResults/", dataName, "-", SOLVER_NAMES[solver_id])
-            if length(suffixName) > 0
-                filename = string(filename, "-", suffixName)
-            end
-            io_stats = open(string(filename, ".lpcompstats"), "w")
-            io_sets = open(string(filename, ".lpcompsets"), "w")
-            write(io_stats, string(join(STATS_NAMES,","), "\n"))
+            mkpath(FOLDER_LP_COMP_RESULTS)
+            io_stats = open(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solver_id, suffixName, RESULT_TYPE_STATS)), "w")
+            io_sets = open(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solver_id, suffixName, RESULT_TYPE_SETS)), "w")
+            write(io_stats, string(join(STATS_NAMES, ","), "\n"))
             for i in 1:length(statsAlgorithms[solver_id])
                 stats = []
                 statsAlgorithms[solver_id][i]
@@ -75,10 +88,38 @@ function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="")
     for dataName in dataset_names
         print(string(dataName, ":"))
         proc = @timed ProcessAndOutputAlgorithms(dataName, ALL_SOLVERS, suffixName)
-        print(string(proc.time))
+        print(proc.time)
     end
 end
 
+
+function GetLPCompResultFileName(dataName, solverID, suffixName, resultType)
+    name = string(dataName, "-", SOLVER_NAMES[solverID])
+    if length(suffixName) > 0
+        name = string(name, "-", suffixName)
+    end
+    name = string(name, ".", RESULT_TYPE_NAMES[resultType])
+    return name
+end
+
+########################################
+# Compare LA and Local-LP-ADS# results #
+########################################
+
+# Simply count number of result sets that are equal.
+function CompareResultSets(dataName, suffixName::String="")
+    hit, miss = 0, 0
+    dfs = Array{Any}(undef, 2)
+    for solverID in 1:NUM_SOLVERS
+        dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, suffixName, RESULT_TYPE_STATS))))
+    end
+    for i in 1:length(df_fn.alpha)
+        almostEqual(dfs[1].alpha[i], dfs[2].alpha[i]) ? hit += 1 : miss += 1
+    end
+    alphaDiff = mean(dfs[2].alpha) / mean(dfs[1].alpha)
+    time1, time2 = mean(dfs[1].time), mean(dfs[2].time)
+    return hit, miss, alphaDiff, time1, time2
+end 
 
 
 warmed_up_solver = false

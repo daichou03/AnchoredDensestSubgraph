@@ -16,13 +16,6 @@ NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 
-STATS_DS = 1
-STATS_TIME = 2
-STATS_LSIZE = 3
-STATS_ITERS = 4
-STATS_LAST = STATS_ITERS
-STATS_NAMES = ["alpha", "time", "lsize", "iters"]
-
 
 # Returns:
 # struct:densestSubgraph, time of LP.

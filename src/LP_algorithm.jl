@@ -106,7 +106,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
             result_timed = @timed GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted))
             result_S, time_taken = result_timed.value, result_timed.time
         elseif Solver == SOLVER_LP_ADSS
-            result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), lpSolver, DEFAULT_LP_SOLVER)
+            result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), lpSolver)
         else
             error("Unexpected Solver ID")
         end

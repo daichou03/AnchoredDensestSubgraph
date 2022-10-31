@@ -138,7 +138,7 @@ function WarmUpSolvers()
     if !warmed_up_solver
         print("Warming up solvers...")
         for i= 1:NUM_SOLVERS
-            DoSolveLocalADS(i, SAMPLE_GRAPH, SAMPLE_GRAPH_R, DEFAULT_LP_SOLVER)
+            DoSolveLocalADS(i, SAMPLE_GRAPH, SAMPLE_GRAPH_R, false, false, DEFAULT_LP_SOLVER)
         end
         warmed_up_solver = true
         print("Done.")
@@ -150,4 +150,6 @@ WarmUpSolvers()
 # using GLPK
 # DEFAULT_LP_SOLVER = GLPK
 # dataName = "astroph"
+# ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)
+# dataName = "livejournal"
 # ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)

@@ -7,6 +7,7 @@ using Random
 using Base
 using DataFrames
 using CSV
+using Dates
 include("maxflow.jl")
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
@@ -32,14 +33,19 @@ FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
 ############################
 # Run LA and Local-LP-ADS# #
 ############################
-function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true])
+function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true], printInterval=-1)
     statsAlgorithms = []
     for solver_index in 1:length(SolverMask)
         if SolverMask[solver_index]
             result_set = Array{Any}(undef, length(anchors))
+            prev_time = now()
             for i = 1:length(anchors)
                 R = anchors[i]
                 result_set[i] = DoSolveLocalADS(solver_index, B, R, true, false)
+                if printInterval > 0 && (now()-prev_time).value / (printInterval * 1000) > 1
+                    print(string(i, " | ", result_set[i], "\n"))
+                    prev_time = now()
+                end
             end
             append!(statsAlgorithms, [result_set])
         else
@@ -96,7 +102,7 @@ function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="", sa
 end
 
 
-function GetLPCompResultFileName(dataName, solverID, suffixName, resultType)
+function GetLPCompResultFileName(dataName::String, solverID::Int, suffixName::String, resultType::Int)
     name = string(dataName, "-", SOLVER_NAMES[solverID])
     if length(suffixName) > 0
         name = string(name, "-", suffixName)
@@ -110,19 +116,19 @@ end
 ########################################
 
 # Simply count number of result sets that are equal.
-function CompareResultSets(dataName, suffixName::String="")
+function CompareResultSets(dataName::String, suffixName::String="")
     hit, miss = 0, 0
     dfs = Array{Any}(undef, 2)
     for solverID in 1:NUM_SOLVERS
         dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, suffixName, RESULT_TYPE_STATS))))
     end
-    for i in 1:length(df_fn.alpha)
+    for i in 1:length(dfs[1].alpha)
         almostEqual(dfs[1].alpha[i], dfs[2].alpha[i]) ? hit += 1 : miss += 1
     end
     alphaDiff = mean(dfs[2].alpha) / mean(dfs[1].alpha)
     time1, time2 = mean(dfs[1].time), mean(dfs[2].time)
-    return hit, miss, alphaDiff, time1, time2
-end 
+    return join(map(string, [hit, miss, alphaDiff, time1, time2]),",")
+end
 
 
 warmed_up_solver = false

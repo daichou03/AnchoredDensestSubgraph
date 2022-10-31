@@ -16,11 +16,13 @@ NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 
+DEFAULT_LP_SOLVER = HiGHS
+
 
 # Returns:
 # struct:densestSubgraph, time of LP.
-function SolveLPDensestSubgraph(B::SparseMatrixCSC)
-    model = Model(HiGHS.Optimizer)
+function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
+    model = SetupLPSolver(DEFAULT_LP_SOLVER)
     set_optimizer_attribute(model, "log_to_console", false)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
@@ -39,10 +41,18 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC)
     return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
+function SetupLPSolver(solver)
+    model = Model(solver.Optimizer)
+    if solver == HiGHS
+        set_optimizer_attribute(model, "log_to_console", false)
+    end
+    return model
+end
+
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (which can't be LP engineered)
-function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64})
-    model = Model(HiGHS.Optimizer)
+function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, solver=DEFAULT_LP_SOLVER)
+    model = SetupLPSolver(solver)
     set_optimizer_attribute(model, "log_to_console", false)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
@@ -73,12 +83,12 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
 end
 
 # Local-LP-ADS#
-function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false)
-    return DoSolveLocalADS(SOLVER_LP_ADSS, B, R, MoreStats, ShowTrace)
+function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
+    return DoSolveLocalADS(SOLVER_LP_ADSS, B, R, MoreStats, ShowTrace, lpSolver)
 end
 
 
-function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false)
+function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
     Expanded = Int64[]
     RSorted = sort(R)
     Frontier = RSorted
@@ -96,7 +106,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
             result_timed = @timed GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted))
             result_S, time_taken = result_timed.value, result_timed.time
         elseif Solver == SOLVER_LP_ADSS
-            result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted))
+            result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), lpSolver)
         else
             error("Unexpected Solver ID")
         end

@@ -18,12 +18,13 @@ SOLVER_NAMES = ["FNLA", "LPLAS"]
 
 DEFAULT_LP_SOLVER = HiGHS
 
+#using GLPK
+#DEFAULT_LP_SOLVER = GLPK
 
 # Returns:
 # struct:densestSubgraph, time of LP.
 function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(DEFAULT_LP_SOLVER)
-    set_optimizer_attribute(model, "log_to_console", false)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
     m = length(edgelist)
@@ -53,7 +54,6 @@ end
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (which can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
-    set_optimizer_attribute(model, "log_to_console", false)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
     m = length(edgelist)

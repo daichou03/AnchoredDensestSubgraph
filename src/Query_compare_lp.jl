@@ -147,7 +147,7 @@ end
 
 WarmUpSolvers()
 
-using GLPK
-DEFAULT_LP_SOLVER = GLPK
-dataName = "astroph"
-ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)
+# using GLPK
+# DEFAULT_LP_SOLVER = GLPK
+# dataName = "astroph"
+# ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)

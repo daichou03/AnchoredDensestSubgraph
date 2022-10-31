@@ -41,7 +41,7 @@ function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, S
             prev_time = now()
             for i = 1:length(anchors)
                 R = anchors[i]
-                result_set[i] = DoSolveLocalADS(solver_index, B, R, true, false)
+                result_set[i] = DoSolveLocalADS(solver_index, B, R, true, false, DEFAULT_LP_SOLVER)
                 if printInterval > 0 && (now()-prev_time).value / (printInterval * 1000) > 1
                     print(string(i, " | ", result_set[i], "\n"))
                     prev_time = now()
@@ -138,7 +138,7 @@ function WarmUpSolvers()
     if !warmed_up_solver
         print("Warming up solvers...")
         for i= 1:NUM_SOLVERS
-            DoSolveLocalADS(i,SAMPLE_GRAPH,SAMPLE_GRAPH_R)
+            DoSolveLocalADS(i, SAMPLE_GRAPH, SAMPLE_GRAPH_R, DEFAULT_LP_SOLVER)
         end
         warmed_up_solver = true
         print("Done.")
@@ -146,3 +146,8 @@ function WarmUpSolvers()
 end
 
 WarmUpSolvers()
+
+using GLPK
+DEFAULT_LP_SOLVER = GLPK
+dataName = "astroph"
+ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)

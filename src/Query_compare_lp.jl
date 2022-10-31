@@ -33,7 +33,7 @@ FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
 ############################
 # Run LA and Local-LP-ADS# #
 ############################
-function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true], printInterval=-1)
+function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true], printInterval=1)
     statsAlgorithms = []
     for solver_index in 1:length(SolverMask)
         if SolverMask[solver_index]

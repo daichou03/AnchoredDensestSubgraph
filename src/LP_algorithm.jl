@@ -4,7 +4,6 @@ using MatrixNetworks
 using LinearAlgebra
 using Base
 using JuMP
-using HiGHS
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Utils.jl")
@@ -16,8 +15,10 @@ NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 
+# Currently support these LP packages: HiGHS, GLPK
+# (Choose one)
+using HiGHS
 DEFAULT_LP_SOLVER = HiGHS
-
 #using GLPK
 #DEFAULT_LP_SOLVER = GLPK
 
@@ -51,7 +52,7 @@ function SetupLPSolver(solver)
 end
 
 # Global-LP-ADS#
-# Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (which can't be LP engineered)
+# Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
@@ -102,7 +103,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
         if Solver == SOLVER_FN_ADS
-            # TODO: This is unfair, ultimately should reconstruct the solution struct, which contains the time of core algorithms only.
+            # TODO: This is unfair, ideally should reconstruct the solution, which contains the time of core algorithms only.
             result_timed = @timed GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted))
             result_S, time_taken = result_timed.value, result_timed.time
         elseif Solver == SOLVER_LP_ADSS

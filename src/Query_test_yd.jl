@@ -262,7 +262,7 @@ function DoProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Any,1}, Algorith
                 append!(performances, [ProcessGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             elseif alg_index == ALG_MASK_IGA
                 append!(performances, [ProcessImprovedGlobalAnchoredDensestSubgraph(B, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)])
-            elseif alg_index = ALG_MASK_LA
+            elseif alg_index == ALG_MASK_LA
                 append!(performances, [ProcessLocalAnchoredDensestSubgraph(B, anchors, inducedDS_set)])
             end
         else

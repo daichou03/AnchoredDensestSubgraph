@@ -90,7 +90,7 @@ function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=A
     OutputStatsAlgorithms(statsAlgorithms, dataName, suffixName)
 end
 
-
+dataset_names_1to100m = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","yahoo","youtube","google","trec","flixster","dblp","skitter","indian","libimseti","pokec","usaroad","livejournal"]
 dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
 
 function BulkProcessAndOutputAlgorithms(dataset_names, suffixName::String="", sampleSize::Int=0)

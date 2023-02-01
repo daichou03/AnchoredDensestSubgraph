@@ -21,7 +21,7 @@ using LinearAlgebra
 # Note: if reading data with multi-edges, M should count duplicate edges multiple times (not once).
 
 DIR_EXAMPLE_SCC = "../Example_SCC/"
-DIR_ANCHORNODES = "../AnchorNodes/"
+DIR_ANCHOR_NODES = "../AnchorNodes/"
 
 function readRaw(FileName::AbstractString, N::Int, M::Int, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
     f = open(string(Directory,FileName))
@@ -138,7 +138,7 @@ end
 
 # Read Anchor nodes generated from Query_test_yd.GenerateAnchorNodesFile.
 function readAnchors(DatasetName::AbstractString, SubDirName::String)
-    io = open(string(folderString(DIR_ANCHORNODES, SubDirName), DatasetName, ".anchor"))
+    io = open(string(folderString(DIR_ANCHOR_NODES, SubDirName), DatasetName, ".anchor"))
     _ = readline(io) # Should be same as DatasetName, not checking
     nums = parse(Int, readline(io))
     anchors = Array{Array{Int,1},1}(undef, nums)

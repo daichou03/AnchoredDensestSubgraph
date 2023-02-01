@@ -32,7 +32,7 @@ end
 
 # ----------
 
-ANCHOR_NODES_BASE_DIR = "../AnchorNodes/"
+DIR_ANCHOR_NODES = "../AnchorNodes/"
 
 DEF_USER_MAX_HOPS = 2
 DEF_USER_TARGET_SIZE = 8
@@ -589,7 +589,7 @@ function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Test
     user_inputs = BulkGenerateUserInputSet(dataset, Tests, MaxHops, UserTargetSize)
     anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, Repeats, Steps, RNodeDegreeCap)
 
-    dir = string(ANCHOR_NODES_BASE_DIR,OutputSubDirName)
+    dir = string(DIR_ANCHOR_NODES,OutputSubDirName)
     mkpath(dir)
     io = open(string(dir, ds_name, ".anchor"), "w")
     write(io, string(ds_name, "\n"))

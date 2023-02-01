@@ -44,12 +44,15 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
+# No extra output from solver
+# Set time limit to TIME_LIMIT
 function SetupLPSolver(solver)
     model = Model(solver.Optimizer)
-    if solver == HiGHS
+    if @isdefined(HiGHS) && solver == HiGHS
         set_optimizer_attribute(model, "log_to_console", false)
+        set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
+    # TODO: time limit for other models
     end
-    set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
     return model
 end
 

@@ -136,8 +136,8 @@ warmed_up_solver = false
 function WarmUpSolvers()
     global warmed_up_solver
     if !warmed_up_solver
-        print("Warming up solvers...")
         for i= 1:NUM_SOLVERS
+            print(string("Warming up solver #", i, "\n"))
             DoSolveLocalADS(i, SAMPLE_GRAPH, SAMPLE_GRAPH_R, false, false, DEFAULT_LP_SOLVER)
         end
         warmed_up_solver = true

@@ -51,7 +51,12 @@ function SetupLPSolver(solver)
     if @isdefined(HiGHS) && solver == HiGHS
         set_optimizer_attribute(model, "log_to_console", false)
         set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
-    # TODO: time limit for other models
+    elseif @isdefined(GLPK) && solver == GLPK
+        set_optimizer_attribute(model, "tm_lim", TIME_LIMIT * 1000)
+        set_optimizer_attribute(model, "msg_lev", GLPK.GLP_MSG_OFF)
+    elseif @isdefined(Clp) && solver == Clp
+        set_optimizer_attribute(model, "LogLevel", 0)
+        set_optimizer_attribute(model, "MaximumSeconds", TIME_LIMIT)
     end
     return model
 end

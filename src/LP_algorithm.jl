@@ -14,7 +14,7 @@ SOLVER_LP_ADSS = 2
 NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
-TIME_LIMIT = 300
+TIME_LIMIT = 300.0
 
 # Currently support these LP packages: HiGHS, GLPK
 # (Choose one)
@@ -49,6 +49,7 @@ function SetupLPSolver(solver)
     if solver == HiGHS
         set_optimizer_attribute(model, "log_to_console", false)
     end
+    set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
     return model
 end
 
@@ -56,7 +57,6 @@ end
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
-    set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
     m = length(edgelist)

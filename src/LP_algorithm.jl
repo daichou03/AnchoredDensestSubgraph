@@ -16,12 +16,16 @@ ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 TIME_LIMIT = 300.0
 
-# Currently support these LP packages: HiGHS, GLPK
-# (Choose one)
+
+# Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, CPLEX
+# Set DEFAULT_LP_SOLVER to change a solver.
 using HiGHS
 DEFAULT_LP_SOLVER = HiGHS
-#using GLPK
-#DEFAULT_LP_SOLVER = GLPK
+
+# CPLEX: https://github.com/jump-dev/CPLEX.jl
+# ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\IBM\\ILOG\\CPLEX_Studio_Community2211\\cplex\\bin\\x64_win64\\"
+# Julia env: "../env/cplex"
+
 
 # Returns:
 # struct:densestSubgraph, time of LP.
@@ -57,6 +61,11 @@ function SetupLPSolver(solver)
     elseif @isdefined(Clp) && solver == Clp
         set_optimizer_attribute(model, "LogLevel", 0)
         set_optimizer_attribute(model, "MaximumSeconds", TIME_LIMIT)
+    elseif @isdefined(CDDLib) && solver == CDDLib
+        model = Model(CDDLib.Optimizer{Float64})
+        # TODO: has error
+        #model = CDDLib.Optimizer{Float64}()
+        #set_log(false)
     end
     return model
 end

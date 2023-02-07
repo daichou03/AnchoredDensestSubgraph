@@ -17,15 +17,20 @@ SOLVER_NAMES = ["FNLA", "LPLAS"]
 TIME_LIMIT = 300.0
 
 
-# Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, CPLEX
+# Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi
 # Set DEFAULT_LP_SOLVER to change a solver.
 using HiGHS
 DEFAULT_LP_SOLVER = HiGHS
 
 # CPLEX: https://github.com/jump-dev/CPLEX.jl
+# Licensed version installed required
 # ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\IBM\\ILOG\\CPLEX_Studio_Community2211\\cplex\\bin\\x64_win64\\"
 # Julia env: "../env/cplex"
 
+# Gurobi: https://github.com/jump-dev/Gurobi.jl
+# Licensed version installed required
+# ENV["GUROBI_HOME"] = "C:\\gurobi1001\\win64\\"
+# Julia env: "../env/gurobi"
 
 # Returns:
 # struct:densestSubgraph, time of LP.
@@ -51,7 +56,11 @@ end
 # No extra output from solver
 # Set time limit to TIME_LIMIT
 function SetupLPSolver(solver)
-    model = Model(solver.Optimizer)
+    if @isdefined(CDDLib) && solver == CDDLib
+        model = Model(solver.Optimizer{Float64})
+    else
+        model = Model(solver.Optimizer)
+    end
     if @isdefined(HiGHS) && solver == HiGHS
         set_optimizer_attribute(model, "log_to_console", false)
         set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
@@ -62,10 +71,13 @@ function SetupLPSolver(solver)
         set_optimizer_attribute(model, "LogLevel", 0)
         set_optimizer_attribute(model, "MaximumSeconds", TIME_LIMIT)
     elseif @isdefined(CDDLib) && solver == CDDLib
-        model = Model(CDDLib.Optimizer{Float64})
+        model = Model(solver.Optimizer{Float64})
         # TODO: has error
         #model = CDDLib.Optimizer{Float64}()
         #set_log(false)
+    elseif @isdefined(Gurobi) && solver == Gurobi
+        set_optimizer_attribute(model, "TimeLimit", TIME_LIMIT)
+        set_optimizer_attribute(model, "LogToConsole", 0)
     end
     return model
 end

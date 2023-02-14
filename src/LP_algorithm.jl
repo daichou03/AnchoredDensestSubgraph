@@ -17,20 +17,25 @@ SOLVER_NAMES = ["FNLA", "LPLAS"]
 TIME_LIMIT = 300.0
 
 
-# Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi
+# Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi, CPLEX
 # Set DEFAULT_LP_SOLVER to change a solver.
-using HiGHS
-DEFAULT_LP_SOLVER = HiGHS
+# using HiGHS
+# DEFAULT_LP_SOLVER = HiGHS
 
 # CPLEX: https://github.com/jump-dev/CPLEX.jl
 # Licensed version installed required
-# ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\IBM\\ILOG\\CPLEX_Studio_Community2211\\cplex\\bin\\x64_win64\\"
+# ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\IBM\\ILOG\\CPLEX_Studio2211\\cplex\\bin\\x64_win64\\"
+# ENV["CPLEX_STUDIO_BINARIES"] = "/opt/ibm/ILOG/CPLEX_Studio201/cplex/bin/x86-64_linux"
 # Julia env: "../env/cplex"
+using CPLEX
+DEFAULT_LP_SOLVER = CPLEX
 
 # Gurobi: https://github.com/jump-dev/Gurobi.jl
 # Licensed version installed required
 # ENV["GUROBI_HOME"] = "C:\\gurobi1001\\win64\\"
 # Julia env: "../env/gurobi"
+# using Gurobi
+# DEFAULT_LP_SOLVER = Gurobi
 
 # Returns:
 # struct:densestSubgraph, time of LP.
@@ -65,19 +70,16 @@ function SetupLPSolver(solver)
         set_optimizer_attribute(model, "log_to_console", false)
         set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
     elseif @isdefined(GLPK) && solver == GLPK
-        set_optimizer_attribute(model, "tm_lim", TIME_LIMIT * 1000)
         set_optimizer_attribute(model, "msg_lev", GLPK.GLP_MSG_OFF)
+        set_optimizer_attribute(model, "tm_lim", TIME_LIMIT * 1000)
     elseif @isdefined(Clp) && solver == Clp
         set_optimizer_attribute(model, "LogLevel", 0)
         set_optimizer_attribute(model, "MaximumSeconds", TIME_LIMIT)
-    elseif @isdefined(CDDLib) && solver == CDDLib
-        model = Model(solver.Optimizer{Float64})
-        # TODO: has error
-        #model = CDDLib.Optimizer{Float64}()
-        #set_log(false)
     elseif @isdefined(Gurobi) && solver == Gurobi
         set_optimizer_attribute(model, "TimeLimit", TIME_LIMIT)
         set_optimizer_attribute(model, "LogToConsole", 0)
+    else
+        set_silent(model)
     end
     return model
 end

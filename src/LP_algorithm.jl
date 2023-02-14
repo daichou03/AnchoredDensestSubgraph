@@ -80,6 +80,7 @@ function SetupLPSolver(solver)
         set_optimizer_attribute(model, "LogToConsole", 0)
     else
         set_silent(model)
+        set_time_limit_sec(model, TIME_LIMIT)
     end
     return model
 end

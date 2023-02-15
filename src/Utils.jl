@@ -68,6 +68,44 @@ function TimerLapValue()
     return ret / 1000
 end
 
+
+# Source: GPT-chat: "Write a function in Julia that have one thread run a function called func(), another thread waits for up to 300 seconds. If func() finishes in 300 seconds, return its result; otherwise, terminate func() and returns nothing."
+# This function creates two tasks: task_func, which runs func(), and task_timeout, which sleeps for 300 seconds. The main thread waits for either of these tasks to complete using @taskwait.
+# If task_func completes before task_timeout, its result is returned. Otherwise, task_func is terminated using schedule(task_func, TaskStatus.failed) and nothing is returned.
+# Note that this implementation assumes that func() can be interrupted by terminating its corresponding task. If func() relies on external resources (such as network connections or file locks) that can't be released cleanly, it may not be safe to terminate it in this way.
+function run_with_timeout(func, timeout)
+    result = nothing
+    task_func = @task func # func is passed as a callable, i.e., func(a).
+    task_timeout = @task sleep(timeout)
+    task_wait = @taskwait [task_func, task_timeout]
+
+    if istaskdone(task_func)
+        result = fetch(task_func)
+    else
+        schedule(task_func, TaskStatus.failed)
+    end
+
+    return result
+end
+
+function run_with_timeout(func, timeout)
+    result = nothing
+    task_func = @task func
+    task_timeout = @task sleep(timeout)
+
+    # Wait for either task to complete or timeout
+    wait([task_func, task_timeout], timeout)
+
+    task_done = istaskdone(task_func)
+    if task_done
+        result = task_done ? fetch(task_func) : nothing
+    else
+        schedule(task_func, TaskStatus.failed)
+    end
+
+    return (task_done, result)
+end
+
 # Only up to second
 function TimeAsName()
     return split(replace(string(now()), ":"=>"-"), ".")[1]

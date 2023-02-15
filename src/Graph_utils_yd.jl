@@ -17,6 +17,8 @@ mutable struct densestSubgraph
     source_nodes::Vector{Int64} # give the indices of the nodes attached to the source. Note this includes source node with index = 1, and all nodes' indices are 1 greater.
 end
 
+EMPTY_DENSEST_SUBGRAPH = densestSubgraph(0.0, [])
+
 # ----------------------------------
 # Laplacians package functions start
 # ----------------------------------

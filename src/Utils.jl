@@ -79,7 +79,7 @@ function run_with_timeout(func, timeout)
     task_timeout = @task sleep(timeout)
 
     # Wait for either task to complete or timeout
-    wait([task_func, task_timeout], timeout)
+    wait([task_func, task_timeout])
 
     task_done = istaskdone(task_func)
     if task_done

@@ -61,7 +61,7 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
         @constraint(model, y[i] <= x[u])
         @constraint(model, y[i] <= x[v])
     end
-    task_done, _ = run_with_timeout(optimize!(model), EXT_TIME_LIMIT)
+    task_done, _ = run_with_timeout(()->optimize!(model), EXT_TIME_LIMIT)
     if task_done
         return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
     else
@@ -124,7 +124,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         end
     end
     @objective(model, Max, sum(map(*, wy, y)))
-    task_done, _ = run_with_timeout(optimize!(model), EXT_TIME_LIMIT)
+    task_done, _ = run_with_timeout(()->optimize!(model), EXT_TIME_LIMIT)
     if task_done
         return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
     else

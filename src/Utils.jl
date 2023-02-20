@@ -69,46 +69,19 @@ function TimerLapValue()
 end
 
 
+# 20230220: The tombstone of attempting to write a run-with-timeout function - doesn't work.
 # returns (if_func_finished_before_timeout, result_of_func_if_finished)
 # func needs to have no parameter.
-EMPTY_LOOP_EPSILON = 1e-16 # 20230215: It turned out that you just need to "do something" in the while loop, otherwise it behaves as if being recognized as "unconditional blocking" by the compiler.
+# EMPTY_LOOP_EPSILON = 1e-4 # 20230215: It turned out that you just need to "do something" in the while loop, otherwise it behaves as if being recognized as "unconditional blocking" by the compiler.
+# WAIT_PRECISION = 1e-4 # Whenever the current elapsed time * WAIT_PRECISION > current wait interval, doubles current wait interval.
 
-function run_with_timeout(func, timeout)
-    task_func = @async begin
-        func()
-    end
-    
-    task_timeout = @async begin
-        sleep(timeout)
-    end
-    
-    # Wait for either task to complete.
+# Rewrite after works:
+# if (time() - t0) * WAIT_PRECISION > wait_interval
+#     wait_interval *= 2
+# end
 
-    completed_task = nothing
-    task_completed = false
-    while true
-        for task in [task_func, task_timeout]
-            if istaskdone(task)
-                completed_task = task
-                task_completed = true
-                break
-            end
-        end
-        if task_completed
-            break
-        end
-        sleep(EMPTY_LOOP_EPSILON)
-        # print(string(istaskdone(task_func), " ", istaskdone(task_timeout), " ", task_completed)) # This is also weird: task_completed is false by the first time it should have been true.
-    end
-    
-    # Determine which task completed and take appropriate action
-    func_complete = completed_task == task_func
-    if func_complete
-        return (true, fetch(task_func))
-    else
-        return (false, nothing)
-    end
-end
+# function run_with_timeout(func, timeout)
+
 
 # Only up to second
 function TimeAsName()

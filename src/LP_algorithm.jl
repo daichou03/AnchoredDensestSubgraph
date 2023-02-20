@@ -103,6 +103,10 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     @variable(model, y[i = 1:m] >= 0)
     wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
+    # for i = 1:n
+    #     if x[i]
+    #     end
+    # end
     for i = 1:m
         u, v = edgelist[i]
         if (u in R) || (v in R)
@@ -138,21 +142,26 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     S = Int64[]
     SUnion = Int64[]
     L = Int64[]
-    total_time = 0
+    int_time = 0
+    ext_time = 0
     iters = 0
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
         if Solver == SOLVER_FN_ADS
-            # TODO: This is unfair, ideally should reconstruct the solution, which contains the time of core algorithms only.
             result_timed = @timed GlobalAnchoredDensestSubgraph(B[L,L], orderedSubsetIndices(L, RSorted))
-            result_S, time_taken = result_timed.value, result_timed.time
+            result_S, ext_time_taken = result_timed.value, result_timed.time
+            # Take ext_time as int_time for now.
+            int_time_taken = ext_time_taken
         elseif Solver == SOLVER_LP_ADSS
-            result_S, time_taken = SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), lpSolver)
+            result_timed = @timed SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), lpSolver)
+            ext_time_taken = result_timed.time
+            result_S, int_time_taken = result_timed.value
         else
             error("Unexpected Solver ID")
         end
-        total_time += time_taken
+        int_time += int_time_taken
+        ext_time += ext_time_taken
         alpha = result_S.alpha_star
         S = L[result_S.source_nodes]
         if ShowTrace
@@ -164,7 +173,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     end
     
     if MoreStats
-        return densestSubgraph(alpha, S), total_time, length(L), iters
+        return densestSubgraph(alpha, S), ext_time, int_time, length(L), nnz(B[L,L])÷2, iters
     else
         return densestSubgraph(alpha, S)
     end

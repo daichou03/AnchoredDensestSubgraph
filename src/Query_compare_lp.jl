@@ -60,7 +60,7 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
                 stats = []
                 statsAlgorithms[solver_id][i]
                 append!(stats, statsAlgorithms[solver_id][i][STATS_DS].alpha_star)
-                for j in STATS_TIME:STATS_LAST
+                for j in (STATS_DS+1):STATS_LAST
                     append!(stats, statsAlgorithms[solver_id][i][j])
                 end
                 write(io_stats, string(join(map(string, stats),","), "\n"))

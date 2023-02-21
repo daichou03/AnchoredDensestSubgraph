@@ -14,6 +14,7 @@ SOLVER_LP_ADSS = 2
 NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
+ERR_TIME_LIMIT = 9999.0
 EXT_TIME_LIMIT = 450.0
 TIME_LIMIT = 300.0
 
@@ -61,7 +62,12 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
         @constraint(model, y[i] <= x[u])
         @constraint(model, y[i] <= x[v])
     end
-    optimize!(model)
+    try
+        optimize!(model)
+    catch y
+        println("Exception: ", y)
+        return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
+    end
     return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
@@ -124,7 +130,12 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         end
     end
     @objective(model, Max, sum(map(*, wy, y)))
-    optimize!(model)
+    try
+        optimize!(model)
+    catch y
+        println("Exception: ", y)
+        return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
+    end
     return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 

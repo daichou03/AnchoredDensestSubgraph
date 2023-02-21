@@ -17,13 +17,6 @@ include("Test_utils_yd.jl")
 include("Utils.jl")
 
 
-STATS_DS = 1
-STATS_TIME = 2
-STATS_LSIZE = 3
-STATS_ITERS = 4
-STATS_LAST = STATS_ITERS
-STATS_NAMES = ["alpha", "time", "lsize", "iters"]
-
 RESULT_TYPE_STATS = 1
 RESULT_TYPE_SETS = 2
 RESULT_TYPE_NAMES = ["lpcompstats", "lpcompsets"]

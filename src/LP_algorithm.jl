@@ -184,8 +184,19 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     end
     
     if MoreStats
+        # See 
         return densestSubgraph(alpha, S), ext_time, int_time, length(L), nnz(B[L,L])÷2, iters
     else
         return densestSubgraph(alpha, S)
     end
 end
+
+# Used by Query_compare_lp.jl, put here for context self-explanation.
+STATS_DS = 1 # result set
+STATS_EXT_TIME = 2 # external time elapsed
+STATS_INT_TIME = 3 # internal time "officially" given
+STATS_LNSIZE = 4 # number of explored nodes of the subgraph the last iteration
+STATS_LMSIZE = 5 # number of edges of the above subgraph
+STATS_ITERS = 6 # number of iterations
+STATS_LAST = STATS_ITERS
+STATS_NAMES = ["alpha", "ext_time", "int_time", "lnsize", "lmsize", "iters"]

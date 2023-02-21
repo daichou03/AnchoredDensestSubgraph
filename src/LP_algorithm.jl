@@ -64,11 +64,11 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     end
     try
         optimize!(model)
+        return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
     catch y
         println("Exception: ", y)
         return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
     end
-    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
 # No extra output from solver
@@ -109,6 +109,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     @variable(model, y[i = 1:m] >= 0)
     wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
+    # TODO: Supernode optimization
     # for i = 1:n
     #     if x[i]
     #     end
@@ -130,13 +131,16 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         end
     end
     @objective(model, Max, sum(map(*, wy, y)))
+    # 20230221: Possible reason of exceptions:
+    # Something's wrong when optimize!()
+    # Get no result
     try
         optimize!(model)
+        return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
     catch y
         println("Exception: ", y)
         return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
     end
-    return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
 end
 
 # Local-LP-ADS#

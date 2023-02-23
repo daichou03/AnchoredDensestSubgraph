@@ -32,3 +32,11 @@ function GetLPCompResultFileName(dataName::String, solverID::Int, suffixName::St
     name = string(name, ".", RESULT_TYPE_NAMES[resultType])
     return name
 end
+
+function GetLPEvalResultFileName(dataName::String, suffixName::String)
+    name = dataName
+    if length(suffixName) > 0
+        name = string(name, "-", suffixName)
+    end
+    return name
+end

@@ -6,7 +6,7 @@ using StatsBase # TODO: To install
 using Random
 using Base
 include("maxflow.jl")
-include("Helper_io.jl")
+include("Utils_io.jl")
 
 #------------
 # Graph Utils

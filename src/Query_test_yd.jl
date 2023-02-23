@@ -8,10 +8,10 @@ using StatsBase # TODO: To install
 using Random
 using Base
 include("maxflow.jl")
-include("Helper_io.jl")
-include("Graph_utils_yd.jl")
+include("Utils_io.jl")
+include("Utils_graph.jl")
 include("Core_algorithm_yd.jl")
-include("Test_utils_yd.jl")
+include("Utils_warmup.jl")
 include("Utils.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant

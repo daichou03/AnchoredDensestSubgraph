@@ -2,26 +2,17 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
-using StatsBase
 using Random
 using Base
-using DataFrames
-using CSV
-using Dates
-include("maxflow.jl")
 include("Helper_io.jl")
 include("Graph_utils_yd.jl")
-include("Core_algorithm_yd.jl")
-include("LP_algorithm.jl")
 include("Test_utils_yd.jl")
 include("Utils.jl")
+include("maxflow.jl")
+include("Core_algorithm_yd.jl")
+include("LP_consts.jl")
+include("LP_algorithm.jl")
 
-
-RESULT_TYPE_STATS = 1
-RESULT_TYPE_SETS = 2
-RESULT_TYPE_NAMES = ["lpcompstats", "lpcompsets"]
-
-FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
 
 ############################
 # Run LA and Local-LP-ADS# #
@@ -92,35 +83,6 @@ function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, s
         proc = @timed ProcessAndOutputAlgorithms(dataName, SolverMask, suffixName, sampleSize)
         println(proc.time)
     end
-end
-
-
-function GetLPCompResultFileName(dataName::String, solverID::Int, suffixName::String, resultType::Int)
-    name = string(dataName, "-", SOLVER_NAMES[solverID])
-    if length(suffixName) > 0
-        name = string(name, "-", suffixName)
-    end
-    name = string(name, ".", RESULT_TYPE_NAMES[resultType])
-    return name
-end
-
-########################################
-# Compare LA and Local-LP-ADS# results #
-########################################
-
-# Simply count number of result sets that are equal.
-function CompareResultSets(dataName::String, suffixName::String="")
-    hit, miss = 0, 0
-    dfs = Array{Any}(undef, 2)
-    for solverID in 1:NUM_SOLVERS
-        dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, suffixName, RESULT_TYPE_STATS))))
-    end
-    for i in 1:length(dfs[1].alpha)
-        almostEqual(dfs[1].alpha[i], dfs[2].alpha[i]) ? hit += 1 : miss += 1
-    end
-    alphaDiff = mean(dfs[2].alpha) / mean(dfs[1].alpha)
-    time1, time2 = mean(dfs[1].time), mean(dfs[2].time)
-    return join(map(string, [hit, miss, alphaDiff, time1, time2]),",")
 end
 
 

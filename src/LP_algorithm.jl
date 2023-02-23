@@ -8,15 +8,7 @@ include("Helper_io.jl")
 include("Graph_utils_yd.jl")
 include("Utils.jl")
 include("Core_algorithm_yd.jl")
-
-SOLVER_FN_ADS = 1
-SOLVER_LP_ADSS = 2
-NUM_SOLVERS = 2
-ALL_SOLVERS = [true, true]
-SOLVER_NAMES = ["FNLA", "LPLAS"]
-ERR_TIME_LIMIT = 9999.0
-EXT_TIME_LIMIT = 450.0
-TIME_LIMIT = 300.0
+include("LP_consts.jl")
 
 
 # Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi, CPLEX
@@ -195,12 +187,3 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     end
 end
 
-# Used by Query_compare_lp.jl, put here for context self-explanation.
-STATS_DS = 1 # result set
-STATS_EXT_TIME = 2 # external time elapsed
-STATS_INT_TIME = 3 # internal time "officially" given
-STATS_LNSIZE = 4 # number of explored nodes of the subgraph the last iteration
-STATS_LMSIZE = 5 # number of edges of the above subgraph
-STATS_ITERS = 6 # number of iterations
-STATS_LAST = STATS_ITERS
-STATS_NAMES = ["alpha", "ext_time", "int_time", "lnsize", "lmsize", "iters"]

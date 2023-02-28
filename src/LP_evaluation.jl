@@ -4,18 +4,20 @@ using StatsBase
 include("Utils.jl")
 include("LP_consts.jl")
 
-EVAL_ALPHA_EQUAL = 1
-EVAL_ALPHA_DIFF = 2
-EVAL_EXT_TIME_1 = 3
-EVAL_EXT_TIME_2 = 4
-EVAL_INT_TIME_1 = 5
-EVAL_INT_TIME_2 = 6
-EVAL_LN1 = 7
-EVAL_LM1 = 8
-EVAL_LN2 = 9
-EVAL_LM2 = 10
+EVAL_DATA_NAME = 1
+EVAL_DATA_INDEX = 2
+EVAL_ALPHA_EQUAL = 3
+EVAL_ALPHA_DIFF = 4
+EVAL_EXT_TIME_1 = 5
+EVAL_EXT_TIME_2 = 6
+EVAL_INT_TIME_1 = 7
+EVAL_INT_TIME_2 = 8
+EVAL_LN1 = 9
+EVAL_LM1 = 10
+EVAL_LN2 = 11
+EVAL_LM2 = 12
 EVAL_LAST = EVAL_LM2
-EVAL_NAMES = ["alpha_equal", "alpha_diff", "ext_time_1", "ext_time_2", "int_time_1", "int_time_2", "ln1", "lm1", "ln2", "lm2"]
+EVAL_NAMES = ["data_name", "index", "alpha_equal", "alpha_diff", "ext_time_1", "ext_time_2", "int_time_1", "int_time_2", "ln1", "lm1", "ln2", "lm2"]
 FOLDER_LP_EVAL_RESULTS = "../LPEvalResults/"
 
 # suffixName: either a string, or an array containing a suffix for each solverID.
@@ -26,6 +28,8 @@ function CompareResultSets(dataName::String, suffixName)
         dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, currSuffixName, RESULT_TYPE_STATS))))
     end
     nrows = min(nrow(dfs[1]), nrow(dfs[2]))
+    dataNameColumn = repeat([dataName], nrows)
+    dataIndex = collect(1:nrows)
     alphaEquals = Array{Float64}(undef, nrows)
     alphaDiffs = Array{Float64}(undef, nrows)
     timeExt1 = Array{Float64}(undef, nrows)
@@ -48,7 +52,7 @@ function CompareResultSets(dataName::String, suffixName)
         lns2[i] = dfs[2][i,STATS_NAMES[STATS_LNSIZE]]
         lms2[i] = dfs[2][i,STATS_NAMES[STATS_LMSIZE]]
     end
-    return alphaEquals, alphaDiffs, timeExt1, timeExt2, timeInt1, timeInt2, lns1, lms1, lns2, lms2
+    return dataNameColumn, dataIndex, alphaEquals, alphaDiffs, timeExt1, timeExt2, timeInt1, timeInt2, lns1, lms1, lns2, lms2
 end
 
 function OutputCompareResults(evalResults, dataName::String, suffixName::String)
@@ -56,11 +60,11 @@ function OutputCompareResults(evalResults, dataName::String, suffixName::String)
     io = open(string(FOLDER_LP_EVAL_RESULTS, GetLPEvalResultFileName(dataName, suffixName)), "w")
     write(io, string(join(EVAL_NAMES, ","), "\n"))
     for i in 1:length(evalResults[1])
-        stats = []
+        stats = Array{Any}(undef, EVAL_LAST)
         for j in 1:EVAL_LAST
-            append!(stats, evalResults[j][i])
+            stats[j] = evalResults[j][i]
         end
-        write(io, string(join(map(string, stats),","), "\n"))
+        write(io, string(join(stats, ","), "\n"))
     end
     close(io)
 end

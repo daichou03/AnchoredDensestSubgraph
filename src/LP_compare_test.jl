@@ -76,6 +76,8 @@ end
 
 dataset_names_1to100m = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","yahoo","youtube","google","trec","flixster","dblp","skitter","indian","libimseti","pokec","usaroad","livejournal"]
 dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
+# 20230228: union of the above two, but excluding libimseti as process is killed when running LP.
+dataset_union_to100m = ["amazon", "notredame", "digg", "citeseer", "livemocha", "flickr", "hyves", "yahoo", "youtube", "google", "trec", "flixster", "dblp", "skitter", "indian", "pokec", "usaroad", "livejournal", "astroph", "brightkite", "condmat", "deezer", "douban", "enron", "epinion", "fbgov", "github", "gowalla", "grqc", "hamster", "hepph", "hepth", "lastfm", "orkut"]
 
 function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names

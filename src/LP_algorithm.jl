@@ -92,7 +92,7 @@ end
 
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
-function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, solver=DEFAULT_LP_SOLVER)
+function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
@@ -101,12 +101,23 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     @variable(model, y[i = 1:m] >= 0)
     wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
+    # IGA optimization: Set overdensed node's value to 0
     if !isnothing(OverdensedMask)
         for i = 1:n
             if OverdensedMask[i]
                 @constraint(model, x[i] == 0)
             end
         end
+    end
+    # MIP start optimization
+    if !isnothing(MIP)
+        for i = 1:n
+            if i in MIP
+                set_start_value(x[i], 1 / length(MIP))
+            else
+                set_start_value(x[i], 0)
+            end
+        end            
     end
     for i = 1:m
         u, v = edgelist[i]
@@ -154,18 +165,19 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     int_time = 0
     ext_time = 0
     iters = 0
-    InducedDS = GlobalDensestSubgraph(B[R,R])
+    inducedDS = GlobalDensestSubgraph(B[R,R])
     while !isempty(Frontier)
         Expanded = union(Expanded, Frontier)
         L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
         overdensedMask = map(v->(GetDegree(B,v)>=GetVolume(B,R)), L)
         if Solver == SOLVER_FN_ADS
-            result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, InducedDS)
+            result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, inducedDS)
             result_S, ext_time_taken = result_timed.value, result_timed.time
             # Take ext_time as int_time for now.
             int_time_taken = ext_time_taken
         elseif Solver == SOLVER_LP_ADSS
-            result_timed = @timed SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, lpSolver)
+            mip_set = length(S) > 0 ? [findfirst(L .== v) for v in S] : inducedDS.source_nodes
+            result_timed = @timed SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, mip_set, lpSolver)
             ext_time_taken = result_timed.time
             result_S, int_time_taken = result_timed.value
         else

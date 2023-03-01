@@ -91,7 +91,7 @@ function SetupLPSolver(solver)
 end
 
 OPT_IGA = true
-OPT_MIP = true
+OPT_MIP = false
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
@@ -149,6 +149,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
     end
 end
+
 
 # Local-LP-ADS#
 function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)

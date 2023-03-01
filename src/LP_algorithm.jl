@@ -90,8 +90,12 @@ function SetupLPSolver(solver)
     return model
 end
 
-OPT_IGA = true
-OPT_MIP = false
+OPT_IGA = true # IGA optimization: Set overdensed node's value to 0
+OPT_MIP = false # MIP start optimization
+OPT_FEASIBILITY = false # Higher feasibility to match problem
+OPT_DUAL = false # Solve dual problem instead
+OPT_NOPRESOLVE = false # Do not presolve
+OPT_BARRIER = false # Use barrier algorithm
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
@@ -103,7 +107,8 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     @variable(model, y[i = 1:m] >= 0)
     wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
-    # IGA optimization: Set overdensed node's value to 0
+
+    # Optimizations
     if OPT_IGA && !isnothing(OverdensedMask)
         for i = 1:n
             if OverdensedMask[i]
@@ -111,7 +116,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
             end
         end
     end
-    # MIP start optimization
+    
     if OPT_MIP && !isnothing(MIP)
         for i = 1:n
             if i in MIP
@@ -121,6 +126,23 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
             end
         end            
     end
+
+    if OPT_FEASIBILITY
+        set_optimizer_attribute(model, "CPX_PARAM_EPRHS", 0.005)
+    end
+
+    if OPT_DUAL
+        set_optimizer_attribute(model, "CPXPARAM_Simplex_Pricing", CPX_ALG_DUAL)
+    end
+
+    if OPT_NOPRESOLVE
+        set_optimizer_attribute(model, "CPX_PARAM_PREIND", 0)
+    end
+
+    if OPT_BARRIER
+        set_optimizer_attribute(model, "CPX_PARAM_LPMETHOD", 4)
+    end
+
     for i = 1:m
         u, v = edgelist[i]
         if (u in R) || (v in R)

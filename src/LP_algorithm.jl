@@ -90,6 +90,8 @@ function SetupLPSolver(solver)
     return model
 end
 
+OPT_IGA = true
+OPT_MIP = true
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
@@ -102,7 +104,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
     wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
     # IGA optimization: Set overdensed node's value to 0
-    if !isnothing(OverdensedMask)
+    if OPT_IGA && !isnothing(OverdensedMask)
         for i = 1:n
             if OverdensedMask[i]
                 @constraint(model, x[i] == 0)
@@ -110,7 +112,7 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         end
     end
     # MIP start optimization
-    if !isnothing(MIP)
+    if OPT_MIP && !isnothing(MIP)
         for i = 1:n
             if i in MIP
                 set_start_value(x[i], 1 / length(MIP))

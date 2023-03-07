@@ -63,14 +63,17 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     end
 end
 
+PARAM_THREADS = -1 # -1 means do not force set number of threads
 # No extra output from solver
 # Set time limit to TIME_LIMIT
 function SetupLPSolver(solver)
+    # Init
     if @isdefined(CDDLib) && solver == CDDLib
         model = Model(solver.Optimizer{Float64})
     else
         model = Model(solver.Optimizer)
     end
+    # Slient, time limit
     if @isdefined(HiGHS) && solver == HiGHS
         set_optimizer_attribute(model, "log_to_console", false)
         set_optimizer_attribute(model, "time_limit", TIME_LIMIT)
@@ -87,15 +90,23 @@ function SetupLPSolver(solver)
         set_silent(model)
         set_time_limit_sec(model, TIME_LIMIT)
     end
+    # Number of threads (CPLEX, HiGHS only)
+    if PARAM_THREADS >= 0
+        if @isdefined(CPLEX) && solver == CPLEX
+            set_optimizer_attribute(model, "CPX_PARAM_THREADS", PARAM_THREADS)
+        elseif @isdefined(HiGHS) && solver == HiGHS
+            set_optimizer_attribute(model, "threads", PARAM_THREADS)
+        end
+    end
     return model
 end
 
 OPT_IGA = true # IGA optimization: Set overdensed node's value to 0
 OPT_MIP = false # MIP start optimization
-OPT_FEASIBILITY = false # Higher feasibility to match problem
-OPT_DUAL = false # Solve dual problem instead
-OPT_NOPRESOLVE = false # Do not presolve
-OPT_BARRIER = false # Use barrier algorithm
+OPT_FEASIBILITY = false # Currently CPLEX only: Higher feasibility to match problem
+OPT_DUAL = false # Currently CPLEX only: Solve dual problem instead
+OPT_NOPRESOLVE = false # Currently CPLEX only: Do not presolve
+OPT_BARRIER = false # Currently CPLEX only: Use barrier algorithm
 # Global-LP-ADS#
 # Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
 function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)

@@ -40,13 +40,12 @@ end
 # Returns:
 # struct:densestSubgraph, time of LP.
 function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
-    model = SetupLPSolver(DEFAULT_LP_SOLVER)
+    model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
     m = length(edgelist)
     @variable(model, x[i = 1:n] >= 0)
     @variable(model, y[i = 1:m] >= 0)
-    wy = Array{Int}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
     @objective(model, Max, sum(y))
     for i = 1:m

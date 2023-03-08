@@ -39,6 +39,7 @@ end
 
 # Returns:
 # struct:densestSubgraph, time of LP.
+# TODO: Need to prove if calling local version of this could lead to a sub-optimal local result.
 function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
@@ -106,9 +107,58 @@ OPT_FEASIBILITY = false # Currently CPLEX only: Higher feasibility to match prob
 OPT_DUAL = false # Currently CPLEX only: Solve dual problem instead
 OPT_NOPRESOLVE = false # Currently CPLEX only: Do not presolve
 OPT_BARRIER = false # Currently CPLEX only: Use barrier algorithm
-# Global-LP-ADS#
-# Note that "Anchored Densest Subgraph Sharp" means ADS#, which is different from ADS (ADS can't be LP engineered)
-function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
+
+
+# Weight maps. 7 positions stand for ... accordingly:
+# R∩S x R∩S
+# R∩S x S
+# R∩S x R
+# R∩S x ∅
+# S x S
+# S x R
+# S x ∅
+
+WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. TODO: Probably not strongly local, to give counterex.
+# WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph. Note that LP algorithm won't work for this one.
+WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched)
+WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. TODO: Prove strongly local.
+WEIGHT_MAP_ADSI = [2,1,0,0,1,0,0] # Anchored Densest Subgraph Intense. TODO: Prove strongly local.
+WEIGHT_MAP_ADSLS = [2,2,0,0,0,0,-1] # ADSL, but weight of R∩S x S is 2. TODO: I doubt all ADS*Ss are probably not strongly local, to give counterex.
+WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
+WEIGHT_MAP_ADSIS = [2,2,0,0,1,0,0] # ADSI, but weight of R∩S x S is 2
+
+DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
+
+WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # |e∩R|, not an actual weight map for calculation
+
+WEIGHT_IND_RSXRS = 1
+WEIGHT_IND_RSXS = 2
+WEIGHT_IND_RSXR = 3
+WEIGHT_IND_RSXE = 4
+WEIGHT_IND_SXS = 5
+WEIGHT_IND_SXR = 6
+WEIGHT_IND_SXE = 7
+
+EIR0_TYPE_ZERO = 0
+EIR0_TYPE_POSITIVE = 1
+EIR0_TYPE_NEGATIVE = -1
+function FindWeightMapEIR0Type(WeightMap)
+    weightMapEIR0 = findall(WEIGHT_FEATURE_EIR .== 0)
+    if all(x -> x == 0, WeightMap[weightMapEIR0])
+        return EIR0_TYPE_ZERO
+    elseif all(x -> x >= 0, WeightMap[weightMapEIR0])
+        return EIR0_TYPE_POSITIVE # All non-negative actually
+    elseif all(x -> x <= 0, WeightMap[weightMapEIR0])
+        return EIR0_TYPE_NEGATIVE # All non-positive actually
+    else
+        throw(ArgumentError("All values in WeightMap must be either non-positive or non-negative"))
+    end
+end
+
+
+# It is assumed that all valid weight maps meet some *specific* (in other words, only WEIGHT_MAPs listed above) assumptions,
+# such that this algorithm would work. See paper. 
+function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int64}, WeightMap = WEIGHT_MAP_ADSL, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
@@ -153,20 +203,28 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         set_optimizer_attribute(model, "CPX_PARAM_LPMETHOD", 4)
     end
 
+    # Weights and objective
+    eir0type = FindWeightMapEIR0Type(WeightMap)
     for i = 1:m
         u, v = edgelist[i]
-        if (u in R) || (v in R)
-            if (u in R) && (v in R)
-                wy[i] = 2
-            else
-                wy[i] = 1
+        eir = (u in R ? 1 : 0) + (v in R ? 1 : 0) # |e∩R|
+        if eir == 0 && eir0type == EIR0_TYPE_NEGATIVE
+            wy[i] = WeightMap[WEIGHT_IND_SXE]
+            @constraint(model, y[i] >= x[u] - x[v])
+            @constraint(model, y[i] >= x[v] - x[u])
+        elseif eir == 0 && eir0type == EIR0_TYPE_ZERO
+            wy[i] = 0
+            @constraint(model, y[i] == 0)
+        else
+            if eir == 2
+                wy[i] = WeightMap[WEIGHT_IND_RSXRS]
+            elseif eir == 1
+                wy[i] = WeightMap[WEIGHT_IND_RSXS]
+            else # eir == 0 && eir0type == EIR0_TYPE_POSITIVE
+                wy[i] = WeightMap[WEIGHT_IND_SXS]
             end
             @constraint(model, y[i] <= x[u])
             @constraint(model, y[i] <= x[v])
-        else
-            wy[i] = -1
-            @constraint(model, y[i] >= x[u] - x[v])
-            @constraint(model, y[i] >= x[v] - x[u])
         end
     end
     @objective(model, Max, sum(map(*, wy, y)))
@@ -180,12 +238,6 @@ function SolveLPAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64
         println("Exception: ", y)
         return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
     end
-end
-
-
-# Local-LP-ADS#
-function SolveLPLocalAnchoredDensestSubgraphSharp(B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
-    return DoSolveLocalADS(SOLVER_LP_ADSS, B, R, MoreStats, ShowTrace, lpSolver)
 end
 
 
@@ -212,7 +264,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
             int_time_taken = ext_time_taken
         elseif Solver == SOLVER_LP_ADSS
             mip_set = length(S) > 0 ? [findfirst(L .== v) for v in S] : inducedDS.source_nodes
-            result_timed = @timed SolveLPAnchoredDensestSubgraphSharp(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, mip_set, lpSolver)
+            result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(B[L,L], orderedSubsetIndices(L, RSorted), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
             ext_time_taken = result_timed.time
             result_S, int_time_taken = result_timed.value
         else

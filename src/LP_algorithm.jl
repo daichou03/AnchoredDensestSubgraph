@@ -241,7 +241,22 @@ function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int
 end
 
 
+OPT_FORCE_GLOBAL = false # Force running global version rather than running strongly-local
+# Strongly-local version that integrates both flow network and linear programming solution.
 function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
+    if OPT_FORCE_GLOBAL && Solver == SOLVER_LP_ADSS
+        mip_set = GlobalDensestSubgraph(B[R,R]).source_nodes 
+        result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(B, R, DEFAULT_WEIGHT_MAP, nothing, mip_set, lpSolver)
+        ext_time_taken = result_timed.time
+        result_S, int_time_taken = result_timed.value
+        alpha = result_S.alpha_star
+        if MoreStats
+            # See LP_consts.STATS_NAMES
+            return result_S, ext_time_taken, int_time_taken, B.n, nnz(B)÷2, 1
+        else
+            return result_S
+        end
+    end
     Expanded = Int64[]
     RSorted = sort(R)
     Frontier = RSorted
@@ -283,7 +298,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     end
     
     if MoreStats
-        # See 
+        # See LP_consts.STATS_NAMES
         return densestSubgraph(alpha, S), ext_time, int_time, length(L), nnz(B[L,L])÷2, iters
     else
         return densestSubgraph(alpha, S)

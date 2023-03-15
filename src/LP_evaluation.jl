@@ -16,8 +16,10 @@ EVAL_LN1 = 9
 EVAL_LM1 = 10
 EVAL_LN2 = 11
 EVAL_LM2 = 12
-EVAL_LAST = EVAL_LM2
-EVAL_NAMES = ["data_name", "index", "alpha_equal", "alpha_diff", "ext_time_1", "ext_time_2", "int_time_1", "int_time_2", "ln1", "lm1", "ln2", "lm2"]
+EVAL_SS1 = 13
+EVAL_SS2 = 14
+EVAL_LAST = EVAL_SS2
+EVAL_NAMES = ["data_name", "index", "alpha_equal", "alpha_diff", "ext_time_1", "ext_time_2", "int_time_1", "int_time_2", "ln1", "lm1", "ln2", "lm2", "s_size_1", "s_size_2"]
 FOLDER_LP_EVAL_RESULTS = "../LPEvalResults/"
 
 # suffixName: either a string, or an array containing a suffix for each solverID.
@@ -40,9 +42,11 @@ function CompareResultSets(dataName::String, suffixName)
     lms1 = Array{Float64}(undef, nrows)
     lns2 = Array{Float64}(undef, nrows)
     lms2 = Array{Float64}(undef, nrows)
+    lss1 = Array{Float64}(undef, nrows)
+    lss2 = Array{Float64}(undef, nrows)
     for i in 1:nrows
-        alphaEquals[i] = almostEqual(dfs[1][i,STATS_NAMES[STATS_ALPHA]], dfs[2][i,STATS_NAMES[STATS_ALPHA]]) ? 1 : 0
-        alphaDiffs[i] = dfs[2][i,STATS_NAMES[STATS_ALPHA]] / dfs[1][i,STATS_NAMES[STATS_ALPHA]]
+        alphaEquals[i] = almostEqual(dfs[1][i,STATS_NAMES[STATS_OUTPUT_ALPHA]], dfs[2][i,STATS_NAMES[STATS_OUTPUT_ALPHA]]) ? 1 : 0
+        alphaDiffs[i] = dfs[2][i,STATS_NAMES[STATS_OUTPUT_ALPHA]] / dfs[1][i,STATS_NAMES[STATS_OUTPUT_ALPHA]]
         timeExt1[i] = dfs[1][i,STATS_NAMES[STATS_EXT_TIME]]
         timeExt2[i] = dfs[2][i,STATS_NAMES[STATS_EXT_TIME]]
         timeInt1[i] = dfs[1][i,STATS_NAMES[STATS_INT_TIME]]
@@ -51,8 +55,10 @@ function CompareResultSets(dataName::String, suffixName)
         lms1[i] = dfs[1][i,STATS_NAMES[STATS_LMSIZE]]
         lns2[i] = dfs[2][i,STATS_NAMES[STATS_LNSIZE]]
         lms2[i] = dfs[2][i,STATS_NAMES[STATS_LMSIZE]]
+        lss1[i] = dfs[1][i,STATS_NAMES[STATS_OUTPUT_SSIZE]]
+        lss2[i] = dfs[2][i,STATS_NAMES[STATS_OUTPUT_SSIZE]]
     end
-    return dataNameColumn, dataIndex, alphaEquals, alphaDiffs, timeExt1, timeExt2, timeInt1, timeInt2, lns1, lms1, lns2, lms2
+    return dataNameColumn, dataIndex, alphaEquals, alphaDiffs, timeExt1, timeExt2, timeInt1, timeInt2, lns1, lms1, lns2, lms2, lss1, lss2
 end
 
 function OutputCompareResults(evalResults, dataName::String, suffixName::String)

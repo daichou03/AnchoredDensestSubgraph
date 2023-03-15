@@ -9,14 +9,17 @@ TIME_LIMIT = 300.0 # Cutoff time for LP solvers
 
 # Stats to output for LP_algorithm.DoSolveLocalADS (core algorithm for experiment of running ADS problems on FN and LP).
 STATS_DS = 1 # result set as a densestSubgraph struct
-STATS_ALPHA = STATS_DS # in the output file "lpcompsets", it is just alpha star value
+STATS_OUTPUT_ALPHA = STATS_DS # in the output file "lpcompsets", it is just alpha star value
 STATS_EXT_TIME = 2 # external time elapsed
 STATS_INT_TIME = 3 # internal time "officially" given
 STATS_LNSIZE = 4 # number of explored nodes of the subgraph the last iteration
 STATS_LMSIZE = 5 # number of edges of the above subgraph
 STATS_ITERS = 6 # number of iterations
 STATS_LAST = STATS_ITERS
+STATS_OUTPUT_SSIZE = STATS_LAST + 1
+STATS_OUTPUT_LAST = STATS_OUTPUT_SSIZE
 STATS_NAMES = ["alpha", "ext_time", "int_time", "lnsize", "lmsize", "iters"]
+STATS_OUTPUT_NAMES = vcat(STATS_NAMES, ["ssize"])
 
 # I/O of experiment results
 RESULT_TYPE_STATS = 1

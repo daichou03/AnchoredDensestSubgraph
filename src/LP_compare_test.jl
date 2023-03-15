@@ -46,7 +46,7 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
             mkpath(FOLDER_LP_COMP_RESULTS)
             io_stats = open(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solver_id, suffixName, RESULT_TYPE_STATS)), "w")
             io_sets = open(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solver_id, suffixName, RESULT_TYPE_SETS)), "w")
-            write(io_stats, string(join(STATS_NAMES, ","), "\n"))
+            write(io_stats, string(join(STATS_OUTPUT_NAMES, ","), "\n"))
             for i in 1:length(statsAlgorithms[solver_id])
                 stats = []
                 statsAlgorithms[solver_id][i]
@@ -54,6 +54,7 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
                 for j in (STATS_DS+1):STATS_LAST
                     append!(stats, statsAlgorithms[solver_id][i][j])
                 end
+                append!(stats, length(statsAlgorithms[solver_id][i][STATS_DS].source_nodes))
                 write(io_stats, string(join(map(string, stats),","), "\n"))
                 write(io_sets, string(join(map(string, statsAlgorithms[solver_id][i][STATS_DS].source_nodes),","), "\n"))
             end

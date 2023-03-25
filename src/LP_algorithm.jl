@@ -118,16 +118,22 @@ WEIGHT_IND_SXS = 5      # S x S
 WEIGHT_IND_SXR = 6      # S x R
 WEIGHT_IND_SXE = 7      # S x ∅
 
-WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Not strongly local nor optimal on local algorithm.
-# WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph. Note that LP algorithm won't work for this one.
-WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched)
-WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. TODO: Prove strongly local.
-WEIGHT_MAP_ADSI = [2,1,0,0,1,0,0] # Anchored Densest Subgraph Intense. TODO: Prove strongly local.
-WEIGHT_MAP_ADSLS = [2,2,0,0,0,0,-1] # ADSL, but weight of R∩S x S is 2. TODO: I doubt all ADS*Ss are probably not strongly local, to give counterex.
+WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Runnable on LP, but not strongly local nor optimal on local algorithm.
+# WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph for flow network. Note that LP algorithm won't work for this weight map.
+WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched). 20230324: proven to be strongly local nor optimal on local algorithm.
+WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. 20230324: proven to be not strongly local nor optimal on local algorithm.
+WEIGHT_MAP_ADSI = [2,1,0,0,1,0,0] # Anchored Densest Subgraph Intense. 20230324: proven to be NOT strongly local nor optimal on local algorithm.
+WEIGHT_MAP_ADSLS = [2,2,0,0,0,0,-1] # ADSL, but weight of R∩S x S is 2. 20230324: All conclusions on locality for ADSXS follows the non-S version.
 WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
 WEIGHT_MAP_ADSIS = [2,2,0,0,1,0,0] # ADSI, but weight of R∩S x S is 2
 
+function WeightIsADSFX(weightMap)
+    return all(x -> x > 0, weightMap[1:2]) && all(x -> almostEqual(x, 0), weightMap[3:7])
+end
+
 DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
+
+
 # EIR0_TYPE_X: X = |e∩R|.
 EIR0_TYPE_ZERO = 0
 EIR0_TYPE_POSITIVE = 1
@@ -151,8 +157,8 @@ function FindWeightMapEIR0Type(WeightMap)
 end
 
 
-# It is assumed that all valid weight maps meet some *specific* (in other words, only WEIGHT_MAPs listed above) assumptions,
-# such that this algorithm would work. See paper. 
+# Note that you can only assume this algorithm to work as expected with ONLY weight maps defined above,  
+# as they all meet some *SPECIFIC* assumptions (see paper).
 function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int64}, WeightMap = WEIGHT_MAP_ADSL, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
@@ -290,6 +296,10 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
         SUnion = union(SUnion, S)
         Frontier = setdiff(S, Expanded)
         iters += 1
+        # ADSFX weights always one-shot
+        if WeightIsADSFX(DEFAULT_WEIGHT_MAP)
+            break
+        end
     end
     
     if MoreStats

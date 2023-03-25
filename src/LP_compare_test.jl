@@ -79,6 +79,12 @@ dataset_names_1to100m = ["amazon","notredame","digg","citeseer","livemocha","fli
 dataset_names = ["amazon","astroph","brightkite","condmat","dblp","deezer","douban","enron","epinion","fbgov","github","gowalla","grqc","hamster","hepph","hepth","lastfm","livejournal","livemocha","orkut","youtube"]
 # 20230228: union of the above two, but excluding libimseti as process is killed when running LP.
 dataset_union_to100m = ["amazon", "notredame", "digg", "citeseer", "livemocha", "flickr", "hyves", "yahoo", "youtube", "google", "trec", "flixster", "dblp", "skitter", "indian", "pokec", "usaroad", "livejournal", "astroph", "brightkite", "condmat", "deezer", "douban", "enron", "epinion", "fbgov", "github", "gowalla", "grqc", "hamster", "hepph", "hepth", "lastfm", "orkut"]
+dataset_names_lps = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
+dataset_names_lps = ["amazon","notredame","digg","citeseer"] # A
+dataset_names_lps = ["livemocha","flickr","hyves","youtube"] # B
+dataset_names_lps = ["google","trec","flixster","dblp","skitter"] # C
+dataset_names_lps = ["indian","pokec","usaroad","livejournal","orkut"] # E
+# BulkProcessAndOutputAlgorithms(dataset_names_lps, [false, true], "ADSL100C", 100)
 
 function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
@@ -99,7 +105,8 @@ function WarmUpSolvers()
             DoSolveLocalADS(i, SAMPLE_GRAPH, SAMPLE_GRAPH_R, false, false, DEFAULT_LP_SOLVER)
         end
         warmed_up_solver = true
-        print("Done.")
+        println(string("Done."))
+        println(string("DEFAULT_LP_SOLVER = ", DEFAULT_LP_SOLVER))
     end
 end
 

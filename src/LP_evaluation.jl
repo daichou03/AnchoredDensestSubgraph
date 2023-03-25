@@ -104,3 +104,73 @@ end
 # TODO:
 # Also output LM, LN (have minimal difference, take both first), regression on these.
 # Optimizaitons
+
+FILENAME_EMPTY_LPCOMPSTATS = "empty.lpcompstats"
+# 20230323
+# Take ADS (Flow Network), ADSL, ADSF together for example.
+# For example, assume .lpcompstats has name like "amazon-FNLA-FN100.lpcompstats", "google-LPLAS-ADSL100C.lpcompstats", etc.
+# Sample dataNames:
+# ["amazon", "google"]
+# Sample suffixNames - one for each model to compare. Note assuming the first name is for FNLA, and the second name onwards are all for LPLAS.
+# suffixNames = ["FN100", "ADSL100C", "ADSF100C"]
+# If a file is not found, assume the task couldn't be completed and fall back to use FILENAME_EMPTY_LPCOMPSTATS as data.
+function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{String}, getRatio::Bool=false)
+    df1 = Nothing
+    means = Array{Any}(undef, length(suffixNames))
+    for solverID in 1:length(suffixNames)
+        filename = GetLPCompResultFileName(dataName, solverID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS, suffixNames[solverID], RESULT_TYPE_STATS)
+        fileFound = isfile(string(FOLDER_LP_COMP_RESULTS, filename))
+        if fileFound
+            df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, filename)))
+        else
+            df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, FILENAME_EMPTY_LPCOMPSTATS)))
+        end
+        if getRatio
+            if solverID == 1
+                df1 = copy(df)
+            end
+            if fileFound
+                df = df ./ df1
+            end
+        end
+        means[solverID] = [mean(df[!, column]) for column in names(df)]
+    end
+    return means
+end
+
+# Example: given dataMeans like:
+# Amazon
+# alpha,ext_time,int_time
+# 1,0.011,0.005 <- ADS
+# 2,0.024,0.011 <- ADSL
+# 3,0.024,0.011 <- ADSF
+# DBLP
+# alpha,ext_time,int_time
+# 4,0.011,0.005 <- ADS
+# 5,0.024,0.011 <- ADSL
+# 6,0.024,0.011 <- ADSF
+# Output file with name average-suffix-alpha (also for ext_time and int_time):
+# data,ADS,ADSL,ADSF
+# amazon,1,2,3
+# DBLP,4,5,6
+
+suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
+function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
+    dataMeans = Array{Any}(undef, length(dataNames))
+    for dataID in eachindex(dataNames)
+        dataMeans[dataID] = CompareMultipleModelResultSets(dataNames[dataID], suffixNames, getRatio)
+    end
+    columnNames = names(DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(
+        dataNames[1], SOLVER_FN_ADS, suffixNames[1], RESULT_TYPE_STATS)))))
+    col_names = vcat(["dataName"], suffixNames)
+    col_types = vcat(String, repeat([Float64], length(suffixNames)))
+
+    mkpath(FOLDER_LP_EVAL_RESULTS)
+    for columnID in eachindex(columnNames)
+        df = DataFrame([Vector{t}() for t in col_types], col_names)
+        for dataID in 1:length(dataNames)
+            push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
+        end
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([getRatio ? "ratio" : "average", outputSuffix, columnNames[columnID]], "-")), df, header=true)
+    end
+end

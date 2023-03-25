@@ -33,9 +33,8 @@ function emptyStringArray(len::Int64)
     return ret
 end
 
-# Concatenate folder strings
-#function folderString()
-
+# A robust function that concatenate directory strings.
+# The output ends with "/" regardless, and is ready to attach to a file name.
 function folderString(x::String, y::String...)
     a = x
     if string(last(a)) != "/"

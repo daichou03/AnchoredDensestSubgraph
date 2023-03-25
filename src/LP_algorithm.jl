@@ -13,20 +13,20 @@ include("LP_consts.jl")
 
 # Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi, CPLEX
 # Set DEFAULT_LP_SOLVER to change a solver.
-if !@isdefined(DEFAULT_LP_SOLVER)
-    using HiGHS
-    DEFAULT_LP_SOLVER = HiGHS
-end
+# if !@isdefined(DEFAULT_LP_SOLVER)
+#     using HiGHS
+#     DEFAULT_LP_SOLVER = HiGHS
+# end
 
 # CPLEX: https://github.com/jump-dev/CPLEX.jl
 # Licensed version installed required
 # ENV["CPLEX_STUDIO_BINARIES"] = "C:\\Program Files\\IBM\\ILOG\\CPLEX_Studio2211\\cplex\\bin\\x64_win64\\"
 # ENV["CPLEX_STUDIO_BINARIES"] = "/opt/ibm/ILOG/CPLEX_Studio201/cplex/bin/x86-64_linux"
 # Julia env: "../env/cplex"
-# if !@isdefined(DEFAULT_LP_SOLVER)
-#     using CPLEX
-#     DEFAULT_LP_SOLVER = CPLEX
-# end
+if !@isdefined(DEFAULT_LP_SOLVER)
+    using CPLEX
+    DEFAULT_LP_SOLVER = CPLEX
+end
 
 # Gurobi: https://github.com/jump-dev/Gurobi.jl
 # Licensed version installed required
@@ -110,15 +110,15 @@ OPT_BARRIER = false # Currently CPLEX only: Use barrier algorithm
 
 
 # Weight maps. 7 positions stand for ... accordingly:
-# R∩S x R∩S
-# R∩S x S
-# R∩S x R
-# R∩S x ∅
-# S x S
-# S x R
-# S x ∅
+WEIGHT_IND_RSXRS = 1    # R∩S x R∩S
+WEIGHT_IND_RSXS = 2     # R∩S x S
+WEIGHT_IND_RSXR = 3     # R∩S x R
+WEIGHT_IND_RSXE = 4     # R∩S x ∅
+WEIGHT_IND_SXS = 5      # S x S
+WEIGHT_IND_SXR = 6      # S x R
+WEIGHT_IND_SXE = 7      # S x ∅
 
-WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. TODO: Probably not strongly local, to give counterex.
+WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Not strongly local nor optimal on local algorithm.
 # WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph. Note that LP algorithm won't work for this one.
 WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched)
 WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. TODO: Prove strongly local.
@@ -128,20 +128,15 @@ WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
 WEIGHT_MAP_ADSIS = [2,2,0,0,1,0,0] # ADSI, but weight of R∩S x S is 2
 
 DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
-
-WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # |e∩R|, not an actual weight map for calculation
-
-WEIGHT_IND_RSXRS = 1
-WEIGHT_IND_RSXS = 2
-WEIGHT_IND_RSXR = 3
-WEIGHT_IND_RSXE = 4
-WEIGHT_IND_SXS = 5
-WEIGHT_IND_SXR = 6
-WEIGHT_IND_SXE = 7
-
+# EIR0_TYPE_X: X = |e∩R|.
 EIR0_TYPE_ZERO = 0
 EIR0_TYPE_POSITIVE = 1
 EIR0_TYPE_NEGATIVE = -1
+
+WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # Labels EIR type for each edge type, not an actual WEIGHT_MAP.
+
+# Checks whether the weight values for |e∩R| = 0 edges are all zero, all non-negative or all non-positive.
+# Note this is only a problem for |e∩R| = 0 edges, as |e∩R| = 1 or 2 edges must be all non-negative.
 function FindWeightMapEIR0Type(WeightMap)
     weightMapEIR0 = findall(WEIGHT_FEATURE_EIR .== 0)
     if all(x -> x == 0, WeightMap[weightMapEIR0])
@@ -151,7 +146,7 @@ function FindWeightMapEIR0Type(WeightMap)
     elseif all(x -> x <= 0, WeightMap[weightMapEIR0])
         return EIR0_TYPE_NEGATIVE # All non-positive actually
     else
-        throw(ArgumentError("All values in WeightMap must be either non-positive or non-negative"))
+        throw(ArgumentError("All values in WeightMap under the same EIR type must be either non-positive or non-negative"))
     end
 end
 

@@ -166,7 +166,7 @@ function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int
     m = length(edgelist)
     @variable(model, x[i = 1:n] >= 0)
     @variable(model, y[i = 1:m] >= 0)
-    wy = Array{Int}(undef, m)
+    wy = Array{Float64}(undef, m)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
 
     # Optimizations

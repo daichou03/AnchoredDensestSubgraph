@@ -33,7 +33,7 @@ function readRaw(FileName::AbstractString, N::Int, M::Int, Directory::String=DIR
 end
 
 function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
-    f = open(string(Directory,FileName))
+    f = open(string(folderString(Directory),FileName))
     header = split(readline(f))
     n = parse(Int,header[1])
     m = parse(Int,header[2])

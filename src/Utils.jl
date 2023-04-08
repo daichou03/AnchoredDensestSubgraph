@@ -45,7 +45,7 @@ function folderString(x::String, y::String...)
     end
 
     b = y[1]
-    if string(b[1]) == "/"
+    if length(b) > 0 && string(b[1]) == "/"
         b = b[2:end]
     end
     return folderString(string(a, b), y[2:end]...)
@@ -94,3 +94,21 @@ function almostEqual(a, b, tol=ALMOST_EQUAL_TOL)
 end
 
 
+function f1score(p::Float64, r::Float64)
+    if p == 0 && r == 0
+        return 0.0
+    end
+    return 2 * p * r / (p + r)
+end
+
+function f1score(set1::Union{Set, Vector}, set2::Union{Set, Vector})
+    if length(set1) == 0 || length(set2) == 0
+        return 0.0
+    end
+    tp = length(intersect(set1, set2))
+    fp = length(set1) - tp
+    fn = length(set2) - tp
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    return f1score(precision, recall)
+end

@@ -2,6 +2,7 @@ using CSV
 using DataFrames
 using StatsBase
 include("Utils.jl")
+include("Utils_io.jl")
 include("LP_consts.jl")
 
 EVAL_DATA_NAME = 1
@@ -173,4 +174,52 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
         end
         CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([getRatio ? "ratio" : "average", outputSuffix, columnNames[columnID]], "-")), df, header=true)
     end
+end
+
+
+# For F1 score
+function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, EmptyIfNotFound::Bool=false, SubDirName::String="")
+    filename = string(folderString(FOLDER_LP_COMP_RESULTS, SubDirName), GetLPCompResultFileName(DataName, SolverID, SuffixName, RESULT_TYPE_SETS)) 
+    if EmptyIfNotFound && !isfile(filename)
+        return []
+    end
+    results = []
+    for rawline in eachline(filename)
+        line = strip(rawline)
+        if length(line) > 0
+            line = split(line, ",")
+            line = map(x->parse(Int, x), line)
+            append!(results, [line])
+        end
+    end
+    return results
+end
+
+
+function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String})
+    results = []
+    means = Array{Any}(undef, length(suffixNames))
+    anchors = readAnchors(dataName, "Baseline")
+    for algID in 1:length(suffixNames)
+        solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+        results = readCompsets(dataName, solverID, suffixNames[algID], true)
+        means[solverID] = map(f1score(anchors[i], results[i]), 1:min(length(anchors), length(results)))
+    end
+    return means
+end
+
+function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String)
+    dataMeans = Array{Any}(undef, length(dataNames))
+    for dataID in eachindex(dataNames)
+        dataMeans[dataID] = CompareMultipleModelF1score(dataNames[dataID], suffixNames)
+    end
+    col_names = vcat(["dataName"], suffixNames)
+    col_types = vcat(String, repeat([Float64], length(suffixNames)))
+
+    mkpath(FOLDER_LP_EVAL_RESULTS)
+    df = DataFrame([Vector{t}() for t in col_types], col_names)
+    for dataID in 1:length(dataNames)
+        push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
+    end
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "f1score"], "-")), df, header=true)
 end

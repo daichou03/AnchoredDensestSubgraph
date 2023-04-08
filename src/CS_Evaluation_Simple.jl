@@ -269,13 +269,6 @@ function OutputSimpleCSCalculatedMetrics(folder, calcDataStats)
     end
 end
 
-function f1score(p, r)
-    if p == 0 && r == 0
-        return 0
-    end
-    return 2 * p * r / (p + r)
-end
-
 function CalculatedMetrics(stat, index)
     if index == IND_F1SCORE
         return f1score(stat[IND_RINS], stat[IND_SINR])

@@ -190,6 +190,8 @@ function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, Em
             line = split(line, ",")
             line = map(x->parse(Int, x), line)
             append!(results, [line])
+        else
+            append!(results, [[]]) # Retain an empty entry to match position
         end
     end
     return results
@@ -203,8 +205,8 @@ function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String
     for algID in 1:length(suffixNames)
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
-        resultSetLength = min(length(anchors), length(results))
-        means[solverID] = mean(map(i->f1score(anchors[i], results[i]), 1:resultSetLength))
+        allCount = min(length(anchors), length(results))
+        means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:allCount))
     end
     return means
 end

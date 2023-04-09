@@ -48,7 +48,7 @@ function SolveLPDensestSubgraph(B::SparseMatrixCSC, solver=DEFAULT_LP_SOLVER)
     @variable(model, x[i = 1:n] >= 0)
     @variable(model, y[i = 1:m] >= 0)
     @constraint(model, sum(x[i] for i in 1:n) <= 1)
-    @objective(model, Max, sum(y))
+    @objective(model, Max, 2*sum(y))
     for i = 1:m
         u, v = edgelist[i]
         @constraint(model, y[i] <= x[u])

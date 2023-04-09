@@ -203,7 +203,8 @@ function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String
     for algID in 1:length(suffixNames)
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
-        means[solverID] = map(f1score(anchors[i], results[i]), 1:min(length(anchors), length(results)))
+        resultSetLength = min(length(anchors), length(results))
+        means[solverID] = mean(map(i->f1score(anchors[i], results[i]), 1:resultSetLength))
     end
     return means
 end

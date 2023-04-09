@@ -106,6 +106,10 @@ function WeightIsADSFX(weightMap)
     return all(x -> x > 0, weightMap[1:2]) && all(x -> almostEqual(x, 0), weightMap[3:7])
 end
 
+function WeightIsADSIX(weightMap)
+    return all(x -> x > 0, weightMap[[1,2,5]]) && all(x -> almostEqual(x, 0), weightMap[[3,4,6,7]])
+end
+
 DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
 
 
@@ -255,6 +259,9 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
             int_time_taken = ext_time_taken
         elseif Solver == SOLVER_LP_ADSS
             mip_set = length(S) > 0 ? [findfirst(L .== v) for v in S] : inducedDS.source_nodes
+            if WeightIsADSIX(DEFAULT_WEIGHT_MAP) # IGA optimization is not correct for ADSIX.
+                overdensedMask = Nothing
+            end
             result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(B[L,L], orderedSubsetIndices(L, RSorted), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
             ext_time_taken = result_timed.time
             result_S, int_time_taken = result_timed.value

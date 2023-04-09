@@ -199,7 +199,6 @@ end
 
 
 function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String})
-    results = []
     means = Array{Any}(undef, length(suffixNames))
     anchors = readAnchors(dataName, "Baseline")
     for algID in 1:length(suffixNames)
@@ -222,7 +221,7 @@ function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array
     mkpath(FOLDER_LP_EVAL_RESULTS)
     df = DataFrame([Vector{t}() for t in col_types], col_names)
     for dataID in 1:length(dataNames)
-        push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
+        push!(df, vcat(dataNames[dataID], dataMeans[dataID]))
     end
     CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "f1score"], "-")), df, header=true)
 end

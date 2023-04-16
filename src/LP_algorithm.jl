@@ -84,56 +84,7 @@ OPT_NOPRESOLVE = false # Currently CPLEX only: Do not presolve
 OPT_BARRIER = false # Currently CPLEX only: Use barrier algorithm
 
 
-# Weight maps. 7 positions stand for ... accordingly:
-WEIGHT_IND_RSXRS = 1    # R∩S x R∩S
-WEIGHT_IND_RSXS = 2     # R∩S x S
-WEIGHT_IND_RSXR = 3     # R∩S x R
-WEIGHT_IND_RSXE = 4     # R∩S x ∅
-WEIGHT_IND_SXS = 5      # S x S
-WEIGHT_IND_SXR = 6      # S x R
-WEIGHT_IND_SXE = 7      # S x ∅
-
-WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Runnable on LP, but not strongly local nor optimal on local algorithm.
-# WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph for flow network. Note that LP algorithm won't work for this weight map.
-WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched). 20230324: proven to be strongly local nor optimal on local algorithm.
-WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. 20230324: proven to be not strongly local nor optimal on local algorithm.
-WEIGHT_MAP_ADSI = [2,1,0,0,1,0,0] # Anchored Densest Subgraph Intense. 20230324: proven to be NOT strongly local nor optimal on local algorithm.
-WEIGHT_MAP_ADSLS = [2,2,0,0,0,0,-1] # ADSL, but weight of R∩S x S is 2. 20230324: All conclusions on locality for ADSXS follows the non-S version.
-WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
-WEIGHT_MAP_ADSIS = [2,2,0,0,1,0,0] # ADSI, but weight of R∩S x S is 2
-
-function WeightIsADSFX(weightMap)
-    return all(x -> x > 0, weightMap[1:2]) && all(x -> almostEqual(x, 0), weightMap[3:7])
-end
-
-function WeightIsADSIX(weightMap)
-    return all(x -> x > 0, weightMap[[1,2,5]]) && all(x -> almostEqual(x, 0), weightMap[[3,4,6,7]])
-end
-
 DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
-
-
-# EIR0_TYPE_X: X = |e∩R|.
-EIR0_TYPE_ZERO = 0
-EIR0_TYPE_POSITIVE = 1
-EIR0_TYPE_NEGATIVE = -1
-
-WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # Labels EIR type for each edge type, not an actual WEIGHT_MAP.
-
-# Checks whether the weight values for |e∩R| = 0 edges are all zero, all non-negative or all non-positive.
-# Note this is only a problem for |e∩R| = 0 edges, as |e∩R| = 1 or 2 edges must be all non-negative.
-function FindWeightMapEIR0Type(WeightMap)
-    weightMapEIR0 = findall(WEIGHT_FEATURE_EIR .== 0)
-    if all(x -> x == 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_ZERO
-    elseif all(x -> x >= 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_POSITIVE # All non-negative actually
-    elseif all(x -> x <= 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_NEGATIVE # All non-positive actually
-    else
-        throw(ArgumentError("All values in WeightMap under the same EIR type must be either non-positive or non-negative"))
-    end
-end
 
 
 # Note that you can only assume this algorithm to work as expected with ONLY weight maps defined above,  

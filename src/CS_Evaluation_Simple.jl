@@ -17,16 +17,6 @@ include("Collect_results.jl")
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0
 
-function GetDensity(B::SparseMatrixCSC, S::Vector{Int64})
-    return GetVolume(B[S,S]) / length(S)
-end
-
-function GetAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64})
-    S_in_R = intersect(S, R)
-    S_out_R = setdiff(S, S_in_R)
-    return (GetVolume(B[S,S]) - GetVolume(B, S_out_R)) / length(S)
-end
-
 function GetConductance(B::SparseMatrixCSC, S::Vector{Int64})
     return 1 - GetVolume(B[S,S]) / GetVolume(B, S)
 end

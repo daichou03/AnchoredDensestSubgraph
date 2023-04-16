@@ -155,6 +155,7 @@ end
 # amazon,1,2,3
 # DBLP,4,5,6
 
+dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
 suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
 function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
     dataMeans = Array{Any}(undef, length(dataNames))
@@ -225,3 +226,19 @@ function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array
     end
     CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "f1score"], "-")), df, header=true)
 end
+
+
+# For density
+# Note this requires reading the original graph.
+# WIP
+# function CompareMultipleModelDensity(dataName::String, suffixNames::Array{String})
+#     means = Array{Any}(undef, length(suffixNames))
+#     anchors = readAnchors(dataName, "Baseline")
+#     B = readIN(string(dataName, ".in"))
+#     for algID in 1:length(suffixNames)
+#         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+#         results = readCompsets(dataName, solverID, suffixNames[algID], true)
+#         means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:length(results)))
+#     end
+#     return means
+# end

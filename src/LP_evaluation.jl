@@ -157,6 +157,9 @@ end
 
 dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
 suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
+weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI]
+weightMapNames = ["ρ-DS", "ρ-ADS", "ρ-ADSL", "ρ-ADSF", "ρ-ADSI"]
+
 function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
     dataMeans = Array{Any}(undef, length(dataNames))
     for dataID in eachindex(dataNames)
@@ -216,7 +219,7 @@ function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array
     for dataID in eachindex(dataNames)
         dataMeans[dataID] = CompareMultipleModelF1score(dataNames[dataID], suffixNames)
     end
-    col_names = vcat(["dataName"], suffixNames)
+    col_names = vcat(["f1score"], suffixNames)
     col_types = vcat(String, repeat([Float64], length(suffixNames)))
 
     mkpath(FOLDER_LP_EVAL_RESULTS)
@@ -230,15 +233,36 @@ end
 
 # For density
 # Note this requires reading the original graph.
-# WIP
-# function CompareMultipleModelDensity(dataName::String, suffixNames::Array{String})
-#     means = Array{Any}(undef, length(suffixNames))
-#     anchors = readAnchors(dataName, "Baseline")
-#     B = readIN(string(dataName, ".in"))
-#     for algID in 1:length(suffixNames)
-#         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
-#         results = readCompsets(dataName, solverID, suffixNames[algID], true)
-#         means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:length(results)))
-#     end
-#     return means
-# end
+function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Array{String}, weightMaps)
+    weightMeans = Array{Any}(undef, length(weightMaps))
+    anchors = readAnchors(dataName, "Baseline")
+    B = readIN(string(dataName, ".in"))
+    for wID in eachindex(weightMaps)
+        means = Array{Any}(undef, length(suffixNames))
+        for algID in eachindex(suffixNames)
+            solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+            results = readCompsets(dataName, solverID, suffixNames[algID], true)
+            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), 1:length(results)))
+        end
+        weightMapID[weightMapID] = means
+    end
+    return weightMeans
+end
+
+function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, weightMaps, weightMapNames)
+    dataMeans = Array{Any}(undef, length(dataNames))
+    for dataID in eachindex(dataNames)
+        dataMeans[dataID] = CompareMultipleModelExtendedDensity(dataNames[dataID], suffixNames, weightMaps)
+    end
+    col_names = vcat(["dataName"], suffixNames)
+    col_types = vcat(String, repeat([Float64], length(suffixNames)))
+
+    mkpath(FOLDER_LP_EVAL_RESULTS)
+    for wID in eachindex(weightMaps)
+        df = DataFrame([Vector{t}() for t in col_types], col_names)
+        for dataID in 1:length(dataNames)
+            push!(df, vcat(dataNames[dataID], dataMeans[dataID][wID]))
+        end
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, weightMapNames[wID]], "-")), df, header=true)
+    end
+end

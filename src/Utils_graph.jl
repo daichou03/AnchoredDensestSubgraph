@@ -363,7 +363,10 @@ function GetAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int6
     return (GetVolume(B[S,S]) - GetVolume(B, S_out_R)) / length(S)
 end
 
-function GetExtendedAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Int64}, weightMap)
+function GetExtendedAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vector{Any}, weightMap)
+    if length(S) == 0
+        return 0.0
+    end
     S_in_R = intersect(S, R)
     S_out_R = setdiff(S, S_in_R)
     counts = repeat([0], WEIGHT_IND_COUNT)

@@ -368,10 +368,9 @@ function GetExtendedAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vec
     S_out_R = setdiff(S, S_in_R)
     counts = repeat([0], WEIGHT_IND_COUNT)
     counts[WEIGHT_IND_RSXRS] = GetVolume(B[S_in_R,S_in_R])÷2
-    counts[WEIGHT_IND_RSXS] = GetVolume(B[S_in_R,S_out_R])÷2
+    counts[WEIGHT_IND_RSXS] = GetVolume(B[S_in_R,S_out_R])
     counts[WEIGHT_IND_SXS] = GetVolume(B[S_out_R,S_out_R])÷2
-    counts[WEIGHT_IND_SXR] = GetVolume(B[S_out_R,setdiff(R, S_in_R)])÷2
+    counts[WEIGHT_IND_SXR] = GetVolume(B[S_out_R,setdiff(R, S_in_R)])
     counts[WEIGHT_IND_SXE] = GetVolume(B, S_out_R) - counts[WEIGHT_IND_SXS]*2 - counts[WEIGHT_IND_RSXS] - counts[WEIGHT_IND_SXR]
-    println(counts)
     return sum(weightMap .* counts) / length(S)
 end

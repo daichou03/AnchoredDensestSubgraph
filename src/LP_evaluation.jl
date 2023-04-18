@@ -4,6 +4,7 @@ using StatsBase
 include("Utils.jl")
 include("Utils_io.jl")
 include("LP_consts.jl")
+include("Utils_graph.jl")
 
 EVAL_DATA_NAME = 1
 EVAL_DATA_INDEX = 2
@@ -158,7 +159,7 @@ end
 dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
 suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
 weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI]
-weightMapNames = ["ρ-DS", "ρ-ADS", "ρ-ADSL", "ρ-ADSF", "ρ-ADSI"]
+weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI"]
 
 function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
     dataMeans = Array{Any}(undef, length(dataNames))
@@ -181,7 +182,6 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
 end
 
 
-# For F1 score
 function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, EmptyIfNotFound::Bool=false, SubDirName::String="")
     filename = string(folderString(FOLDER_LP_COMP_RESULTS, SubDirName), GetLPCompResultFileName(DataName, SolverID, SuffixName, RESULT_TYPE_SETS)) 
     if EmptyIfNotFound && !isfile(filename)
@@ -202,6 +202,7 @@ function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, Em
 end
 
 
+# For F1 score
 function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String})
     means = Array{Any}(undef, length(suffixNames))
     anchors = readAnchors(dataName, "Baseline")
@@ -242,9 +243,9 @@ function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Arra
         for algID in eachindex(suffixNames)
             solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
             results = readCompsets(dataName, solverID, suffixNames[algID], true)
-            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), 1:length(results)))
+            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), eachindex(results)))
         end
-        weightMapID[weightMapID] = means
+        weightMeans[wID] = means
     end
     return weightMeans
 end
@@ -265,4 +266,32 @@ function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixName
         end
         CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, weightMapNames[wID]], "-")), df, header=true)
     end
+end
+
+
+# For completion
+function CompareMultipleModelCompletion(dataName::String, suffixNames::Array{String})
+    means = Array{Any}(undef, length(suffixNames))
+    for algID in 1:length(suffixNames)
+        solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+        results = readCompsets(dataName, solverID, suffixNames[algID], true)
+        means[algID] = mean(map(i->length(results[i]) > 0 ? 1 : 0, eachindex(results)))
+    end
+    return means
+end
+
+function OutputMultipleModelCompletion(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String)
+    dataMeans = Array{Any}(undef, length(dataNames))
+    for dataID in eachindex(dataNames)
+        dataMeans[dataID] = CompareMultipleModelCompletion(dataNames[dataID], suffixNames)
+    end
+    col_names = vcat(["completion"], suffixNames)
+    col_types = vcat(String, repeat([Float64], length(suffixNames)))
+
+    mkpath(FOLDER_LP_EVAL_RESULTS)
+    df = DataFrame([Vector{t}() for t in col_types], col_names)
+    for dataID in 1:length(dataNames)
+        push!(df, vcat(dataNames[dataID], dataMeans[dataID]))
+    end
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "completion"], "-")), df, header=true)
 end

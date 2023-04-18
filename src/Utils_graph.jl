@@ -224,8 +224,7 @@ function GetVolume(B::SparseMatrixCSC, S::Vector{Int64})
 end
 
 function GetVolume(B::SparseMatrixCSC)
-    N = size(B,1)
-    GetVolume(B, collect(1:N))
+    nnz(B)
 end
 
 function GetAllDegrees(B::SparseMatrixCSC)
@@ -372,6 +371,7 @@ function GetExtendedAnchoredDensity(B::SparseMatrixCSC, R::Vector{Int64}, S::Vec
     counts[WEIGHT_IND_RSXS] = GetVolume(B[S_in_R,S_out_R])÷2
     counts[WEIGHT_IND_SXS] = GetVolume(B[S_out_R,S_out_R])÷2
     counts[WEIGHT_IND_SXR] = GetVolume(B[S_out_R,setdiff(R, S_in_R)])÷2
-    counts[WEIGHT_IND_SXE] = GetVolume(B, S_out_R) - N_SXS*2 - N_RSXS - N_SXR
-    return (weightMap .* counts) / length(S)
+    counts[WEIGHT_IND_SXE] = GetVolume(B, S_out_R) - counts[WEIGHT_IND_SXS]*2 - counts[WEIGHT_IND_RSXS] - counts[WEIGHT_IND_SXR]
+    println(counts)
+    return sum(weightMap .* counts) / length(S)
 end

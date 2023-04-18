@@ -199,10 +199,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     ext_time = 0
     iters = 0
     inducedDS = GlobalDensestSubgraph(B[R,R])
-    if inducedDS.alpha < 1 # Return empty results. This is necessary to have both maximal and minimal algorithm behave similarly in this edge case.
-        alpha = 0.0
-        S = []
-    else
+    if inducedDS.alpha_star >= 1 # If not, return empty results early. This is necessary to have both maximal and minimal algorithm behave similarly in this edge case.
         while !isempty(Frontier)
             Expanded = union(Expanded, Frontier)
             L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.

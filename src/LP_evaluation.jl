@@ -158,8 +158,8 @@ end
 
 dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
 suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
-weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI]
-weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI"]
+weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI, WEIGHT_MAP_ADSLS, WEIGHT_MAP_ADSFS, WEIGHT_MAP_ADSIS]
+weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI", "ρADSLS", "ρADSFS", "ρADSIS"]
 
 function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
     dataMeans = Array{Any}(undef, length(dataNames))
@@ -168,7 +168,6 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
     end
     columnNames = names(DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(
         dataNames[1], SOLVER_FN_ADS, suffixNames[1], RESULT_TYPE_STATS)))))
-    col_names = vcat(["dataName"], suffixNames)
     col_types = vcat(String, repeat([Float64], length(suffixNames)))
 
     mkpath(FOLDER_LP_EVAL_RESULTS)
@@ -255,12 +254,11 @@ function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixName
     for dataID in eachindex(dataNames)
         dataMeans[dataID] = CompareMultipleModelExtendedDensity(dataNames[dataID], suffixNames, weightMaps)
     end
-    col_names = vcat(["dataName"], suffixNames)
     col_types = vcat(String, repeat([Float64], length(suffixNames)))
 
     mkpath(FOLDER_LP_EVAL_RESULTS)
     for wID in eachindex(weightMaps)
-        df = DataFrame([Vector{t}() for t in col_types], col_names)
+        df = DataFrame([Vector{t}() for t in col_types], vcat([weightMapNames[wID]], suffixNames))
         for dataID in 1:length(dataNames)
             push!(df, vcat(dataNames[dataID], dataMeans[dataID][wID]))
         end
@@ -295,3 +293,17 @@ function OutputMultipleModelCompletion(dataNames::Array{String}, suffixNames::Ar
     end
     CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "completion"], "-")), df, header=true)
 end
+
+
+# Get adjusted eval results
+function GetAdjustedEvalResults(prefix::String, suffix::String)
+    dfCompletion = DataFrame(CSV.File(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", prefix, "completion"], "-"))))
+    df = DataFrame(CSV.File(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", prefix, suffix], "-"))))
+    dfNew = hcat(df[:,1:1], df[:, Not(1)] ./ dfCompletion[:, Not(1)])
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["adjusted", prefix, suffix], "-")), dfNew, header=true)
+end
+
+# suffixes = ["alpha", "f1score", "iters", "lmsize", "lnsize", "ssize", "ρADS", "ρADSF", "ρADSFS", "ρADSI", "ρADSIS", "ρADSL", "ρADSLS", "ρDS"]
+# for suffix in suffixes
+#     GetAdjustedEvalResults("18graph", suffix)
+# end

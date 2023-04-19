@@ -13,4 +13,5 @@ CaseStudy/*
 CS_Competitors/*
 LPCompResults/*
 LPEvalResults/*
+!LPEvalResults/*.gp
 env/*

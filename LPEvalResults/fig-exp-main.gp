@@ -30,7 +30,7 @@ plot 'adjusted-18graph-ρDS' using 2:xtic(1) title "FN100", \
      '' using 7 title "ADSFS100C", \
      '' using 8 title "ADSIS100C"
 
-set yrange [-10:20]
+set yrange [-10:10]
 set output 'rhoADS.eps'
 plot 'adjusted-18graph-ρADS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
@@ -191,7 +191,7 @@ unset title
 unset grid
 
 set output 'legend.eps'
-plot NaN title "FN" with boxes, \
+plot NaN title "ADS" with boxes, \
      NaN title "ADSL" with boxes, \
      NaN title "ADSF" with boxes, \
      NaN title "ADSI" with boxes, \

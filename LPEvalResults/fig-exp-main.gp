@@ -1,6 +1,6 @@
 reset
-set terminal postscript eps color "Times-Roman" 20 enhanced
-set size 1,0.67
+set terminal postscript eps color "Times-Roman" 12 enhanced
+set size 1,0.3
 
 set datafile separator ","
 set style data histogram
@@ -12,7 +12,7 @@ set key outside
 unset xlabel
 unset ylabel
 unset key
-set xtics rotate by -45
+set xtics rotate by -30
 set xtics format ""
 set xtics nomirror
 set ytics nomirror
@@ -182,13 +182,15 @@ plot 'average-18graph-int_time' using 2:xtic(1) title "FN100", \
 
 
 # Legend only
-set key at screen 0.5, screen 0.5 center center horizontal spacing 0.5 font "Times-Roman,10"
+set key at screen 0.5, screen 0.5 center center horizontal spacing 0.5 font "Times-Roman,12"
 set noxtics
 set noytics
 set noborder
 
 unset title
 unset grid
+
+set size 1,1
 
 set output 'legend.eps'
 plot NaN title "ADS" with boxes, \

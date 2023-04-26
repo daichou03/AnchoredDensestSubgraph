@@ -15,3 +15,4 @@ LPCompResults/*
 LPEvalResults/*
 !LPEvalResults/*.gp
 env/*
+src/LP_load_solver.jl

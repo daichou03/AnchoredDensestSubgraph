@@ -175,6 +175,7 @@ end
 OPT_FORCE_GLOBAL = false # Force running global version rather than running strongly-local
 # Strongly-local version that integrates both flow network and linear programming solution.
 function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
+    R = sort(R)
     if OPT_FORCE_GLOBAL && Solver == SOLVER_LP_ADSS
         mip_set = GlobalDensestSubgraph(B[R,R]).source_nodes 
         result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(B, R, DEFAULT_WEIGHT_MAP, nothing, mip_set, lpSolver)
@@ -188,48 +189,48 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
             return result_S
         end
     end
-    Expanded = Int64[]
-    RSorted = sort(R)
-    Frontier = RSorted
-    alpha = 0
+    # Expanded = Int64[]
+    # Frontier = R
+    alpha = 0.0
     S = Int64[]
-    SUnion = Int64[]
-    L = Int64[]
+    F = R
+    SRUnion = R
+    L = Nothing
     int_time = 0
     ext_time = 0
     iters = 0
     inducedDS = GlobalDensestSubgraph(B[R,R])
     if inducedDS.alpha_star >= 1 # If not, return empty results early. This is necessary to have both maximal and minimal algorithm behave similarly in this edge case.
-        while !isempty(Frontier)
-            Expanded = union(Expanded, Frontier)
-            L = sort(union(L, GetComponentAdjacency(B, Frontier, true))) # GetComponentAdjacency is expensive, doing it incrementally.
-            overdensedMask = map(v->(GetDegree(B,v)>=GetVolume(B,R)), L)
+        while !isempty(F)
+            F = setdiff(GetComponentAdjacency(B, F, false), SRUnion)
+            L = [B[SRUnion,SRUnion] B[SRUnion,F]; B[F,SRUnion] spzeros(length(F),length(F))]
+            overdensedMask = map(v->(GetDegree(B,v)>=GetVolume(B,R)), [SRUnion;F])
             if Solver == SOLVER_FN_ADS
-                result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(B[L,L], orderedSubsetIndices(L, RSorted), overdensedMask, inducedDS)
+                result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(L, orderedSubsetIndices([SRUnion;F], R), overdensedMask, inducedDS)
                 result_S, ext_time_taken = result_timed.value, result_timed.time
                 # Take ext_time as int_time for now.
                 int_time_taken = ext_time_taken
             elseif Solver == SOLVER_LP_ADSS
-                mip_set = length(S) > 0 ? [findfirst(L .== v) for v in S] : inducedDS.source_nodes
+                mip_set = [findfirst([SRUnion;F] .== v) for v in (length(S) > 0 ? S : R[inducedDS.source_nodes])] 
                 if WeightIsADSIX(DEFAULT_WEIGHT_MAP) # IGA optimization is not correct for ADSIX.
                     overdensedMask = Nothing
                 end
-                result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(B[L,L], orderedSubsetIndices(L, RSorted), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
+                result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(L, orderedSubsetIndices([SRUnion;F], R), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
                 ext_time_taken = result_timed.time
                 result_S, int_time_taken = result_timed.value
             else
                 error("Unexpected Solver ID")
             end
+            alpha = result_S.alpha_star
             int_time += int_time_taken
             ext_time += ext_time_taken
-            alpha = result_S.alpha_star
-            S = L[result_S.source_nodes]
-            if ShowTrace
-                println(densestSubgraph(result_S.alpha_star, S))
-            end
-            SUnion = union(SUnion, S)
-            Frontier = setdiff(S, Expanded)
+            S = [SRUnion;F][result_S.source_nodes]
+            F = setdiff(S, SRUnion)
+            SRUnion = [SRUnion;F]
             iters += 1
+            if ShowTrace
+                println(join([densestSubgraph(result_S.alpha_star, S), ext_time, int_time, L.n, nnz(L)÷2, iters], " | "))
+            end
             # ADSFX weights always one-shot
             if WeightIsADSFX(DEFAULT_WEIGHT_MAP)
                 break
@@ -239,7 +240,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     
     if MoreStats
         # See LP_consts.STATS_NAMES
-        return densestSubgraph(alpha, S), ext_time, int_time, length(L), nnz(B[L,L])÷2, iters
+        return densestSubgraph(alpha, S), ext_time, int_time, L.n, nnz(L)÷2, iters
     else
         return densestSubgraph(alpha, S)
     end

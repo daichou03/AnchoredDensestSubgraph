@@ -196,7 +196,7 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     SRUnion = R # Inner nodes - all edges 
     P = Int64[] # Peripheral nodes - nodes are in the working graph, but edges between two P nodes do not.
     F = R # Frontier nodes - a subset of SRUnion where Peripheral nodes grow by F's neighbours per iteration.
-    L = Nothing # Working subgraph
+    L = spzeros(0,0) # Working subgraph
     int_time = 0
     ext_time = 0
     iters = 0

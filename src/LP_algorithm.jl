@@ -212,9 +212,9 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
                 # Take ext_time as int_time for now.
                 int_time_taken = ext_time_taken
             elseif Solver == SOLVER_LP_ADSS
-                mip_set = [findfirst([SRUnion;P] .== v) for v in (length(S) > 0 ? S : R[inducedDS.source_nodes])] 
+                mip_set = [findfirst([SRUnion;P] .== v) for v in (length(S) > 0 ? S : R[inducedDS.source_nodes])]
                 if WeightIsADSIX(DEFAULT_WEIGHT_MAP) # IGA optimization is not correct for ADSIX.
-                    overdensedMask = Nothing
+                    overdensedMask = nothing
                 end
                 result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(L, orderedSubsetIndices([SRUnion;P], R), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
                 ext_time_taken = result_timed.time

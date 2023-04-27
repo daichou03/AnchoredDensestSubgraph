@@ -117,7 +117,7 @@ FILENAME_EMPTY_LPCOMPSTATS = "empty.lpcompstats"
 # suffixNames = ["FN100", "ADSL100C", "ADSF100C"]
 # If a file is not found, assume the task couldn't be completed and fall back to use FILENAME_EMPTY_LPCOMPSTATS as data.
 function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{String}, getRatio::Bool=false)
-    df1 = Nothing
+    df1 = nothing
     means = Array{Any}(undef, length(suffixNames))
     for solverID in 1:length(suffixNames)
         filename = GetLPCompResultFileName(dataName, solverID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS, suffixNames[solverID], RESULT_TYPE_STATS)

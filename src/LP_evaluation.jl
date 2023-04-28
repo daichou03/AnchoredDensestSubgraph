@@ -157,7 +157,9 @@ end
 # DBLP,4,5,6
 
 dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
-suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
+# suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
+suffixNames = ["smartL","ADSLsmartL","ADSFsmartL","ADSIsmartL","ADSLSsmartL","ADSFSsmartL","ADSISsmartL"]
+outputSuffix = "smartL"
 weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI, WEIGHT_MAP_ADSLS, WEIGHT_MAP_ADSFS, WEIGHT_MAP_ADSIS]
 weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI", "ρADSLS", "ρADSFS", "ρADSIS"]
 
@@ -166,17 +168,17 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
     for dataID in eachindex(dataNames)
         dataMeans[dataID] = CompareMultipleModelResultSets(dataNames[dataID], suffixNames, getRatio)
     end
-    columnNames = names(DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(
+    resultColumnNames = names(DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(
         dataNames[1], SOLVER_FN_ADS, suffixNames[1], RESULT_TYPE_STATS)))))
-    col_types = vcat(String, repeat([Float64], length(suffixNames)))
-
+    columnTypes = vcat(String, repeat([Float64], length(suffixNames)))
+    
     mkpath(FOLDER_LP_EVAL_RESULTS)
-    for columnID in eachindex(columnNames)
-        df = DataFrame([Vector{t}() for t in col_types], col_names)
+    for columnID in eachindex(resultColumnNames)
+        df = DataFrame([Vector{t}() for t in columnTypes], vcat(resultColumnNames[columnID], suffixNames))
         for dataID in 1:length(dataNames)
             push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
         end
-        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([getRatio ? "ratio" : "average", outputSuffix, columnNames[columnID]], "-")), df, header=true)
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([getRatio ? "ratio" : "average", outputSuffix, resultColumnNames[columnID]], "-")), df, header=true)
     end
 end
 

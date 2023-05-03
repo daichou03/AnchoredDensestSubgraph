@@ -251,6 +251,7 @@ function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Arra
     return weightMeans
 end
 
+# Note this requires reading the original graph.
 function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, weightMaps, weightMapNames)
     dataMeans = Array{Any}(undef, length(dataNames))
     for dataID in eachindex(dataNames)
@@ -305,7 +306,16 @@ function GetAdjustedEvalResults(prefix::String, suffix::String)
     CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["adjusted", prefix, suffix], "-")), dfNew, header=true)
 end
 
+
+
+
+# OutputMultipleModelResultSets(dataNames,suffixNames,outputSuffix)
+# OutputMultipleModelF1score(dataNames,suffixNames,outputSuffix)
+# (dataNames,suffixNames,outputSuffix)
+# (dataNames,suffixNames,outputSuffix)
+# OutputMultipleModelExtendedDensity(dataNames,suffixNames,outputSuffix, weightMaps, weightMapNames)
+
 # suffixes = ["alpha", "f1score", "iters", "lmsize", "lnsize", "ssize", "ρADS", "ρADSF", "ρADSFS", "ρADSI", "ρADSIS", "ρADSL", "ρADSLS", "ρDS"]
 # for suffix in suffixes
-#     GetAdjustedEvalResults("18graph", suffix)
+#     GetAdjustedEvalResults(outputSuffix, suffix)
 # end

@@ -103,8 +103,6 @@ function BulkCompareAndOutputConcatenatedResultSets(dataNames, concatName, suffi
 end
 
 
-# TODO:
-# Also output LM, LN (have minimal difference, take both first), regression on these.
 # Optimizaitons
 
 FILENAME_EMPTY_LPCOMPSTATS = "empty.lpcompstats"
@@ -116,7 +114,7 @@ FILENAME_EMPTY_LPCOMPSTATS = "empty.lpcompstats"
 # Sample suffixNames - one for each model to compare. Note assuming the first name is for FNLA, and the second name onwards are all for LPLAS.
 # suffixNames = ["FN100", "ADSL100C", "ADSF100C"]
 # If a file is not found, assume the task couldn't be completed and fall back to use FILENAME_EMPTY_LPCOMPSTATS as data.
-function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{String}, getRatio::Bool=false)
+function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{String})
     df1 = nothing
     means = Array{Any}(undef, length(suffixNames))
     for solverID in 1:length(suffixNames)
@@ -127,15 +125,8 @@ function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{Str
         else
             df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, FILENAME_EMPTY_LPCOMPSTATS)))
         end
-        if getRatio
-            if solverID == 1
-                df1 = copy(df)
-            end
-            if fileFound
-                df = df ./ df1
-            end
-        end
-        means[solverID] = [mean(df[!, column]) for column in names(df)]
+        mask = GetValidOutputMask(dataName, suffixNames)
+        means[solverID] = [mean(df[mask, column]) for column in names(df)]
     end
     return means
 end
@@ -163,10 +154,10 @@ outputSuffix = "smartL"
 weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI, WEIGHT_MAP_ADSLS, WEIGHT_MAP_ADSFS, WEIGHT_MAP_ADSIS]
 weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI", "ρADSLS", "ρADSFS", "ρADSIS"]
 
-function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, getRatio::Bool=false)
+function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String)
     dataMeans = Array{Any}(undef, length(dataNames))
     for dataID in eachindex(dataNames)
-        dataMeans[dataID] = CompareMultipleModelResultSets(dataNames[dataID], suffixNames, getRatio)
+        dataMeans[dataID] = CompareMultipleModelResultSets(dataNames[dataID], suffixNames)
     end
     resultColumnNames = names(DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(
         dataNames[1], SOLVER_FN_ADS, suffixNames[1], RESULT_TYPE_STATS)))))
@@ -211,7 +202,8 @@ function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
         allCount = min(length(anchors), length(results))
-        means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:allCount))
+        mask = GetValidOutputMask(dataName, suffixNames)
+        means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:allCount)[mask])
     end
     return means
 end
@@ -244,7 +236,8 @@ function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Arra
         for algID in eachindex(suffixNames)
             solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
             results = readCompsets(dataName, solverID, suffixNames[algID], true)
-            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), eachindex(results)))
+            mask = GetValidOutputMask(dataName, suffixNames)
+            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), eachindex(results))[mask])
         end
         weightMeans[wID] = means
     end
@@ -271,11 +264,13 @@ end
 
 
 # For completion
+# Does not mask intersection of completed queries.
 function CompareMultipleModelCompletion(dataName::String, suffixNames::Array{String})
     means = Array{Any}(undef, length(suffixNames))
     for algID in 1:length(suffixNames)
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
+        mask = GetValidOutputMask(dataName, suffixNames)
         means[algID] = mean(map(i->length(results[i]) > 0 ? 1 : 0, eachindex(results)))
     end
     return means
@@ -307,7 +302,27 @@ function GetAdjustedEvalResults(prefix::String, suffix::String)
 end
 
 
+# To avoid the survivor's bias, find the intersection of input sets that all algorithms return solutions.
+function GetValidOutputMask(dataName::String, suffixNames::Array{String})
+    intersection = nothing
+    for algID in 1:length(suffixNames)
+        solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+        results = readCompsets(dataName, solverID, suffixNames[algID], true)
+        validMask = map(i->length(results[i]) > 0, eachindex(results))
+        if any(validMask)
+            if isnothing(intersection)
+                intersection = validMask
+            else
+                intersection = intersection .& validMask
+            end
+        end
+    end
+    return intersection
+end
 
+# for dataName in dataNames
+#     println(string(dataName, ",", sum(GetValidOutputMask(dataName, suffixNames))))
+# end
 
 # OutputMultipleModelResultSets(dataNames,suffixNames,outputSuffix)
 # OutputMultipleModelF1score(dataNames,suffixNames,outputSuffix)
@@ -319,3 +334,5 @@ end
 # for suffix in suffixes
 #     GetAdjustedEvalResults(outputSuffix, suffix)
 # end
+
+# TODO: use masks

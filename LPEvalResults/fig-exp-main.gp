@@ -22,7 +22,7 @@ set grid y
 
 set yrange [0:20]
 set output 'rhoDS.eps'
-plot 'adjusted-18graph-ρDS' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρDS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -32,7 +32,7 @@ plot 'adjusted-18graph-ρDS' using 2:xtic(1) title "FN100", \
 
 set yrange [-10:10]
 set output 'rhoADS.eps'
-plot 'adjusted-18graph-ρADS' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -42,7 +42,7 @@ plot 'adjusted-18graph-ρADS' using 2:xtic(1) title "FN100", \
 
 set yrange [-10:10]
 set output 'rhoADSL.eps'
-plot 'adjusted-18graph-ρADSL' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSL' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -52,7 +52,7 @@ plot 'adjusted-18graph-ρADSL' using 2:xtic(1) title "FN100", \
 
 set yrange [-10:10]
 set output 'rhoADSLS.eps'
-plot 'adjusted-18graph-ρADSLS' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSLS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -62,7 +62,7 @@ plot 'adjusted-18graph-ρADSLS' using 2:xtic(1) title "FN100", \
 
 set yrange [0:20]
 set output 'rhoADSF.eps'
-plot 'adjusted-18graph-ρADSF' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSF' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -72,7 +72,7 @@ plot 'adjusted-18graph-ρADSF' using 2:xtic(1) title "FN100", \
 
 set yrange [0:20]
 set output 'rhoADSFS.eps'
-plot 'adjusted-18graph-ρADSFS' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSFS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -82,7 +82,7 @@ plot 'adjusted-18graph-ρADSFS' using 2:xtic(1) title "FN100", \
 
 set yrange [0:20]
 set output 'rhoADSI.eps'
-plot 'adjusted-18graph-ρADSI' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSI' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -92,7 +92,7 @@ plot 'adjusted-18graph-ρADSI' using 2:xtic(1) title "FN100", \
 
 set yrange [0:20]
 set output 'rhoADSIS.eps'
-plot 'adjusted-18graph-ρADSIS' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ρADSIS' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -103,7 +103,7 @@ plot 'adjusted-18graph-ρADSIS' using 2:xtic(1) title "FN100", \
 
 set yrange [0:1]
 set output 'f1score.eps'
-plot 'adjusted-18graph-f1score' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-f1score' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -113,7 +113,7 @@ plot 'adjusted-18graph-f1score' using 2:xtic(1) title "FN100", \
 
 set yrange [0:100]
 set output 'ssize.eps'
-plot 'adjusted-18graph-ssize' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ssize' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -123,7 +123,7 @@ plot 'adjusted-18graph-ssize' using 2:xtic(1) title "FN100", \
 
 set yrange [*:*]
 set output 'iters.eps'
-plot 'adjusted-18graph-iters' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-iters' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -138,7 +138,7 @@ set logscale y
 set yrange [10:200000]
 set ytics ('10^{1}' 10, '10^{2}' 100, '10^{3}' 1000, '10^{4}' 10000, '10^{5}' 100000)
 set output 'lnsize.eps'
-plot 'adjusted-18graph-lnsize' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-lnsize' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -149,7 +149,7 @@ plot 'adjusted-18graph-lnsize' using 2:xtic(1) title "FN100", \
 set yrange [10:5000000]
 set ytics ('10^{1}' 10, '10^{2}' 100, '10^{3}' 1000, '10^{4}' 10000, '10^{5}' 100000, '10^{6}' 1000000)
 set output 'lmsize.eps'
-plot 'adjusted-18graph-lmsize' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-lmsize' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -161,7 +161,7 @@ plot 'adjusted-18graph-lmsize' using 2:xtic(1) title "FN100", \
 set yrange [0.001:300]
 set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, 'Inf' 300)
 set output 'exttime.eps'
-plot 'average-18graph-ext_time' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-ext_time' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \
@@ -172,7 +172,7 @@ plot 'average-18graph-ext_time' using 2:xtic(1) title "FN100", \
 set yrange [0.001:300]
 set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, 'Inf' 300)
 set output 'inttime.eps'
-plot 'average-18graph-int_time' using 2:xtic(1) title "FN100", \
+plot 'masked-smartL-int_time' using 2:xtic(1) title "FN100", \
      '' using 3 title "ADSL100C", \
      '' using 4 title "ADSF100C", \
      '' using 5 title "ADSI100C", \

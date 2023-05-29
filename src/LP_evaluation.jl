@@ -149,10 +149,12 @@ end
 
 dataNames = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
 # suffixNames = ["FN100","ADSL100C","ADSF100C","ADSI100C","ADSLS100C","ADSFS100C","ADSIS100C"]
-suffixNames = ["smartL","ADSLsmartL","ADSFsmartL","ADSIsmartL","ADSLSsmartL","ADSFSsmartL","ADSISsmartL"]
+suffixNames = ["FN100","ADSLsmartL","ADSFsmartL","ADSIsmartL","ADSLSsmartL","ADSFSsmartL","ADSISsmartL"]
 outputSuffix = "smartL"
 weightMaps = [WEIGHT_MAP_DS, WEIGHT_MAP_ADS, WEIGHT_MAP_ADSL, WEIGHT_MAP_ADSF, WEIGHT_MAP_ADSI, WEIGHT_MAP_ADSLS, WEIGHT_MAP_ADSFS, WEIGHT_MAP_ADSIS]
 weightMapNames = ["ρDS", "ρADS", "ρADSL", "ρADSF", "ρADSI", "ρADSLS", "ρADSFS", "ρADSIS"]
+resultPrefix = "masked"
+# resultPrefix = "average" # Previously used when result is unmasked
 
 function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String)
     dataMeans = Array{Any}(undef, length(dataNames))
@@ -169,7 +171,7 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
         for dataID in 1:length(dataNames)
             push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
         end
-        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([getRatio ? "ratio" : "average", outputSuffix, resultColumnNames[columnID]], "-")), df, header=true)
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([resultPrefix, outputSuffix, resultColumnNames[columnID]], "-")), df, header=true)
     end
 end
 
@@ -221,7 +223,7 @@ function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array
     for dataID in 1:length(dataNames)
         push!(df, vcat(dataNames[dataID], dataMeans[dataID]))
     end
-    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, "f1score"], "-")), df, header=true)
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([resultPrefix, outputSuffix, "f1score"], "-")), df, header=true)
 end
 
 
@@ -248,6 +250,7 @@ end
 function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String, weightMaps, weightMapNames)
     dataMeans = Array{Any}(undef, length(dataNames))
     for dataID in eachindex(dataNames)
+        # println(dataNames[dataID])
         dataMeans[dataID] = CompareMultipleModelExtendedDensity(dataNames[dataID], suffixNames, weightMaps)
     end
     col_types = vcat(String, repeat([Float64], length(suffixNames)))
@@ -258,7 +261,7 @@ function OutputMultipleModelExtendedDensity(dataNames::Array{String}, suffixName
         for dataID in 1:length(dataNames)
             push!(df, vcat(dataNames[dataID], dataMeans[dataID][wID]))
         end
-        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join(["average", outputSuffix, weightMapNames[wID]], "-")), df, header=true)
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([resultPrefix, outputSuffix, weightMapNames[wID]], "-")), df, header=true)
     end
 end
 
@@ -303,6 +306,7 @@ end
 
 
 # To avoid the survivor's bias, find the intersection of input sets that all algorithms return solutions.
+# Note that if an algorithm has NO valid solution, its validity will be ignored for intersection and we know that it all fails.
 function GetValidOutputMask(dataName::String, suffixNames::Array{String})
     intersection = nothing
     for algID in 1:length(suffixNames)

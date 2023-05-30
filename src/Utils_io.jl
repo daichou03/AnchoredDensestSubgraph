@@ -109,8 +109,21 @@ function exportIN(B::SparseMatrixCSC, FileName::String, Directory::String="../Ex
     for i = 1:N
         indices = B[:,i].nzind
         indices = indices[searchsortedfirst(indices, i) : length(indices)]
-        for j = 1:length(indices)
+        for j = eachindex(indices)
             write(io, string(i," ",indices[j],"\n"))
+        end
+    end
+    close(io)
+end
+
+function exportGephiEdgelist(B::SparseMatrixCSC, FileName::String, Directory::String)
+    io = open(string(Directory,FileName), "w")
+    N = size(B,1)
+    for i = 1:N
+        indices = B[:,i].nzind
+        indices = indices[searchsortedfirst(indices, i) : length(indices)]
+        for j = eachindex(indices)
+            write(io, string(i,",",indices[j],"\n"))
         end
     end
     close(io)

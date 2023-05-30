@@ -28,7 +28,7 @@ RESULT_TYPE_NAMES = ["lpcompstats", "lpcompsets"]
 FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
 
 function GetLPCompResultFileName(dataName::String, solverID::Int, suffixName::String, resultType::Int)
-    name = string(dataName, "-", SOLVER_NAMES[solverID])
+    name = string(dataName, "-", SOLVER_NAMES[solverID == SOLVER_FN_ADS ? SOLVER_FN_ADS : SOLVER_LP_ADSS])
     if length(suffixName) > 0
         name = string(name, "-", suffixName)
     end

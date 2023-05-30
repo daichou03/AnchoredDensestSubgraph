@@ -25,11 +25,10 @@ EVAL_NAMES = ["data_name", "index", "alpha_equal", "alpha_diff", "ext_time_1", "
 FOLDER_LP_EVAL_RESULTS = "../LPEvalResults/"
 
 # suffixName: either a string, or an array containing a suffix for each solverID.
-function CompareResultSets(dataName::String, suffixName)
+function CompareResultSets(dataName::String, suffixNames::Array{String})
     dfs = Array{Any}(undef, 2)
     for solverID in 1:NUM_SOLVERS
-        currSuffixName = suffixName isa String ? suffixName : suffixName[solverID]
-        dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, currSuffixName, RESULT_TYPE_STATS))))
+        dfs[solverID] = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, solverID, suffixNames[solverID], RESULT_TYPE_STATS))))
     end
     nrows = min(nrow(dfs[1]), nrow(dfs[2]))
     dataNameColumn = repeat([dataName], nrows)
@@ -118,7 +117,7 @@ function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{Str
     df1 = nothing
     means = Array{Any}(undef, length(suffixNames))
     for solverID in 1:length(suffixNames)
-        filename = GetLPCompResultFileName(dataName, solverID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS, suffixNames[solverID], RESULT_TYPE_STATS)
+        filename = GetLPCompResultFileName(dataName, solverID, suffixNames[solverID], RESULT_TYPE_STATS)
         fileFound = isfile(string(FOLDER_LP_COMP_RESULTS, filename))
         if fileFound
             df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, filename)))

@@ -1,4 +1,5 @@
 using Dates
+using Printf
 
 # https://stackoverflow.com/a/27930367/10844976
 function print_rgb(r, g, b, t)
@@ -21,6 +22,16 @@ function orderedSubsetIndices(A, B)
     end
     return indices
 end
+
+# r,g,b in [0,1]
+function rgbToHex(r, g, b)
+    red = round(Int, r * 255)
+    green = round(Int, g * 255)
+    blue = round(Int, b * 255)
+    hex_string = "#" * @sprintf("%02X", red) * @sprintf("%02X", green) * @sprintf("%02X", blue)
+    return hex_string
+end
+
 
 # https://stackoverflow.com/questions/25678112/insert-item-into-a-sorted-list-with-julia-with-and-without-duplicates
 insert_and_dedup!(v::Vector, x) = (splice!(v, searchsorted(v,x), [x]); v)

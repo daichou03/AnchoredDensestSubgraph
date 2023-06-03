@@ -165,6 +165,24 @@ function readAnchors(DatasetName::AbstractString, SubDirName::String)
     return anchors
 end
 
+function writeAnchors(DatasetName::AbstractString, SubDirName::String, anchors)
+    dir = folderString(DIR_ANCHOR_NODES, SubDirName)
+    filename = string(dir, DatasetName, ".anchor")
+    if isfile(filename)
+        print(string("Warning: anchor nodes of ", DatasetName, " exists, not overwriting"))
+    else
+        mkpath(dir)
+        io = open(filename, "w")
+        write(io, string(DatasetName, "\n"))
+        write(io, string(length(anchors)), "\n")
+        for anchor in anchors
+            write(io, string(join(map(string, anchor),","), "\n"))
+        end
+        close(io)
+    end
+end
+
+
 #"lastfm","deezer","orkut","livejournal","dblp","youtube","amazon","github","astroph","condmat","grqc","hepph","hepth","brightkite","catster","hamster","douban","gowalla","douban","gowalla","gowalla","douban","gowalla"
 
 

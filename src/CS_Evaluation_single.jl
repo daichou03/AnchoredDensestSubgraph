@@ -15,7 +15,7 @@ include("Utils.jl")
 # For Gephi #
 #############
 # Amazon: Folder=folderString(CS_AMAZON_FOLDER, "Single", "GraphEditor")
-# DBLP: Folder=folderString(CS_DBLP_FOLDER, "Single", "GraphEditor")
+# DBLP: Folder=folderString(FOLDER_CS_DBLP, "Single", "GraphEditor")
 
 function ExportGraphEditor(B::SparseMatrixCSC, R, Ss, Name::String, Folder::String)
     RUnion = copy(R)

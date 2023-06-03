@@ -578,28 +578,10 @@ end
 # ......
 
 function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
-    MaxHops = DEF_USER_MAX_HOPS
-    UserTargetSize = DEF_USER_TARGET_SIZE
-    Repeats = DEF_ANCHOR_REPEATS
-    Steps = DEF_AHCHOR_STEPS
-    RNodeDegreeCap = DEFAULT_R_NODE_DEGREE_CAP
-
-    dir = folderString(DIR_ANCHOR_NODES,OutputSubDirName)
-    filename = string(dir, ds_name, ".anchor")
-    if !isfile(filename)
-        dataset = readIN(string(ds_name, ".in"))
-        user_inputs = BulkGenerateUserInputSet(dataset, Tests, MaxHops, UserTargetSize)
-        anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, Repeats, Steps, RNodeDegreeCap)
-
-        mkpath(dir)
-        io = open(filename, "w")
-        write(io, string(ds_name, "\n"))
-        write(io, string(Tests), "\n")
-        for anchor in anchors
-            write(io, string(join(map(string, anchor),","), "\n"))
-        end
-        close(io)
-    end
+    dataset = readIN(string(ds_name, ".in"))
+    user_inputs = BulkGenerateUserInputSet(dataset, Tests, DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE)
+    anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, DEFAULT_R_NODE_DEGREE_CAP)
+    writeAnchors(DatasetName::AbstractString, SubDirName::String, anchors)
 end
 
 function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)

@@ -9,18 +9,15 @@ include("maxflow.jl")
 include("Utils_io.jl")
 include("Utils_graph.jl")
 include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
 include("Utils.jl")
-include("Query_test_yd.jl")
 include("CS_generic.jl")
-include("Test_degeneracy_yd.jl")
 
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.
 
-CS_DBLP_FOLDER = "../CaseStudy/DBLP/"
-CS_DBLP_RAW_FOLDER = folderString(CS_DBLP_FOLDER, "Raw")
-CS_DBLP_IN_FOLDER = folderString(CS_DBLP_FOLDER, "IN")
+FOLDER_CS_DBLP = "../CaseStudy/DBLP/"
+FOLDER_CS_DBLP_RAW = folderString(FOLDER_CS_DBLP, "Raw")
+FOLDER_CS_DBLP_IN = folderString(FOLDER_CS_DBLP, "IN")
 
 DBLP_NAME_FILE = "ent.author"
 DBLP_CI_FILE = "csdblp.in"
@@ -32,7 +29,7 @@ DBLP_COLLAB_MULTI_TOTAL = 29487744
 # Read raw to make an array of all nodes so that can index -> article title.
 
 function LoadDBLPNameAsArray()
-    io_read = open(string(CS_DBLP_RAW_FOLDER,DBLP_NAME_FILE))
+    io_read = open(string(FOLDER_CS_DBLP_RAW,DBLP_NAME_FILE))
     names = emptyStringArray(DBLP_AUTHOR_TOTAL)
     while !eof(io_read)
         line = readline(io_read)
@@ -47,9 +44,9 @@ function LoadDBLPNameAsArray()
 end
 
 println("Reading DBLP citation data...")
-B = readIN(DBLP_CI_FILE, CS_DBLP_IN_FOLDER)
+B = readIN(DBLP_CI_FILE, FOLDER_CS_DBLP_IN)
 P = toTransitionGraph(B)
-BW = readMulti("out.dblp_coauthor", DBLP_AUTHOR_TOTAL, DBLP_COLLAB_MULTI_TOTAL, CS_DBLP_RAW_FOLDER)
+BW = readMulti("out.dblp_coauthor", DBLP_AUTHOR_TOTAL, DBLP_COLLAB_MULTI_TOTAL, FOLDER_CS_DBLP_RAW)
 allNames = LoadDBLPNameAsArray()
 
 # V = 95485

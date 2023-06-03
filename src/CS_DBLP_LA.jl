@@ -24,7 +24,7 @@ N_JW = GetAdjacency(B, V_JW, true)
 N2R_JW = GetComponentAdjacency(B, N_JW, false)
 # CandidateSearch(B, V_JW, N2R_JW[1])
 
-CS_DBLP_CANDIDATE_FOLDER = folderString(CS_DBLP_FOLDER, "candidate")
+FOLDER_CS_DBLP_CANDIDATE = folderString(FOLDER_CS_DBLP, "candidate")
 
 function CandidateSearch(V, V2)
     println(string("Degree: ", GetDegree(B, V2)))
@@ -47,8 +47,8 @@ end
 # AttemptNonDegLimit: try to get non-degenerate LA result
 # ForceNonDeg: skip this seed if can't get non-degenerate LA result within AttemptNonDegLimit
 # DegCap: in random walk, only take nodes with degree <= max(10, deg(seedNode) ^ 2)
-function CandidateSearchStore(V::Int64, Candidates, Name::String, SizeMin=0, SizeMax=20, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=false)
-    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, Name)
+function CandidateSearchStore(V::Int64, Candidates, Name::String, SizeMin=0, SizeMax=20, AttemptNonDegLimit=10, ForceNonDeg=true, DegCap=true)
+    folder = folderString(FOLDER_CS_DBLP_CANDIDATE, Name)
     mkpath(folder)
     i = 0
     for v2 in Candidates
@@ -70,7 +70,7 @@ function CandidateSearchStore(V::Int64, Candidates, Name::String, SizeMin=0, Siz
             continue
         end
         Ss = ComputeSS(R)
-        DoWriteSearchResults(v2, R, Ss, Folder)
+        DoWriteSearchResults(v2, R, Ss, folder)
         println(string(Name, ": Node ", v2, " passed the test and report saved. Current at #", i))
     end
     return []
@@ -80,8 +80,8 @@ function ComputeSS(R::Vector{Int64})
     return [LocalAnchoredDensestSubgraph(B, R).source_nodes, LocalCond(B, R)[1], MRW_topK(P, R, 30)] # Can truncate MRW later
 end
 
-function DoWriteSearchResults(V::Int64, R, Ss, Folder::String)
-    io = open(string(Folder, V,".txt"), "w")
+function DoWriteSearchResults(V::Int64, R, Ss, folder::String)
+    io = open(string(folder, V,".txt"), "w")
     write(io, string(V, "\n"))
     write(io, string(join(R, ","), "\n"))
     for j = 1:3
@@ -131,7 +131,7 @@ end
 
 # Use PrimeSeed to make this search is trackable, and are kinda random to choose old and new seeds alike.
 function CollabCandidateStore(PrimeSeed::Int64=65537, StartPos::Int64=1)
-    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, "collab")
+    folder = folderString(FOLDER_CS_DBLP_CANDIDATE, "collab")
     mkpath(folder)
     N = size(B, 1)
     for i = StartPos:N
@@ -171,7 +171,7 @@ end
 
 # Export chosen candidate
 function ExportCandidate(CandidateName::String, CandidateV::Int64)
-    folder = folderString(CS_DBLP_CANDIDATE_FOLDER, CandidateName)
+    folder = folderString(FOLDER_CS_DBLP_CANDIDATE, CandidateName)
     io = open(string(folder, CandidateV, ".txt"))
     v = parse(Int64, readline(io))
     RSs = []
@@ -185,5 +185,5 @@ end
 
 # Stub to call that in CS_Evaluation_Simple
 function ExportGraphEditorDBLP(V, R, Ss, Name)
-    return ExportGraphEditorForDBLP(B, V, R, Ss, Name, folderString(CS_DBLP_FOLDER, "Single", "GraphEditor"))
+    return ExportGraphEditorForDBLP(B, V, R, Ss, Name, folderString(FOLDER_CS_DBLP, "Single", "GraphEditor"))
 end

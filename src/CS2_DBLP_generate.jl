@@ -32,9 +32,9 @@ function collectCandidateAsR()
     end
     writeAnchors(dataName, "baseline", Rs)
     # Write Vs to the same folder
-    file = open(string(FOLDER_CS_DBLP_CANDIDATE_LP, "Vs.txt"), "w")
+    io = open(string(FOLDER_CS_DBLP_CANDIDATE_LP, "Vs.txt"), "w")
     for V in Vs
         write(io, string(V, "\n"))
     end
-    close(file)
+    close(io)
 end

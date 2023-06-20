@@ -173,6 +173,7 @@ end
 
 
 OPT_FORCE_GLOBAL = false # Force running global version rather than running strongly-local
+OPT_SMARTL = true # If true, the starting working graph does not include edges between neighbours of R. This reduces starting |E(L)| at the cost of more iterations. Experiment shows it is beneficial to LP but not so for FN.
 # Strongly-local version that integrates both flow network and linear programming solution.
 function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
     R = sort(R)
@@ -193,45 +194,46 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     # Frontier = R
     alpha = 0.0
     S = Int64[] # Result set for each iteration
-    SRUnion = R # Inner nodes - all edges 
-    P = Int64[] # Peripheral nodes - nodes are in the working graph, but edges between two P nodes do not.
-    F = R # Frontier nodes - a subset of SRUnion where Peripheral nodes grow by F's neighbours per iteration.
-    L = spzeros(0,0) # Working subgraph
+    C = sort(OPT_SMARTL ? R : GetComponentAdjacency(B, R, true)) # Inner nodes - all edges
+    P = R # Result nodes new to SRUnion. Start with non-empty.
+    SRUnion = sort(union(S,R))
+    F = sort(setdiff(GetComponentAdjacency(B, P, false), C)) # Frontier nodes - nodes are in the working graph, but edges between two F nodes do not.
+    L = [B[C,C] B[C,F]; B[F,C] spzeros(length(F),length(F))] # Working subgraph
     int_time = 0
     ext_time = 0
     iters = 0
     inducedDS = GlobalDensestSubgraph(B[R,R])
     if inducedDS.alpha_star >= 1 # If not, return empty results early. This is necessary to have both maximal and minimal algorithm behave similarly in this edge case.
-        while !isempty(F)
-            P = setdiff(union(P, GetComponentAdjacency(B, F, false)), SRUnion)
-            L = [B[SRUnion,SRUnion] B[SRUnion,P]; B[P,SRUnion] spzeros(length(P),length(P))]
-            overdensedMask = map(v->(GetDegree(B,v)>=GetVolume(B,R)), [SRUnion;P])
+        while !isempty(P)
+            overdensedMask = map(v->(GetDegree(B,v)>=GetVolume(B,R)), [C;F])
             if Solver == SOLVER_FN_ADS
-                result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(L, orderedSubsetIndices([SRUnion;P], R), overdensedMask, inducedDS)
+                result_timed = @timed ImprovedGlobalAnchoredDensestSubgraphSetFlow(L, orderedSubsetIndices([C;F], R), overdensedMask, inducedDS)
                 result_S, ext_time_taken = result_timed.value, result_timed.time
                 # Take ext_time as int_time for now.
                 int_time_taken = ext_time_taken
             elseif Solver == SOLVER_LP_ADSS
-                mip_set = [findfirst([SRUnion;P] .== v) for v in (length(S) > 0 ? S : R[inducedDS.source_nodes])]
+                mip_set = [findfirst([C;F] .== v) for v in (length(S) > 0 ? S : R[inducedDS.source_nodes])]
                 if WeightIsADSIX(DEFAULT_WEIGHT_MAP) # IGA optimization is not correct for ADSIX.
                     overdensedMask = nothing
                 end
-                result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(L, orderedSubsetIndices([SRUnion;P], R), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
+                result_timed = @timed SolveLPAnchoredDensestSubgraphGeneric(L, orderedSubsetIndices([C;F], R), DEFAULT_WEIGHT_MAP, overdensedMask, mip_set, lpSolver)
                 ext_time_taken = result_timed.time
                 result_S, int_time_taken = result_timed.value
             else
                 error("Unexpected Solver ID")
             end
-
             alpha = result_S.alpha_star
             int_time += int_time_taken
             ext_time += ext_time_taken
-            S = [SRUnion;P][result_S.source_nodes]
-            F = intersect(S, P)
-            SRUnion = [SRUnion;F]            
+            S = [C;F][result_S.source_nodes]
+            C = sort(union(C, S))
+            P = sort(setdiff(S, SRUnion))
+            SRUnion = sort(union(S,R))
+            F = sort(setdiff(union(F, GetComponentAdjacency(B, P, false)), C))
+            L = [B[C,C] B[C,F]; B[F,C] spzeros(length(F),length(F))]
             iters += 1
             if ShowTrace
-                println(join([densestSubgraph(result_S.alpha_star, S), ext_time, int_time, L.n, nnz(L)÷2, iters, length(S), length(SRUnion), length(P), length(F)], " | "))
+                println(join([densestSubgraph(result_S.alpha_star, S), ext_time, int_time, L.n, nnz(L)÷2, iters, length(S), length(C), length(P), length(SRUnion), length(F)], " | "))
             end
             # ADSFX weights always one-shot
             if WeightIsADSFX(DEFAULT_WEIGHT_MAP)

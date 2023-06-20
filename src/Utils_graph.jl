@@ -181,6 +181,9 @@ end
 # Note there are |S| convertions from array to set, and 1 conversion from set to array.
 # 20210219: Slow on large sets.
 function GetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
+    if isempty(S)
+        return S
+    end
     return collect(SetGetComponentAdjacency(B,S,Self))
 end
 

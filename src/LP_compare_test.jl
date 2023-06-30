@@ -65,9 +65,9 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
 end
 
 
-function ProcessAndOutputAlgorithms(dataName::String, SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
+function ProcessAndOutputAlgorithms(dataName::String, anchorsType="Baseline", SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
-    anchors = readAnchors(dataName, "Baseline")
+    anchors = readAnchors(dataName, anchorsType)
     if sampleSize > 0
         anchors = anchors[1:sampleSize]
     end
@@ -94,6 +94,20 @@ function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, s
     end
 end
 
+
+# Sensitivity test: fixed R size
+function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0)
+    B = readIN(string(dataName, ".in"))
+    for size in sizes
+        anchors = readAnchors(dataName, string("fix-", size))
+        if sampleSize > 0
+            anchors = anchors[1:sampleSize]
+        end
+        statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true])
+        OutputStatsAlgorithms(statsAlgorithms, dataName, string("fix-", size))
+    end
+end
+# -------
 
 warmed_up_solver = false
 

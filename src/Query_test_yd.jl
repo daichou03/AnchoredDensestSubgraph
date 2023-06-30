@@ -191,6 +191,19 @@ function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Arr
     return anchors
 end
 
+TARGET_SIZES = [8,16,32,64,128]
+function GenerateReferenceSetTargetSizeAnchors(B::SparseMatrixCSC, dataName::String, TargetSizes, SameUserInput=false)
+    user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
+    for targetSize in TargetSizes
+        if !SameUserInput
+            user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
+        end
+        anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, targetSize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
+        subDirName = string("fix-",targetSize)
+        writeAnchors(dataName, subDirName, anchors)
+    end
+end
+
 # -------------
 # Query Process
 # -------------

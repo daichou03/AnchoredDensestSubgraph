@@ -96,6 +96,7 @@ end
 
 
 # Sensitivity test: fixed R size
+TARGET_SIZES = [8,16,32,64,128,256,512]
 function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     for size in sizes

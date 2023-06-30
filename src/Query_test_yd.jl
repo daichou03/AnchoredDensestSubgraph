@@ -145,26 +145,27 @@ end
 
 # Copy from Test_degeneracy_yd.GenerateSmallRandomWalksSet with changes.
 function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, TargetSize::Int64, MaxStep::Int64,
-        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=false)
+        RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5, ReportTrapped::Bool=true)
     if length(C) > TargetSize
         return StatsBase.sample(C, TargetSize, replace=false, ordered=true)
     end    
     r = copy(C)
     rDegreeCap = GetRNodeDegreeCap(maximum(map(x->GetDegree(B,x), C)), size(B,1), RNodeDegreeCap)
     step = 0
+    maxStep = MaxStep
     current = rand(C)
     retries = 0
     while length(r) < TargetSize
-        if step < MaxStep
+        if step < maxStep
             step += 1
             current = rand(GetAdjacency(B, current, false))
             if (current in r) || (GetDegree(B, current) > rDegreeCap)
                 retries += 1
                 if retries >= MaxRetriesMultiplier * length(C)
                     if ReportTrapped
-                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", MaxStep, " hops with C = ", C, ", need to allow one more step."))
+                        println(string("[Information] Failed to finish GenerateSmallRandomWalksSet within ", maxStep, " hops with C = ", C, ", need to allow one more step."))
                     end
-                    return GenerateReferenceSetTargetSize(B, C, TargetSize, MaxStep+1, RNodeDegreeCap, MaxRetriesMultiplier, ReportTrapped) # Allow it to explore further if can't finish
+                    maxStep += 1
                 end
             else
                 retries = 0
@@ -191,12 +192,13 @@ function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Arr
     return anchors
 end
 
-TARGET_SIZES = [8,16,32,64,128]
-function GenerateReferenceSetTargetSizeAnchors(B::SparseMatrixCSC, dataName::String, TargetSizes, SameUserInput=false)
-    user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
+TARGET_SIZES = [8,16,32,64,128,256,512]
+function GenerateReferenceSetTargetSizeAnchors(dataName::String, TargetSizes, SameUserInput=false, Tests=100)
+    B = readIN(string(dataName,".in"))
+    user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
     for targetSize in TargetSizes
         if !SameUserInput
-            user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
+            user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
         end
         anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, targetSize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
         subDirName = string("fix-",targetSize)

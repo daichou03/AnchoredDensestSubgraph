@@ -188,7 +188,6 @@ function GetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=
 end
 
 function SetGetComponentAdjacency(B::SparseMatrixCSC, S::Vector{Int64}, Self::Bool=true)
-    N = size(B,1)
     L = reduce(union, map(x->Set(GetAdjacency(B,x,false)), S))
     if Self
         L = union(L, Set(S))

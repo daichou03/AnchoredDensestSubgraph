@@ -13,6 +13,7 @@ CaseStudy/*
 CS_Competitors/*
 LPCompResults/*
 LPEvalResults/*
+LPEvalResultsRSize/*
 !LPEvalResults/*.gp
 env/*
 src/LP_load_solver.jl

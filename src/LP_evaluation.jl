@@ -23,6 +23,7 @@ EVAL_SS2 = 14
 EVAL_LAST = EVAL_SS2
 EVAL_NAMES = ["data_name", "index", "alpha_equal", "alpha_diff", "ext_time_1", "ext_time_2", "int_time_1", "int_time_2", "ln1", "lm1", "ln2", "lm2", "s_size_1", "s_size_2"]
 FOLDER_LP_EVAL_RESULTS = "../LPEvalResults/"
+FOLDER_LP_EVAL_RESULTS_RSIZE = "../LPEvalResultsRSize/"
 
 # suffixName: either a string, or an array containing a suffix for each solverID.
 function CompareResultSets(dataName::String, suffixNames::Array{String})
@@ -105,6 +106,18 @@ end
 # Optimizaitons
 
 FILENAME_EMPTY_LPCOMPSTATS = "empty.lpcompstats"
+
+function readCompstats(dataName::String, solverID::Int64, suffixName::String, allowEmpty::Bool=false)
+    filename = GetLPCompResultFileName(dataName, solverID, suffixName, RESULT_TYPE_STATS)
+    fileFound = isfile(string(FOLDER_LP_COMP_RESULTS, filename))
+    if (!allowEmpty) || fileFound
+        df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, filename)))
+    else
+        df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, FILENAME_EMPTY_LPCOMPSTATS)))
+    end
+    return df
+end
+
 # 20230323
 # Take ADS (Flow Network), ADSL, ADSF together for example.
 # For example, assume .lpcompstats has name like "amazon-FNLA-FN100.lpcompstats", "google-LPLAS-ADSL100C.lpcompstats", etc.
@@ -117,13 +130,7 @@ function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{Str
     df1 = nothing
     means = Array{Any}(undef, length(suffixNames))
     for solverID in 1:length(suffixNames)
-        filename = GetLPCompResultFileName(dataName, solverID, suffixNames[solverID], RESULT_TYPE_STATS)
-        fileFound = isfile(string(FOLDER_LP_COMP_RESULTS, filename))
-        if fileFound
-            df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, filename)))
-        else
-            df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, FILENAME_EMPTY_LPCOMPSTATS)))
-        end
+        df = readCompstats(dataName, solverID, suffixNames[solverID], true)
         mask = GetValidOutputMask(dataName, suffixNames)
         means[solverID] = [mean(df[mask, column]) for column in names(df)]
     end
@@ -322,6 +329,38 @@ function GetValidOutputMask(dataName::String, suffixNames::Array{String})
     end
     return intersection
 end
+
+
+############################
+# Sensitivity Test: R-Size #
+############################
+
+TARGET_SIZES = [8,16,32,64,128,256,512]
+# Extend results to include E(R), E(L_0), density.
+function RSizeExtendResults(dataName::String, sizes, solverID::Int64=SOLVER_LP_ADSS)
+    B = readIN(string(dataName, ".in"))
+    for rsize in sizes
+        anchors = readAnchors(dataName, string("fix-", rsize))
+        stats = readCompstats(dataName, solverID, string("fix-", rsize), false)
+        results = readCompsets(dataName, solverID, string("fix-", rsize), true)
+        l = length(anchors)
+        density, ER, EL0 = Vector{Float64}(undef, l), Vector{Int64}(undef, l), Vector{Int64}(undef, l)
+        for i in 1:l
+            R = anchors[i]
+            S = results[i]
+            density[i] = nnz(B[S,S]) / length(S)
+            ER[i] = nnz(B[R,R])÷2
+            F = sort(GetComponentAdjacency(B, R, false))
+            EL0[i] = ER[i] + nnz(B[R,F])
+        end
+        stats = hcat(stats, DataFrame(:density => density))
+        stats = hcat(stats, DataFrame(:er => ER))
+        stats = hcat(stats, DataFrame(:el0 => EL0))
+    end
+    filename = GetLPCompResultFileName(dataName, solverID, string("fix-", rsize), RESULT_TYPE_STATS)
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS_RSIZE), filename), stats)
+end
+
 
 # for dataName in dataNames
 #     println(string(dataName, ",", sum(GetValidOutputMask(dataName, suffixNames))))

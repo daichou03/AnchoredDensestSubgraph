@@ -95,19 +95,24 @@ function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, s
 end
 
 
-# Sensitivity test: fixed R size
+############################
+# Sensitivity Test: R-Size #
+############################
+
 TARGET_SIZES = [8,16,32,64,128,256,512]
 function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
-    for size in sizes
-        anchors = readAnchors(dataName, string("fix-", size))
+    for rsize in sizes
+        anchors = readAnchors(dataName, string("fix-", rsize))
         if sampleSize > 0
             anchors = anchors[1:sampleSize]
         end
         statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true])
-        OutputStatsAlgorithms(statsAlgorithms, dataName, string("fix-", size))
+        OutputStatsAlgorithms(statsAlgorithms, dataName, string("fix-", rsize))
     end
 end
+
+
 # -------
 
 warmed_up_solver = false

@@ -338,6 +338,7 @@ end
 TARGET_SIZES = [8,16,32,64,128,256,512]
 # Extend results to include E(R), E(L_0), density.
 function RSizeExtendResults(dataName::String, sizes, solverID::Int64=SOLVER_LP_ADSS)
+    mkpath(FOLDER_LP_EVAL_RESULTS_RSIZE)
     B = readIN(string(dataName, ".in"))
     for rsize in sizes
         anchors = readAnchors(dataName, string("fix-", rsize))
@@ -356,10 +357,30 @@ function RSizeExtendResults(dataName::String, sizes, solverID::Int64=SOLVER_LP_A
         stats = hcat(stats, DataFrame(:density => density))
         stats = hcat(stats, DataFrame(:er => ER))
         stats = hcat(stats, DataFrame(:el0 => EL0))
-    end
-    filename = GetLPCompResultFileName(dataName, solverID, string("fix-", rsize), RESULT_TYPE_STATS)
-    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS_RSIZE), filename), stats)
+        filename = GetLPCompResultFileName(dataName, solverID, string("fix-", rsize), RESULT_TYPE_STATS)
+        CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS_RSIZE), filename), stats)
+    end   
 end
+
+function RSizeToAverage(dataName::String, sizes, solverID::Int64=SOLVER_LP_ADSS)
+    df = nothing
+    for rsize in sizes
+        filename = string(join([dataName, SOLVER_NAMES[solverID], "fix", rsize], "-"), ".lpcompstats")
+        stats = DataFrame(CSV.File(string(FOLDER_LP_EVAL_RESULTS_RSIZE, filename)))
+        stats = filter(row -> row.alpha >= 1, stats)  # Bad Rs
+        if isnothing(df)
+            df = DataFrame()
+            for i in 1:size(stats, 2)
+                df[!, names(stats)[i]] = Float64[]
+            end
+        end
+        push!(df, mean.(eachcol(stats)))
+    end
+    df[!, "r"] = sizes
+    outputName = join([dataName, SOLVER_NAMES[solverID], "sizes"], "-")
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS_RSIZE), outputName), df)
+end
+
 
 
 # for dataName in dataNames

@@ -129,10 +129,10 @@ end
 function CompareMultipleModelResultSets(dataName::String, suffixNames::Array{String})
     df1 = nothing
     means = Array{Any}(undef, length(suffixNames))
-    for solverID in 1:length(suffixNames)
-        df = readCompstats(dataName, solverID, suffixNames[solverID], true)
-        mask = GetValidOutputMask(dataName, suffixNames)
-        means[solverID] = [mean(df[mask, column]) for column in names(df)]
+    mask = GetValidOutputMask(dataName, suffixNames)
+    for solverID in eachindex(suffixNames)
+        df = readCompstats(dataName, solverID, suffixNames[solverID], true)       
+        means[solverID] = [mean(mask[1:size(df, 1), column]) for column in names(df)]
     end
     return means
 end
@@ -174,7 +174,7 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
     mkpath(FOLDER_LP_EVAL_RESULTS)
     for columnID in eachindex(resultColumnNames)
         df = DataFrame([Vector{t}() for t in columnTypes], vcat(resultColumnNames[columnID], suffixNames))
-        for dataID in 1:length(dataNames)
+        for dataID in eachindex(dataNames)
             push!(df, vcat(dataNames[dataID], [row[columnID] for row in dataMeans[dataID]]))
         end
         CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([resultPrefix, outputSuffix, resultColumnNames[columnID]], "-")), df, header=true)
@@ -206,12 +206,12 @@ end
 function CompareMultipleModelF1score(dataName::String, suffixNames::Array{String})
     means = Array{Any}(undef, length(suffixNames))
     anchors = readAnchors(dataName, "Baseline")
+    mask = GetValidOutputMask(dataName, suffixNames)
     for algID in 1:length(suffixNames)
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
         allCount = min(length(anchors), length(results))
-        mask = GetValidOutputMask(dataName, suffixNames)
-        means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:allCount)[mask])
+        means[algID] = mean(map(i->f1score(anchors[i], results[i]), 1:allCount)[mask[1:size(results, 1)]])
     end
     return means
 end
@@ -239,13 +239,13 @@ function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Arra
     weightMeans = Array{Any}(undef, length(weightMaps))
     anchors = readAnchors(dataName, "Baseline")
     B = readIN(string(dataName, ".in"))
+    mask = GetValidOutputMask(dataName, suffixNames)
     for wID in eachindex(weightMaps)
         means = Array{Any}(undef, length(suffixNames))
         for algID in eachindex(suffixNames)
             solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
             results = readCompsets(dataName, solverID, suffixNames[algID], true)
-            mask = GetValidOutputMask(dataName, suffixNames)
-            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), eachindex(results))[mask])
+            means[algID] = mean(map(i->GetExtendedAnchoredDensity(B, anchors[i], results[i], weightMaps[wID]), eachindex(results))[mask[1:size(results, 1)]])
         end
         weightMeans[wID] = means
     end
@@ -279,7 +279,6 @@ function CompareMultipleModelCompletion(dataName::String, suffixNames::Array{Str
     for algID in 1:length(suffixNames)
         solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
         results = readCompsets(dataName, solverID, suffixNames[algID], true)
-        mask = GetValidOutputMask(dataName, suffixNames)
         means[algID] = mean(map(i->length(results[i]) > 0 ? 1 : 0, eachindex(results)))
     end
     return means

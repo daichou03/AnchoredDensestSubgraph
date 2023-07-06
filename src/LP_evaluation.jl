@@ -235,7 +235,7 @@ end
 
 # For density
 # Note this requires reading the original graph.
-function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Array{String}, weightMaps)
+function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Vector{String}, weightMaps)
     weightMeans = Array{Any}(undef, length(weightMaps))
     anchors = readAnchors(dataName, "Baseline")
     B = readIN(string(dataName, ".in"))

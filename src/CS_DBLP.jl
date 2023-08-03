@@ -28,7 +28,7 @@ DBLP_COLLAB_MULTI_TOTAL = 29487744
 # TODO:
 # Read raw to make an array of all nodes so that can index -> article title.
 
-function LoadDBLPNameAsArray()
+function LoadDBLPNameAsArray(reformat = true)
     io_read = open(string(FOLDER_CS_DBLP_RAW,DBLP_NAME_FILE))
     names = emptyStringArray(DBLP_AUTHOR_TOTAL)
     while !eof(io_read)
@@ -36,6 +36,9 @@ function LoadDBLPNameAsArray()
         if !startswith(line, "%")
             lineSplit = split(line, " ")
             ind, name = parse(Int64, lineSplit[1]), lineSplit[2]
+            if reformat  # Specific to the raw file
+                name = replace(replace(name, "\"" => ""), "_" => " ")
+            end
             names[ind] = name
         end
     end

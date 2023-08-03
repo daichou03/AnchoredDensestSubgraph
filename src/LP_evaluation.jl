@@ -233,6 +233,40 @@ function OutputMultipleModelF1score(dataNames::Array{String}, suffixNames::Array
 end
 
 
+function CompareMultipleModelResultSet(dataName::String, suffixNames::Array{String})
+    means = Array{Any}(undef, length(suffixNames))
+    anchors = readAnchors(dataName, "Baseline")
+    mask = GetValidOutputMask(dataName, suffixNames)
+    firstResult = nothing
+    for algID in 1:length(suffixNames)
+        solverID = algID == 1 ? SOLVER_FN_ADS : SOLVER_LP_ADSS
+        results = readCompsets(dataName, solverID, suffixNames[algID], true)
+        if isnothing(firstResult)
+            firstResult = results
+        end
+        allCount = min(length(anchors), length(results))
+        means[algID] = mean(map(i->f1score(firstResult[i], results[i]) >= 1 ? 1 : 0, 1:allCount)[mask[1:size(results, 1)]])
+    end
+    return means
+end
+
+function OutputMultipleModelResultSet(dataNames::Array{String}, suffixNames::Array{String}, outputSuffix::String)
+    dataMeans = Array{Any}(undef, length(dataNames))
+    for dataID in eachindex(dataNames)
+        dataMeans[dataID] = CompareMultipleModelResultSet(dataNames[dataID], suffixNames)
+    end
+    col_names = vcat(["identres"], suffixNames)
+    col_types = vcat(String, repeat([Float64], length(suffixNames)))
+
+    mkpath(FOLDER_LP_EVAL_RESULTS)
+    df = DataFrame([Vector{t}() for t in col_types], col_names)
+    for dataID in 1:length(dataNames)
+        push!(df, vcat(dataNames[dataID], dataMeans[dataID]))
+    end
+    CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS), join([resultPrefix, outputSuffix, "identres"], "-")), df, header=true)
+end
+
+
 # For density
 # Note this requires reading the original graph.
 function CompareMultipleModelExtendedDensity(dataName::String, suffixNames::Vector{String}, weightMaps)

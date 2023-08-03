@@ -112,14 +112,14 @@ plot 'masked-smartL-lmsize' using 2:xtic(1), \
 
 
 set yrange [0.001:300]
-set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, 'Inf' 300)
+set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100)
 set output 'exttime.eps'
 set label 1 "Time (s)" at screen 0.07, 0.25 font "Times-Roman,10"
 plot 'masked-smartL-ext_time' using 2:xtic(1), \
      for [i=3:8] '' using i
 
 set yrange [0.001:300]
-set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100, 'Inf' 300)
+set ytics ('10^{-3}' 0.001, '10^{-2}' 0.01, '10^{-1}' 0.1, '10^{0}' 1, '10^{1}' 10, '10^{2}' 100)
 set output 'inttime.eps'
 set label 1 "Time (s)" at screen 0.07, 0.25 font "Times-Roman,10"
 plot 'masked-smartL-int_time' using 2:xtic(1), \

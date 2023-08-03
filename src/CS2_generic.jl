@@ -40,12 +40,12 @@ function generateGephiFromAnchor(B::SparseMatrixCSC, dataName::String, V::Int64,
         resultSets[solverID + 1] = readCompsets(dataName, solverID, suffixNames[solverID])[queryID]
     end
     unionRes = sort(reduce(union, resultSets))
-    df = generateDataframeGephi(B, dataName, V, resultSets, suffixNames, nodeNames)
+    df = generateDataframeGephi(B, V, resultSets, suffixNames, nodeNames)
     CSV.write(string(folderString(FOLDER_CS_LP), join(["cslp", "node", dataName, queryID, outputSuffix], "-"), ".csv"), df, header=true)
     exportGephiEdgelist(B[unionRes, unionRes], string(join(["cslp", "edge", dataName, queryID, outputSuffix], "-"), ".csv"), folderString(FOLDER_CS_LP))
 end
 
-function generateDataframeGephi(B::SparseMatrixCSC, dataName::String, V::Int64, resultSets, suffixNames::Array{String}, nodeNames)
+function generateDataframeGephi(B::SparseMatrixCSC, V::Int64, resultSets, suffixNames::Array{String}, nodeNames)
     unionRes = sort(reduce(union, resultSets))
     colTypes = vcat(repeat([Int64], 4), repeat([String], 2), repeat([Int64], length(resultSets)))
     colNames = vcat(["id", "orgid", "V", "degree", "Label", "color", "R"], suffixNames)
@@ -54,7 +54,7 @@ function generateDataframeGephi(B::SparseMatrixCSC, dataName::String, V::Int64, 
         orgid = unionRes[id]
         isv = orgid == V ? 1 : 0
         degree = GetDegree(B, orgid)
-        label = string(degree, isnothing(nodeNames) ? "" : string(", ", nodeNames[orgid]))
+        label = string(degree, isnothing(nodeNames) ? "" : string(" - ", nodeNames[orgid]))
         indicator = map(x->orgid in x, resultSets)
         colorInds = Array{Int}(undef, 3)
         for i in 1:3

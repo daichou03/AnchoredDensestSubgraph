@@ -78,6 +78,7 @@ end
 
 OPT_IGA = true # IGA optimization: Set overdensed node's value to 0
 OPT_MIP = false # MIP start optimization
+OPT_MAXIMAL, INIT_OPT_MAXIMAL = true, -1 # (LP only) binary search |S| to find maximal solution
 OPT_FEASIBILITY = false # Currently CPLEX only: Higher feasibility to match problem
 OPT_DUAL = false # Currently CPLEX only: Solve dual problem instead
 OPT_NOPRESOLVE = false # Currently CPLEX only: Do not presolve
@@ -89,7 +90,7 @@ DEFAULT_WEIGHT_MAP = WEIGHT_MAP_ADSL
 
 # Note that you can only assume this algorithm to work as expected with ONLY weight maps defined above,  
 # as they all meet some *SPECIFIC* assumptions (see paper).
-function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int64}, WeightMap = WEIGHT_MAP_ADSL, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER)
+function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int64}, WeightMap = WEIGHT_MAP_ADSL, OverdensedMask=nothing, MIP=nothing, solver=DEFAULT_LP_SOLVER, minSSize=INIT_OPT_MAXIMAL)
     model = SetupLPSolver(solver)
     edgelist = CSCToEdgeListUndirected(B)
     n = B.n
@@ -116,6 +117,12 @@ function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int
                 set_start_value(x[i], 0)
             end
         end            
+    end
+
+    if OPT_MAXIMAL && minSSize >= 1
+        for i = 1:n
+            @constraint(model, x[i] <= 1 / minSSize)
+        end
     end
 
     if OPT_FEASIBILITY
@@ -162,13 +169,32 @@ function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int
     # 20230221: Possible reason of exceptions:
     # Something's wrong when optimize!()
     # Get no result
+    result = nothing
+    solveTime = 0.0
     try
         optimize!(model)
-        return densestSubgraph(objective_value(model), findall(x->value(x)>0, x)), solve_time(model)
+        result = densestSubgraph(objective_value(model), findall(x->value(x)>0, x))
+        solveTime += solve_time(model)
     catch y
         println("Exception: ", y)
         return EMPTY_DENSEST_SUBGRAPH, ERR_TIME_LIMIT
     end
+    # Binary search max size solution by calling this function repeatedly.
+    if OPT_MAXIMAL && minSSize == INIT_OPT_MAXIMAL
+        lower, upper = length(result.source_nodes), n # note lower is the highest |S| value that S is optimal
+        while upper > lower
+            current = round(Int64, ((lower + 1) * upper) ^ 0.5) # log average is likely to converge faster?
+            newResult, newSolveTime = SolveLPAnchoredDensestSubgraphGeneric(B, R, WeightMap, OverdensedMask, MIP, solver, current)
+            if almostEqual(result.alpha_star, newResult.alpha_star)
+                lower = current
+                result = newResult
+            else
+                upper = current - 1
+            end
+            solveTime += newSolveTime
+        end
+    end
+    return result, solveTime
 end
 
 

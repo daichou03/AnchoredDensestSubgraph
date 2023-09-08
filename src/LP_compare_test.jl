@@ -17,7 +17,7 @@ include("LP_algorithm.jl")
 ############################
 # Run LA and Local-LP-ADS# #
 ############################
-function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true], printInterval=1)
+function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, SolverMask::Vector{Bool}=[true, true], lpWeightMap=DEFAULT_WEIGHT_MAP, printInterval=1)
     statsAlgorithms = []
     for solver_index in 1:length(SolverMask)
         if SolverMask[solver_index]
@@ -25,7 +25,7 @@ function ProcessAlgorithms(B::SparseMatrixCSC, anchors::Array{Array{Int,1},1}, S
             prev_time = now()
             for i = 1:length(anchors)
                 R = anchors[i]
-                result_set[i] = DoSolveLocalADS(solver_index, B, R, true, false, DEFAULT_LP_SOLVER)
+                result_set[i] = DoSolveLocalADS(solver_index, B, R, true, false, DEFAULT_LP_SOLVER, lpWeightMap)
                 if printInterval > 0 && (now()-prev_time).value / (printInterval * 1000) > 1
                     print(string(i, " | ", result_set[i], "\n"))
                     prev_time = now()
@@ -65,13 +65,13 @@ function OutputStatsAlgorithms(statsAlgorithms, dataName::String, suffixName::St
 end
 
 
-function ProcessAndOutputAlgorithms(dataName::String, anchorsType="Baseline", SolverMask::Vector{Bool}=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
+function ProcessAndOutputAlgorithms(dataName::String, anchorsType="Baseline", SolverMask::Vector{Bool}=ALL_SOLVERS, lpWeightMap=DEFAULT_WEIGHT_MAP, suffixName::String="", sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, anchorsType)
     if sampleSize > 0
         anchors = anchors[1:sampleSize]
     end
-    statsAlgorithms = ProcessAlgorithms(B, anchors, SolverMask)
+    statsAlgorithms = ProcessAlgorithms(B, anchors, SolverMask, lpWeightMap)
     OutputStatsAlgorithms(statsAlgorithms, dataName, suffixName)
 end
 
@@ -85,12 +85,11 @@ dataset_names_lps = ["livemocha","flickr","hyves","youtube"] # B
 dataset_names_lps = ["google","trec","flixster","dblp","skitter"] # C
 dataset_names_lps = ["indian","pokec","usaroad","livejournal","orkut"] # E
 dataset_names_lps = ["amazon","notredame","digg","citeseer","livemocha","flickr","hyves","youtube","google","trec","flixster","dblp","skitter","indian","pokec","usaroad","livejournal","orkut"]
-# BulkProcessAndOutputAlgorithms(dataset_names_lps, [false, true], "ADSL100C", 100)
 
-function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, suffixName::String="", sampleSize::Int=0)
+function BulkProcessAndOutputAlgorithms(dataset_names, SolverMask=ALL_SOLVERS, lpWeightMap=DEFAULT_WEIGHT_MAP, suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
         println(string(dataName, ":"))
-        proc = @timed ProcessAndOutputAlgorithms(dataName, "Baseline", SolverMask, suffixName, sampleSize)
+        proc = @timed ProcessAndOutputAlgorithms(dataName, "Baseline", SolverMask, lpWeightMap, suffixName, sampleSize)
         println(proc.time)
     end
 end
@@ -114,6 +113,27 @@ function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0
 end
 
 
+#########################
+# Parameterized LP test #
+#########################
+
+# w_CC = 1 in parameterized LP tests.
+function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, wADRange = 0:-0.25:-2, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+    B = readIN(string(dataName, ".in"))
+    anchors = readAnchors(dataName, anchorsType)
+    if sampleSize > 0
+        anchors = anchors[1:sampleSize]
+    end
+    for wAC in wACRange
+        for wAD in wADRange
+            lpWeightMap = [1,wAC,0,0,0,0,wAD]
+            statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true], lpWeightMap)
+            OutputStatsAlgorithms(statsAlgorithms, dataName, join([wAC,abs(wAD),suffixName], "-"))
+        end
+    end
+end
+
+
 # -------
 
 warmed_up_solver = false
@@ -132,10 +152,3 @@ function WarmUpSolvers()
 end
 
 WarmUpSolvers()
-
-# using GLPK
-# DEFAULT_LP_SOLVER = GLPK
-# dataName = "astroph"
-# ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)
-# dataName = "livejournal"
-# ProcessAndOutputAlgorithms(dataName, [false, true], "GLPK100", 100)

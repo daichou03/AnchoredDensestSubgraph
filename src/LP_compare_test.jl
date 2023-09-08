@@ -126,6 +126,7 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, 
     end
     for wAC in wACRange
         for wAD in wADRange
+            println(string("wAC = ", wAC, ", wAD = ", wAD, ":"))
             lpWeightMap = [1,wAC,0,0,0,0,wAD]
             statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true], lpWeightMap)
             OutputStatsAlgorithms(statsAlgorithms, dataName, join([wAC,abs(wAD),suffixName], "-"))

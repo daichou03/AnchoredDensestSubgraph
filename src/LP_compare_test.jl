@@ -135,6 +135,14 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, 
 end
 
 
+function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = 0:0.25:1, wADRange = 0:-0.25:-2, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+    for dataName in dataset_names
+        println(string(dataName, ":"))
+        proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, anchorsType, suffixName, sampleSize)
+        println(proc.time)
+    end
+end
+
 # -------
 
 warmed_up_solver = false

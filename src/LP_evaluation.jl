@@ -415,6 +415,26 @@ function RSizeToAverage(dataName::String, sizes, solverID::Int64=SOLVER_LP_ADSS)
 end
 
 
+#########################
+# Parameterized LP test #
+#########################
+
+function CompareParameterizedLPSsize(dataName::String, suffixName::String="", wACRange = 0:0.25:1, wADRange = 0:-0.25:-2)
+    means = zeros((length(wACRange), length(wADRange)))
+    anchors = readAnchors(dataName, "Baseline")
+    for i in eachindex(wACRange)
+        wAC = wACRange[i]
+        for j in eachindex(wADRange)
+            wAD = wADRange[j]
+            suffix = join([wAC, abs(wAD), suffixName], "-")
+            df = DataFrame(CSV.File(string(FOLDER_LP_COMP_RESULTS, GetLPCompResultFileName(dataName, SOLVER_LP_ADSS, suffix, RESULT_TYPE_STATS))))
+            means[i,j] = mean(df[!, STATS_OUTPUT_SSIZE])
+        end
+    end
+    return means
+end
+
+
 
 # for dataName in dataNames
 #     println(string(dataName, ",", sum(GetValidOutputMask(dataName, suffixNames))))

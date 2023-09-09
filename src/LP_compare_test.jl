@@ -107,7 +107,7 @@ function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0
         if sampleSize > 0
             anchors = anchors[1:sampleSize]
         end
-        statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true])
+        statsAlgorithms = ProcessAlgorithms(B, anchors, LP_SOLVER_ONLY)
         OutputStatsAlgorithms(statsAlgorithms, dataName, string("fix-", rsize))
     end
 end
@@ -128,7 +128,7 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, 
         for wAD in wADRange
             println(string("wAC = ", wAC, ", wAD = ", wAD, ":"))
             lpWeightMap = [1,wAC,0,0,0,0,wAD]
-            statsAlgorithms = ProcessAlgorithms(B, anchors, [false, true], lpWeightMap)
+            statsAlgorithms = ProcessAlgorithms(B, anchors, LP_SOLVER_ONLY, lpWeightMap)
             OutputStatsAlgorithms(statsAlgorithms, dataName, join([wAC,abs(wAD),suffixName], "-"))
         end
     end

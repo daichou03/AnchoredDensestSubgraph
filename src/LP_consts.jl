@@ -3,6 +3,7 @@ SOLVER_FN_ADS = 1
 SOLVER_LP_ADSS = 2
 NUM_SOLVERS = 2
 ALL_SOLVERS = [true, true]
+LP_SOLVER_ONLY = [false, true]
 SOLVER_NAMES = ["FNLA", "LPLAS"]
 ERR_TIME_LIMIT = 9999.0 # The time "reported" if exception when solving LP or having no results
 TIME_LIMIT = 300.0 # Cutoff time for LP solvers

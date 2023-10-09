@@ -142,24 +142,33 @@ function SolveLPAnchoredDensestSubgraphGeneric(B::SparseMatrixCSC, R::Vector{Int
     end
 
     # Weights and objective
-    eir0type = FindWeightMapEIR0Type(WeightMap)
+    eirType = Dict()
+    for i in 0:2
+        eirType[i] = FindWeightMapEIRType(WeightMap, i)  # eirType[2] won't be used -- simply checking if w_RSXR == 0 or error
+    end
     for i = 1:m
         u, v = edgelist[i]
         eir = (u in R ? 1 : 0) + (v in R ? 1 : 0) # |e∩R|
-        if eir == 0 && eir0type == EIR0_TYPE_NEGATIVE
-            wy[i] = WeightMap[WEIGHT_IND_SXE]
+        if eirType[eir] == EIR_TYPE_NEGATIVE
+            if eir == 0
+                wy[i] = WeightMap[WEIGHT_IND_SXE]
+            elseif eir == 1
+                wy[i] = WeightMap[WEIGHT_IND_RSXE] # Note that w_RSXE == w_SXR
+            else # eir == 2, shouldn't happen as w_SRXSR > 0
+                wy[i] = WeightMap[WEIGHT_IND_RSXR]
+            end
             @constraint(model, y[i] >= x[u] - x[v])
             @constraint(model, y[i] >= x[v] - x[u])
-        elseif eir == 0 && eir0type == EIR0_TYPE_ZERO
+        elseif eirType[eir] == EIR_TYPE_ZERO
             wy[i] = 0
             @constraint(model, y[i] == 0)
-        else
-            if eir == 2
-                wy[i] = WeightMap[WEIGHT_IND_RSXRS]
+        else # eirType[eir] == EIR_TYPE_POSITIVE
+            if eir == 0
+                wy[i] = WeightMap[WEIGHT_IND_SXS]
             elseif eir == 1
                 wy[i] = WeightMap[WEIGHT_IND_RSXS]
-            else # eir == 0 && eir0type == EIR0_TYPE_POSITIVE
-                wy[i] = WeightMap[WEIGHT_IND_SXS]
+            else # eir == 2
+                wy[i] = WeightMap[WEIGHT_IND_RSXRS]
             end
             @constraint(model, y[i] <= x[u])
             @constraint(model, y[i] <= x[v])

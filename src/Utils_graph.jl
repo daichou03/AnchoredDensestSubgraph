@@ -315,8 +315,8 @@ WEIGHT_IND_COUNT = 7
 
 WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Runnable on LP, but not strongly local nor optimal on local algorithm.
 WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph for flow network. Note that LP algorithm won't work for this weight map.
-WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched). 20230324: proven to be strongly local nor optimal on local algorithm.
-WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. 20230324: proven to be not strongly local nor optimal on local algorithm.
+WEIGHT_MAP_ADSL = [2,1,0,0,0,0,-1] # Anchored Densest Subgraph Linear (previously called ADS Sharp, the first LP variation researched). 20230324: proven to be strongly local and optimal on local algorithm.
+WEIGHT_MAP_ADSF = [2,1,0,0,0,0,0] # Anchored Densest Subgraph Fast. 20230324: proven to be strongly local nor optimal on local algorithm.
 WEIGHT_MAP_ADSI = [2,1,0,0,1,0,0] # Anchored Densest Subgraph Intense. 20230324: proven to be NOT strongly local nor optimal on local algorithm.
 WEIGHT_MAP_ADSLS = [2,2,0,0,0,0,-1] # ADSL, but weight of R∩S x S is 2. 20230324: All conclusions on locality for ADSXS follows the non-S version.
 WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
@@ -331,25 +331,36 @@ function WeightIsADSIX(weightMap)
 end
 
 
-# EIR0_TYPE_X: X = |e∩R|.
-EIR0_TYPE_ZERO = 0
-EIR0_TYPE_POSITIVE = 1
-EIR0_TYPE_NEGATIVE = -1
+# EIR_TYPE_X: X = |e∩R|.
+EIR_TYPE_ZERO = 0
+EIR_TYPE_POSITIVE = 1
+EIR_TYPE_NEGATIVE = -1
 
 WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # Labels EIR type for each edge type, not an actual WEIGHT_MAP.
 
-# Checks whether the weight values for |e∩R| = 0 edges are all zero, all non-negative or all non-positive.
-# Note this is only a problem for |e∩R| = 0 edges, as |e∩R| = 1 or 2 edges must be all non-negative.
-function FindWeightMapEIR0Type(WeightMap)
-    weightMapEIR0 = findall(WEIGHT_FEATURE_EIR .== 0)
-    if all(x -> x == 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_ZERO
-    elseif all(x -> x >= 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_POSITIVE # All non-negative actually
-    elseif all(x -> x <= 0, WeightMap[weightMapEIR0])
-        return EIR0_TYPE_NEGATIVE # All non-positive actually
+
+# eir: The number of intersecting nodes of e with R, from 0-2.
+# Will check if weightMap for this eir is valid for LP solvability, see error message.
+function FindWeightMapEIRType(WeightMap, eir)
+    weights = WeightMap[findall(WEIGHT_FEATURE_EIR .== eir)]
+    # Check all weights same or 0 first
+    for i in eachindex(weights)
+        w1 = weights[i]
+        for j in i+1 : length(weights)
+            w2 = weights[j]
+            if w1 * w2 * (w1 - w2) != 0
+                throw(ArgumentError(string("Each 2 edge weights in WeightMap with same ", eir, " intersections with R must be either 0 or same")))
+            end
+        end
+    end
+    if all(x -> x == 0, weights)
+        return EIR_TYPE_ZERO
+    elseif all(x -> x >= 0, weights)
+        return EIR_TYPE_POSITIVE # All non-negative actually
+    elseif all(x -> x <= 0, weights)
+        return EIR_TYPE_NEGATIVE # All non-positive actually
     else
-        throw(ArgumentError("All values in WeightMap under the same EIR type must be either non-positive or non-negative"))
+        throw(ArgumentError("Unexpected error"))
     end
 end
 

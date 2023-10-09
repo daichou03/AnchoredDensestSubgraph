@@ -118,7 +118,7 @@ end
 #########################
 
 # w_CC = 1 in parameterized LP tests.
-function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, wADRange = 0:-0.25:-2, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, wADRange = [0,-0.25,-0.5,-1,-2], anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, anchorsType)
     if sampleSize > 0

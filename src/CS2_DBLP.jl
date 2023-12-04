@@ -11,6 +11,7 @@ include("CS_DBLP.jl")
 
 DATA_NAME = "csdblp"
 suffixNames = ["FNcsdblp","ADSLcsdblp","ADSFcsdblp","ADSIcsdblp","ADSLScsdblp","ADSFScsdblp","ADSIScsdblp"]
+# suffixNames = ["FNcsdblp","ADSLcsdblp","ADSFcsdblp","ADSLScsdblp","ADSFScsdblp"]
 indicatorIDs = [3,4,5]
 
 # suffixNames = ["FNcsdblp","ADSLcsdblp","ADSFcsdblp","ADSLScsdblp","ADSFScsdblp"]

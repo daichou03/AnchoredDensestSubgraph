@@ -1,6 +1,6 @@
 README - Last update: 20210818
 
-# Anchored Densest Subgraph
+# On Density-based Local Community Search
 
 ------
 
@@ -102,22 +102,3 @@ Note `R` is a 1-indexed vector of indices of vertices in `A`.
 - Originally fork of https://github.com/nveldt/HypergraphFlowClustering, using `maxflow.jl` with modifications.
 
 ------
-## Troubleshooting
-
-Case 1 - In Linux, when installing Julia packages, found HDF5 related errors:  
-This is due to either HDF5 is not configured properly. Uninstall, install a lower version to force update dependency, uninstall, then install the newest version again can fix.  
-In Linux:
-```
-apt-get -u install hdf5-tools
-```
-
-If still getting `UndefVarError: libhdf5 not defined`:  
-In Julia:  
-```
-using Pkg  
-Pkg.rm("HDF5")  
-Pkg.add(Pkg.PackageSpec(;name="HDF5",version="0.11.1"))  
-Pkg.build("HDF5")  
-Pkg.rm("HDF5")  
-Pkg.add("HDF5") 
-```

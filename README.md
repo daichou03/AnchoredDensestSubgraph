@@ -40,7 +40,7 @@ Loading this graph is equivalent to:
 A = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5)
 ```
 
-Run GADS under graph `A` with `R = [1,2]`, $x (\omega_{12}) = 1, y (\omega_{24}) = -1$ (see Section 1.4):
+Run GADS under graph `A` with `R = [1,2]`, x $(\omega_{12}) = 1$, y $(\omega_{24}) = -1$ (see Section 1.4):
 ```julia
 R = [1,2]
 x = 1
@@ -50,6 +50,8 @@ y = -1
 weight = [2,x,0,0,0,0,y]
 SolveLPAnchoredDensestSubgraphGeneric(A, R, weight)
 ```
+You have just run the LP algorithm introduced in the original paper!
+
 
 Some small (compared to other real-world data graphs), preprocessed real-world data graphs are in /Example_SCC/. For example:
 

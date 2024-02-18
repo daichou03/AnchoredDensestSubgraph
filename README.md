@@ -97,9 +97,10 @@ LocalAnchoredDensestSubgraph(A, R) # The strongly-local implementation
 Note `R` is a 1-indexed vector of indices of vertices in `A`.
 
 ------
-#### Acknowledgement (for code)
+#### Acknowledgments
 
-- Originally fork of https://github.com/nveldt/HypergraphFlowClustering, using `maxflow.jl` with modifications.
+This project is a fork of [HypergraphFlowClustering](https://github.com/nveldt/HypergraphFlowClustering) by [Nate Veldt](https://github.com/nveldt). We are grateful for [Nate Veldt]'s contributions, such as:
+- `maxflow.jl` with modifications.
 
 ------
 ## Troubleshooting

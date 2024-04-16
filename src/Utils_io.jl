@@ -2,6 +2,7 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
+include("Utils.jl")
 
 # read "IN" format.
 # Based on MatrixNetworks::readSMAT.

@@ -16,5 +16,5 @@ LPEvalResults/*
 LPEvalResultsRSize/*
 !LPEvalResults/*.gp
 env/*
-src/LP_load_solver.jl
-src/HTTP_creds.jl
+LP_load_solver.jl
+HTTP_creds.jl

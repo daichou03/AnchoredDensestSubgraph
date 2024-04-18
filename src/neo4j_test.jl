@@ -1,6 +1,6 @@
 using PyCall
 using SparseArrays
-include("HTTP_creds.jl")
+include("neo4j_creds.jl")
 
 neo4j = pyimport("neo4j")
 

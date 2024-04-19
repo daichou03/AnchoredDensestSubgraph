@@ -17,3 +17,4 @@ LPEvalResultsRSize/*
 !LPEvalResults/*.gp
 env/*
 LP_load_solver.jl
+__pycache__

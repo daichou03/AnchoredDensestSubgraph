@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Node Counter</title>
+</head>
+<body>
+    <h1>Database Node Counter</h1>
+    <input type="text" id="database-name" placeholder="Enter database name">
+    <button onclick="getNodeCount()">Get Node Count</button>
+    <p id="result"></p>
+
+    <script>
+        async function getNodeCount() {
+            const databaseName = document.getElementById('database-name').value;
+            const response = await fetch('http://localhost:8000/get-node-count/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `database_name=${encodeURIComponent(databaseName)}`
+            });
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('result').textContent = 'Node count in "' + databaseName + '": ' + data.node_count;
+            } else {
+                document.getElementById('result').textContent = 'Error: ' + data.detail;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,3 +1,6 @@
+cd .\src_fastapi\
+
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 ..\env\python\venv\Scripts\activate
+
 uvicorn app.main:app --reload

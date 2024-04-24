@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Request, HTTPException, Form
+from fastapi import FastAPI, Request, HTTPException, Form, Body
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from neo4j import GraphDatabase, basic_auth
 from fastapi.middleware.cors import CORSMiddleware
+import httpx
 
 
 HTTP_CREDS_USERNAME = "neo4j"
@@ -28,7 +29,7 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def serve_home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse({"request": request}, "index.html")
 
 @app.get("/")
 async def get_index():
@@ -55,3 +56,30 @@ async def get_node_count(database_name: str = Form(None)):
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         driver.close()
+
+
+@app.post("/load-graph/")
+async def load_graph(filename: str = Body(...), dir: str = Body(...)):
+    try:
+        response = httpx.post(
+            "http://localhost:8080",
+            json={"action": "load-graph", "filename": filename, "dir": dir}
+        )
+        response.raise_for_status()
+        return {"message": response.text}
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/solve-gads/")
+async def solve_gads(R: list = Body(...), weight_map: list = Body(...)):
+    try:
+        response = httpx.post("http://localhost:8080", json={"action": "solve-gads", "R": R, "weight_map": weight_map})
+        response.raise_for_status()
+        return response.json()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+

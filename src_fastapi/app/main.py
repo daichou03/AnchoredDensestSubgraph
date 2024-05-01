@@ -25,7 +25,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Set up templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="app/templates")
 
 @app.get("/")
 async def serve_home(request: Request):
@@ -34,6 +34,18 @@ async def serve_home(request: Request):
 @app.get("/")
 async def get_index():
     return FileResponse('templates/index.html')
+
+@app.get("/view-graph/")
+async def view_graph(request: Request):
+    return templates.TemplateResponse("graph.html", {"request": request})
+
+@app.get("/specimen-1/")
+async def test_html(request: Request):
+    return templates.TemplateResponse("specimen-1.html", {"request": request})
+
+@app.get("/test/")
+async def test_html(request: Request):
+    return templates.TemplateResponse("test.html", {"request": request})
 
 
 @app.post("/get-node-count/")

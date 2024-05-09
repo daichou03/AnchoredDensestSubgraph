@@ -42,6 +42,7 @@
                 Character: {
                     label: "name",
                     value: "pagerank",
+                    group: "temp_type" // Use the updated property to assign colors
                 }
             },
             relationships: {
@@ -56,43 +57,29 @@
         viz.render();
     }
 
-    function onCompleteFunction(labelName, propertyName, propertyValue) {
-        return function() {
-            var cypher = `MATCH (n:${labelName}) WHERE n.${propertyName} = "${propertyValue}" RETURN n`;
-            viz.query(cypher, { includeStats: true }, function(results) {
-                var filteredNodes = results.records.map(record => record.get("n"));
-                var nodeIds = filteredNodes.map(node => node.identity.toString());
-                viz.stylize(nodeIds, {
-                    color: "red"
-                });
-            });
-        };
-    }
-
     function filterNodes() {
         var labelName = document.getElementById("labelName").value;
         var propertyName = document.getElementById("propertyName").value;
         var propertyValue = document.getElementById("propertyValue").value;
         var parseAsNumber = document.getElementById("parseAsNumber").checked;
 
-        var cypherQuery = "MATCH (n)";
+        var queryN = "MATCH (n)";
         if (labelName !== "") {
-            cypherQuery += `:${labelName}`;
+            queryN += `:${labelName}`;
         }
 
         if (parseAsNumber) {
-            cypherQuery += ` WHERE toFloat(n.${propertyName}) = ${propertyValue}`;
+            queryN += ` WHERE toFloat(n.${propertyName}) = ${propertyValue}`;
         } else {
-            cypherQuery += ` WHERE n.${propertyName} = "${propertyValue}"`;
+            queryN += ` WHERE n.${propertyName} = "${propertyValue}"`;
         }
-
-        cypherQuery += " MATCH p = (n)-[r]->(m) RETURN p LIMIT 100";
-
-        // var onComplete = onCompleteFunction(labelName, propertyName, propertyValue);
-        // viz.renderWithCypher(cypherQuery, {
-        //     onComplete: onComplete
-        // });
-
+        var cypherQuery = queryN + `
+        WITH n
+        MATCH (n)-[r]-(m)
+        SET m.temp_type = 3
+        SET n.temp_type = 4
+        RETURN n,r,m
+        `;
         viz.renderWithCypher(cypherQuery);
     }
 </script>

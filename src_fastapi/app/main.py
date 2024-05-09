@@ -43,9 +43,9 @@ async def view_graph(request: Request):
 async def test_html(request: Request):
     return templates.TemplateResponse("specimen-1.html", {"request": request})
 
-@app.get("/test/")
-async def test_html(request: Request):
-    return templates.TemplateResponse("test.html", {"request": request})
+# @app.get("/test/")
+# async def test_html(request: Request):
+#     return templates.TemplateResponse("test.html", {"request": request})
 
 
 @app.post("/get-node-count/")

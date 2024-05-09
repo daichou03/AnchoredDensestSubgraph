@@ -3,9 +3,24 @@
 <head>
     <title>DataViz</title>
     <style type="text/css">
+        #container {
+            display: flex;
+            border: 1px solid #ccc; /* Frame around the container */
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #controls {
+            flex: 1;
+            padding: 20px;
+            border-right: 1px solid #ccc; /* Vertical frame between controls and graph */
+        }
+
         #viz {
+            flex: 3;
             width: 900px;
             height: 700px;
+            border-left: 1px solid #ccc; /* Vertical frame between graph and controls */
         }
     </style>
     <script src="https://rawgit.com/neo4j-contrib/neovis.js/master/dist/neovis.js"></script>
@@ -13,38 +28,90 @@
 
 <script type="text/javascript">
     var viz;
+
     function draw() {
         var config = {
-                containerId: "viz",
-                neo4j: {
-                    serverUrl: "bolt://localhost:7687",
-                    serverUser: "neo4j",
-                    serverPassword: "12345678",
-                },
-                serverDatabase: "got",
-                labels: { 
-                    Character: {
-                        label: "name",
-                        value: "pagerank",
-                        //group: "community",
-                    }
-                },
-                relationships: {
-                    INTERACTS: {
-                        value: "weight"
-                    }
-                },
-                initialCypher: "MATCH p = (n)-[r]->(m) RETURN p LIMIT 100"
-            };
+            containerId: "viz",
+            neo4j: {
+                serverUrl: "bolt://localhost:7687",
+                serverUser: "neo4j",
+                serverPassword: "12345678",
+            },
+            serverDatabase: "got",
+            labels: {
+                Character: {
+                    label: "name",
+                    value: "pagerank",
+                }
+            },
+            relationships: {
+                INTERACTS: {
+                    value: "weight"
+                }
+            },
+            initialCypher: "MATCH p = (n)-[r]->(m) RETURN p LIMIT 100"
+        };
 
         viz = new NeoVis.default(config);
         viz.render();
-        
+    }
+
+    function onCompleteFunction(labelName, propertyName, propertyValue) {
+        return function() {
+            var cypher = `MATCH (n:${labelName}) WHERE n.${propertyName} = "${propertyValue}" RETURN n`;
+            viz.query(cypher, { includeStats: true }, function(results) {
+                var filteredNodes = results.records.map(record => record.get("n"));
+                var nodeIds = filteredNodes.map(node => node.identity.toString());
+                viz.stylize(nodeIds, {
+                    color: "red"
+                });
+            });
+        };
+    }
+
+    function filterNodes() {
+        var labelName = document.getElementById("labelName").value;
+        var propertyName = document.getElementById("propertyName").value;
+        var propertyValue = document.getElementById("propertyValue").value;
+        var parseAsNumber = document.getElementById("parseAsNumber").checked;
+
+        var cypherQuery = "MATCH (n)";
+        if (labelName !== "") {
+            cypherQuery += `:${labelName}`;
+        }
+
+        if (parseAsNumber) {
+            cypherQuery += ` WHERE toFloat(n.${propertyName}) = ${propertyValue}`;
+        } else {
+            cypherQuery += ` WHERE n.${propertyName} = "${propertyValue}"`;
+        }
+
+        cypherQuery += " MATCH p = (n)-[r]->(m) RETURN p LIMIT 100";
+
+        // var onComplete = onCompleteFunction(labelName, propertyName, propertyValue);
+        // viz.renderWithCypher(cypherQuery, {
+        //     onComplete: onComplete
+        // });
+
+        viz.renderWithCypher(cypherQuery);
     }
 </script>
 
 <body onload="draw()">
-    <div id="viz"></div>
+    <div id="container">
+        <div id="controls">
+            <label for="labelName">Label (optional):</label>
+            <input type="text" id="labelName" name="labelName"><br><br>
+            <label for="propertyName">Property Name:</label>
+            <input type="text" id="propertyName" name="propertyName"><br><br>
+            <label for="propertyValue">Property Value:</label>
+            <input type="text" id="propertyValue" name="propertyValue">
+            <input type="checkbox" id="parseAsNumber" name="parseAsNumber">
+            <label for="parseAsNumber">Parse as number</label><br><br>
+            <button onclick="filterNodes()">Filter Nodes</button>
+        </div>
+        <div id="viz"></div>
+    </div>
 </body>
 
 </html>

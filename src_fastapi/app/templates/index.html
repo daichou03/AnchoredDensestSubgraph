@@ -7,10 +7,10 @@
 </head>
 <body>
     <label for="database-name">Database Name:</label>
-    <input type="text" id="database-name" value="zachary"><br><br>
+    <input type="text" id="database-name" value="got"><br><br>
     <h2>Run Neo4j Query</h2>
     <label for="any-query">Query:</label>
-    <input type="text" id="any-query" name="any-query" value="MATCH p = (n)-[r]->(m) RETURN p LIMIT 100"><br><br>
+    <input type="text" id="any-query" name="any-query" value="MATCH p = (n)-[r]->(m) RETURN p LIMIT 10"><br><br>
     <button onclick="executeQuery()">Execute Query</button>
     <p id="result-query"></p>
 
@@ -19,39 +19,46 @@
     <p id="result-node-count"></p>
 
     <script>
-        async function executeQuery() {
-            const databaseName = document.getElementById('database-name').value;
-            const query = document.getElementById('any-query').value;
-            const response = await fetch('http://localhost:8000/execute-query/', {
+        async function sendPostRequest(url, body, headers = {'Content-Type': 'application/x-www-form-urlencoded'}) {
+            const response = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(query)}`
+                headers: headers,
+                body: body
             });
             const data = await response.json();
             if (response.ok) {
-                document.getElementById('result-query').textContent = 'Query result: ' + JSON.stringify(data);
+                return data;
             } else {
-                document.getElementById('result-query').textContent = 'Error: ' + (data.detail || 'Failed to execute query');
+                throw new Error(data.detail || 'Unknown error occurred');
+            }
+        }
+
+        async function executeQuery() {
+            const databaseName = document.getElementById('database-name').value;
+            const query = document.getElementById('any-query').value;
+            const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(query)}`;
+            const url = 'http://localhost:8000/execute-query/';
+
+            try {
+                const result = await sendPostRequest(url, body);
+                document.getElementById('result-query').textContent = JSON.stringify(result);
+            } catch (error) {
+                document.getElementById('result-query').textContent = 'Error: ' + error.message;
             }
         }
         async function getNodeCount() {
             const databaseName = document.getElementById('database-name').value;
-            const response = await fetch('http://localhost:8000/get-node-count/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `database_name=${encodeURIComponent(databaseName)}`
-            });
-            const data = await response.json();
-            if (response.ok) {
+            const body = `database_name=${encodeURIComponent(databaseName)}`;
+            const url = 'http://localhost:8000/get-node-count/';
+
+            try {
+                const data = await sendPostRequest(url, body);
                 document.getElementById('result-node-count').textContent = 'Node count in "' + databaseName + '": ' + data.node_count;
-            } else {
-                document.getElementById('result-node-count').textContent = 'Error: ' + data.detail;
+            } catch (error) {
+                document.getElementById('result-node-count').textContent = 'Error: ' + error.message;
             }
         }
+
     </script>
     <a href="/view-graph/">View Graph</a>
 </body>

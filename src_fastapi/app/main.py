@@ -48,26 +48,32 @@ async def test_html(request: Request):
 #     return templates.TemplateResponse("test.html", {"request": request})
 
 
-@app.post("/get-node-count/")
-async def get_node_count(database_name: str = Form(None)):
+@app.post("/execute-query/")
+async def execute_query(database_name: str = Form(...), query: str = Form(...)):
     if not database_name:
         raise HTTPException(status_code=400, detail="Database name must not be empty")
-    print(database_name)
-    uri = "bolt://localhost:7687"  # Adjust as necessary
-    username = HTTP_CREDS_USERNAME  # Default username, replace with your credentials
-    password = HTTP_CREDS_PASSWORD  # Replace with your password
+    if not query:
+        raise HTTPException(status_code=400, detail="Query must not be empty")
+    uri = "bolt://localhost:7687"
+    username = HTTP_CREDS_USERNAME
+    password = HTTP_CREDS_PASSWORD
     driver = GraphDatabase.driver(uri, auth=basic_auth(username, password))
 
     try:
         with driver.session(database=database_name) as session:
-            query = "MATCH (n) RETURN count(n) as node_count"
             result = session.run(query)
-            node_count = result.single()["node_count"]
-        return {"database": database_name, "node_count": node_count}
+            return result.data()
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     finally:
         driver.close()
+    
+
+@app.post("/get-node-count/")
+async def get_node_count(database_name: str = Form(...)):
+    data = await execute_query(database_name, "MATCH (n) RETURN count(n) as node_count")
+    print(data)
+    return {"database": database_name, "node_count": data[0]["node_count"]}
 
 
 @app.post("/load-graph/")

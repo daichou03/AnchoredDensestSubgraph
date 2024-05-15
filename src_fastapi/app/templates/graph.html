@@ -27,7 +27,26 @@
 </head>
 
 <script type="text/javascript">
+    // Not working
+    // import { sendPostRequest } from "/static/js/core.js";
+    // The difficulty level of the problem of importing a js file is non-trivial for this project to be solved
+    // Copy paste from core.js begins
+    async function sendPostRequest(url, body, headers = {'Content-Type': 'application/x-www-form-urlencoded'}) {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: headers,
+            body: body
+        });
+        const data = await response.json();
+        if (response.ok) {
+            return data;
+        } else {
+            throw new Error(data.detail || 'Unknown error occurred');
+        }
+    }
+    // Copy paste from core.js end
     var viz;
+    const databaseName = "got";
 
     function draw() {
         var config = {
@@ -37,7 +56,7 @@
                 serverUser: "neo4j",
                 serverPassword: "12345678",
             },
-            serverDatabase: "got",
+            serverDatabase: databaseName,
             labels: {
                 Character: {
                     label: "name",
@@ -57,31 +76,52 @@
         viz.render();
     }
 
-    function filterNodes() {
+    async function filterNodes() {
         var labelName = document.getElementById("labelName").value;
         var propertyName = document.getElementById("propertyName").value;
         var propertyValue = document.getElementById("propertyValue").value;
         var parseAsNumber = document.getElementById("parseAsNumber").checked;
 
-        var queryN = "MATCH (n)";
+        var query = "MATCH (n)";
         if (labelName !== "") {
-            queryN += `:${labelName}`;
+            query += `:${labelName}`;
         }
 
         if (parseAsNumber) {
-            queryN += ` WHERE toFloat(n.${propertyName}) = ${propertyValue}`;
+            query += ` WHERE toFloat(n.${propertyName}) = ${propertyValue}`;
         } else {
-            queryN += ` WHERE n.${propertyName} = "${propertyValue}"`;
+            query += ` WHERE n.${propertyName} = "${propertyValue}"`;
         }
-        var cypherQuery = queryN + `
-        WITH n
-        MATCH (n)-[r]-(m)
+        query += " RETURN id(n)";
+        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(query)}`;
+        const url = 'http://localhost:8000/execute-query/';
+
+        try {
+            const result = await sendPostRequest(url, body);
+            if (result && result.length > 0) {
+                const nodeIds = result.map(item => item['id(n)']);  // Extract node IDs from the result
+                document.getElementById('nodeIds').value = nodeIds.join(", ");
+                visualizeNodes([], nodeIds);  // Pass the IDs to visualizeNodes function
+            } else {
+                console.log('No nodes found or query error');
+            }
+        } catch (error) {
+            console.error('Error executing query:', error.message);
+        }
+    }
+
+    // Takes set of id(n) and return G(V+(n)m E+(n)) - the graph that includes at least 1 node in n, where n is a node
+    function visualizeNodes(nodeIds) {
+        var idList = nodeIds.join(",");
+        var vizQuery = `
+        MATCH (n) WHERE id(n) IN [${idList}] MATCH p = (n)-[r]->(m) 
         SET m.temp_type = 3
         SET n.temp_type = 4
-        RETURN n,r,m
+        RETURN p LIMIT 100
         `;
-        viz.renderWithCypher(cypherQuery);
+        viz.renderWithCypher(vizQuery);
     }
+
 </script>
 
 <body onload="draw()">
@@ -90,12 +130,14 @@
             <label for="labelName">Label (optional):</label>
             <input type="text" id="labelName" name="labelName"><br><br>
             <label for="propertyName">Property Name:</label>
-            <input type="text" id="propertyName" name="propertyName"><br><br>
+            <input type="text" id="propertyName" name="propertyName" value="community"><br><br>
             <label for="propertyValue">Property Value:</label>
-            <input type="text" id="propertyValue" name="propertyValue">
-            <input type="checkbox" id="parseAsNumber" name="parseAsNumber">
-            <label for="parseAsNumber">Parse as number</label><br><br>
+            <input type="text" id="propertyValue" name="propertyValue" value="1">
+            <input type="checkbox" id="parseAsNumber" name="parseAsNumber" checked>
+            <label for="parseAsNumber">As number</label><br><br>
             <button onclick="filterNodes()">Filter Nodes</button>
+            <label for="nodeIds">id(n):</label>
+            <textarea id="nodeIds" rows="4" cols="50" readonly></textarea>
         </div>
         <div id="viz"></div>
     </div>

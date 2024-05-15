@@ -110,41 +110,6 @@
         }
     }
 
-    // function visualizeNodes(nodeIdsS, nodeIdsR) {
-    // // Convert arrays of IDs to comma-separated strings for Cypher query inclusion
-    //     const idListR = nodeIdsR.join(",");
-    //     const idListS = nodeIdsS.join(",");
-
-    //     // Construct the Cypher query to visualize nodes
-    //     const vizQuery = `
-    //         // Match all nodes involved in the relationships
-    //         MATCH (n)
-    //         WHERE id(n) IN [${idListR}]
-    //         WITH n
-    //         MATCH p = (n)-[r]->(m)
-    //         // Set temp_is_r to 1 if n is in nodeIdsR, else 0 (for m not in nodeIdsR)
-    //         SET n.temp_is_r = 1,
-    //             m.temp_is_r = CASE WHEN id(m) IN [${idListR}] THEN 1 ELSE 0 END
-    //         // Set temp_is_s to 1 if in nodeIdsS, else 0 for both n and m
-    //         SET n.temp_is_s = CASE WHEN id(n) IN [${idListS}] THEN 1 ELSE 0 END,
-    //             m.temp_is_s = CASE WHEN id(m) IN [${idListS}] THEN 1 ELSE 0 END
-    //             SET n.temp_type = CASE 
-    //             WHEN n.temp_is_r = 1 AND n.temp_is_s = 1 THEN 1
-    //             WHEN n.temp_is_r = 0 AND n.temp_is_s = 1 THEN 2
-    //             WHEN n.temp_is_r = 1 AND n.temp_is_s = 0 THEN 3
-    //             ELSE 4 END,
-    //             m.temp_type = CASE 
-    //             WHEN m.temp_is_r = 1 AND m.temp_is_s = 1 THEN 1
-    //             WHEN m.temp_is_r = 0 AND m.temp_is_s = 1 THEN 2
-    //             WHEN m.temp_is_r = 1 AND m.temp_is_s = 0 THEN 3
-    //             ELSE 4 END
-    //         RETURN p
-    //     `;
-
-    //     // Execute the query to visualize the graph with updated properties
-    //     viz.renderWithCypher(vizQuery);
-    // }
-
     async function visualizeNodes(nodeIdsS, nodeIdsR) {
         const idListR = nodeIdsR.join(",");
         const idListS = nodeIdsS.join(",");

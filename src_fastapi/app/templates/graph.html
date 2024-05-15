@@ -110,15 +110,93 @@
         }
     }
 
-    // Takes set of id(n) and return G(V+(n)m E+(n)) - the graph that includes at least 1 node in n, where n is a node
-    function visualizeNodes(nodeIds) {
-        var idList = nodeIds.join(",");
-        var vizQuery = `
-        MATCH (n) WHERE id(n) IN [${idList}] MATCH p = (n)-[r]->(m) 
-        SET m.temp_type = 3
-        SET n.temp_type = 4
-        RETURN p LIMIT 100
+    // function visualizeNodes(nodeIdsS, nodeIdsR) {
+    // // Convert arrays of IDs to comma-separated strings for Cypher query inclusion
+    //     const idListR = nodeIdsR.join(",");
+    //     const idListS = nodeIdsS.join(",");
+
+    //     // Construct the Cypher query to visualize nodes
+    //     const vizQuery = `
+    //         // Match all nodes involved in the relationships
+    //         MATCH (n)
+    //         WHERE id(n) IN [${idListR}]
+    //         WITH n
+    //         MATCH p = (n)-[r]->(m)
+    //         // Set temp_is_r to 1 if n is in nodeIdsR, else 0 (for m not in nodeIdsR)
+    //         SET n.temp_is_r = 1,
+    //             m.temp_is_r = CASE WHEN id(m) IN [${idListR}] THEN 1 ELSE 0 END
+    //         // Set temp_is_s to 1 if in nodeIdsS, else 0 for both n and m
+    //         SET n.temp_is_s = CASE WHEN id(n) IN [${idListS}] THEN 1 ELSE 0 END,
+    //             m.temp_is_s = CASE WHEN id(m) IN [${idListS}] THEN 1 ELSE 0 END
+    //             SET n.temp_type = CASE 
+    //             WHEN n.temp_is_r = 1 AND n.temp_is_s = 1 THEN 1
+    //             WHEN n.temp_is_r = 0 AND n.temp_is_s = 1 THEN 2
+    //             WHEN n.temp_is_r = 1 AND n.temp_is_s = 0 THEN 3
+    //             ELSE 4 END,
+    //             m.temp_type = CASE 
+    //             WHEN m.temp_is_r = 1 AND m.temp_is_s = 1 THEN 1
+    //             WHEN m.temp_is_r = 0 AND m.temp_is_s = 1 THEN 2
+    //             WHEN m.temp_is_r = 1 AND m.temp_is_s = 0 THEN 3
+    //             ELSE 4 END
+    //         RETURN p
+    //     `;
+
+    //     // Execute the query to visualize the graph with updated properties
+    //     viz.renderWithCypher(vizQuery);
+    // }
+
+    async function visualizeNodes(nodeIdsS, nodeIdsR) {
+        const idListR = nodeIdsR.join(",");
+        const idListS = nodeIdsS.join(",");
+
+        const setAttributesQuery = `
+            MATCH (n)
+            WHERE id(n) IN [${idListR}]
+            WITH n
+            MATCH p = (n)-[r]->(m)
+            SET m.temp_is_r = 0
+            SET n.temp_is_r = 1
+            SET n.temp_is_s = CASE WHEN id(n) IN [${idListS}] THEN 1 ELSE 0 END,
+                m.temp_is_s = CASE WHEN id(m) IN [${idListS}] THEN 1 ELSE 0 END
         `;
+
+        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(setAttributesQuery)}`;
+        const url = 'http://localhost:8000/execute-query/';
+
+        try {
+            // Execute setting attributes using the server-side API
+            await sendPostRequest(url, body);
+            // Once attributes are set, call the visualization function
+            doVisualizeNodes(nodeIdsR);
+        } catch (error) {
+            console.error('Error setting attributes:', error.message);
+        }
+    } // TODO: reuse it in this way?
+
+    // Assuming temp_is_r and temp_is_s is set for nodeIdsR,
+    // this function sets temp_type for all nodes in N+(R) for visualization
+    function doVisualizeNodes(nodeIdsR) {
+        const idListR = nodeIdsR.join(",");
+
+        const vizQuery = `
+            MATCH (n)
+            WHERE id(n) IN [${idListR}]
+            WITH n
+            MATCH p = (n)-[r]->(m)
+                SET n.temp_type = CASE 
+                WHEN n.temp_is_r = 1 AND n.temp_is_s = 1 THEN 1
+                WHEN n.temp_is_r = 0 AND n.temp_is_s = 1 THEN 2
+                WHEN n.temp_is_r = 1 AND n.temp_is_s = 0 THEN 3
+                ELSE 4 END,
+                m.temp_type = CASE 
+                WHEN m.temp_is_r = 1 AND m.temp_is_s = 1 THEN 1
+                WHEN m.temp_is_r = 0 AND m.temp_is_s = 1 THEN 2
+                WHEN m.temp_is_r = 1 AND m.temp_is_s = 0 THEN 3
+                ELSE 4 END
+            RETURN p
+        `;
+
+        // Execute the query to visualize the graph with updated properties
         viz.renderWithCypher(vizQuery);
     }
 

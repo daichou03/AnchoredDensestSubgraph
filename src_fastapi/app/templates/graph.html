@@ -76,7 +76,7 @@
         viz.render();
     }
 
-    async function filterNodes() {
+    async function handleFilterNodes() {
         var labelName = document.getElementById("labelName").value;
         var propertyName = document.getElementById("propertyName").value;
         var propertyValue = document.getElementById("propertyValue").value;
@@ -99,9 +99,9 @@
         try {
             const result = await sendPostRequest(url, body);
             if (result && result.length > 0) {
-                const nodeIds = result.map(item => item['id(n)']);  // Extract node IDs from the result
-                document.getElementById('nodeIds').value = nodeIds.join(", ");
-                visualizeNodes([], nodeIds);  // Pass the IDs to visualizeNodes function
+                const nodeIdsR = result.map(item => item['id(n)']);  // Extract node IDs from the result
+                document.getElementById('nodeIdsR').value = nodeIdsR.join(", ");
+                visualizeNodes([], nodeIdsR);  // Pass the IDs to visualizeNodes function
             } else {
                 console.log('No nodes found or query error');
             }
@@ -165,6 +165,76 @@
         viz.renderWithCypher(vizQuery);
     }
 
+    // Performs a local community detection algorithm that takes R, returns S and visualize.
+    // It only uses information from neo4j without calling Julia server (core algorithm).
+    // TODO: refactor - duplications.
+    async function handleDummyLocalCommunityDetection() {
+        var idsStringR = document.getElementById('nodeIdsR').value;
+        var nodeIdsR = idsStringR.split(", ").map(Number);
+        
+        const idListR = nodeIdsR.join(",");
+        const lcdQuery = `
+            MATCH (n)
+            WHERE id(n) IN [${idListR}]
+            WITH n
+            MATCH (n)-[r]->(m)
+            WITH collect(n) + collect(m) AS all_nodes
+            UNWIND all_nodes AS node
+            WITH node
+            WHERE node.pagerank > 0 AND -1/log10(node.pagerank) > rand()
+            RETURN DISTINCT id(node)
+        `;
+
+        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(lcdQuery)}`;
+        const url = 'http://localhost:8000/execute-query/';
+        try {
+            const result = await sendPostRequest(url, body);
+            if (result && result.length > 0) {
+                const nodeIdsS = result.map(item => item['id(node)']);  // Extract node IDs from the result
+                document.getElementById('nodeIdsS').value = nodeIdsS.join(", ");
+                visualizeNodes(nodeIdsS, nodeIdsR);  // Pass the IDs to visualizeNodes function
+            } else {
+                console.log('No nodes found or query error');
+            }
+        } catch (error) {
+            console.error('Error executing query:', error.message);
+        }
+    }
+
+    async function dummyLocalCommunityDetection(nodeIdsR) {
+        const idListR = nodeIdsR.join(",");
+
+        const setAttributesQuery = `
+            MATCH (n)
+            WHERE id(n) IN [${idListR}]
+            WITH n
+            MATCH (n)-[r]->(m)
+            SET m.temp_is_r = 0,
+                n.temp_is_r = 1
+            WITH n, m
+            WITH collect(n) + collect(m) AS all_nodes
+            UNWIND all_nodes AS node
+            SET node.temp_is_s = CASE WHEN node.pagerank > 0 AND -log10(node.pagerank) > rand() THEN 1 ELSE 0 END
+            WITH node
+            WHERE node.temp_is_s = 1
+            RETURN DISTINCT id(node) AS node_id
+        `;
+
+        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(setAttributesQuery)}`;
+        const url = 'http://localhost:8000/execute-query/';
+
+        try {
+            // Execute setting attributes using the server-side API
+            await sendPostRequest(url, body);
+            // Once attributes are set, call the visualization function
+            doVisualizeNodes(nodeIdsR);
+        } catch (error) {
+            console.error('Error setting attributes:', error.message);
+        }
+    }
+    // TODO:
+    // Synchronized solution: ensure Julia loaded the "same" graph so it can only take R (and parameters) and return S
+
 </script>
 
 <body onload="draw()">
@@ -178,9 +248,12 @@
             <input type="text" id="propertyValue" name="propertyValue" value="1">
             <input type="checkbox" id="parseAsNumber" name="parseAsNumber" checked>
             <label for="parseAsNumber">As number</label><br><br>
-            <button onclick="filterNodes()">Filter Nodes</button>
-            <label for="nodeIds">id(n):</label>
-            <textarea id="nodeIds" rows="4" cols="50" readonly></textarea>
+            <button onclick="handleFilterNodes()">Filter Nodes</button><br><br>
+            <label for="nodeIdsR">ids of R:</label>
+            <textarea id="nodeIdsR" rows="4" cols="50" readonly></textarea><br><br>
+            <label for="nodeIdsS">ids of S:</label>
+            <textarea id="nodeIdsS" rows="4" cols="50" readonly></textarea><br><br>
+            <button onclick="handleDummyLocalCommunityDetection()">Dummy LCD</button><br><br>
         </div>
         <div id="viz"></div>
     </div>

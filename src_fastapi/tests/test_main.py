@@ -3,10 +3,16 @@ from ..app.main import app
 
 client = TestClient(app)
 
+# Sanity
 def test_get():
     response = client.get("/")
     assert response.status_code == 200
-    # assert response.json() == {"message": "Graph loaded successfully"}
+
+# FastAPI -> Julia server
+def test_load_graph_sync():
+    response = client.post("/load-graph-sync/", json="got")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Synchronized data got loaded successfully"}
 
 def test_load_graph():
     response = client.post("/load-graph/", json={"filename": "pincer.in", "dir": "../Example_small/"})

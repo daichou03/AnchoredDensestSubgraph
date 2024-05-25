@@ -22,6 +22,7 @@ include("Utils.jl")
 # Note: if reading data with multi-edges, M should count duplicate edges multiple times (not once).
 
 DIR_EXAMPLE_SCC = "../Example_SCC/"
+DIR_EXAMPLE_DEMO_SYNC = "../Example_demo_sync/"
 DIR_ANCHOR_NODES = "../AnchorNodes/"
 
 function readRaw(FileName::AbstractString, N::Int, M::Int, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)

@@ -46,7 +46,10 @@
     }
     // Copy paste from core.js end
     var viz;
-    const databaseName = "got";
+
+    function getDatabaseName() {
+        return databaseName = document.getElementById("databaseName").value;
+    }
 
     function draw() {
         var config = {
@@ -56,7 +59,7 @@
                 serverUser: "neo4j",
                 serverPassword: "12345678",
             },
-            serverDatabase: databaseName,
+            serverDatabase: getDatabaseName(),
             labels: {
                 Character: {
                     label: "name",
@@ -92,14 +95,14 @@
         } else {
             query += ` WHERE n.${propertyName} = "${propertyValue}"`;
         }
-        query += " RETURN id(n)";
-        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(query)}`;
+        query += " RETURN n.julia_id";
+        const body = `database_name=${encodeURIComponent(getDatabaseName())}&query=${encodeURIComponent(query)}`;
         const url = 'http://localhost:8000/execute-query/';
 
         try {
             const result = await sendPostRequest(url, body);
             if (result && result.length > 0) {
-                const nodeIdsR = result.map(item => item['id(n)']);  // Extract node IDs from the result
+                const nodeIdsR = result.map(item => item['n.julia_id']);  // Extract node IDs from the result
                 document.getElementById('nodeIdsR').value = nodeIdsR.join(", ");
                 visualizeNodes([], nodeIdsR);  // Pass the IDs to visualizeNodes function
             } else {
@@ -116,16 +119,16 @@
 
         const setAttributesQuery = `
             MATCH (n)
-            WHERE id(n) IN [${idListR}]
+            WHERE n.julia_id IN [${idListR}]
             WITH n
             MATCH p = (n)-[r]->(m)
             SET m.temp_is_r = 0
             SET n.temp_is_r = 1
-            SET n.temp_is_s = CASE WHEN id(n) IN [${idListS}] THEN 1 ELSE 0 END,
-                m.temp_is_s = CASE WHEN id(m) IN [${idListS}] THEN 1 ELSE 0 END
+            SET n.temp_is_s = CASE WHEN n.julia_id IN [${idListS}] THEN 1 ELSE 0 END,
+                m.temp_is_s = CASE WHEN m.julia_id IN [${idListS}] THEN 1 ELSE 0 END
         `;
 
-        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(setAttributesQuery)}`;
+        const body = `database_name=${encodeURIComponent(getDatabaseName())}&query=${encodeURIComponent(setAttributesQuery)}`;
         const url = 'http://localhost:8000/execute-query/';
 
         try {
@@ -145,7 +148,7 @@
 
         const vizQuery = `
             MATCH (n)
-            WHERE id(n) IN [${idListR}]
+            WHERE n.julia_id IN [${idListR}]
             WITH n
             MATCH p = (n)-[r]->(m)
                 SET n.temp_type = CASE 
@@ -175,22 +178,22 @@
         const idListR = nodeIdsR.join(",");
         const lcdQuery = `
             MATCH (n)
-            WHERE id(n) IN [${idListR}]
+            WHERE n.julia_id IN [${idListR}]
             WITH n
             MATCH (n)-[r]->(m)
             WITH collect(n) + collect(m) AS all_nodes
             UNWIND all_nodes AS node
             WITH node
             WHERE node.pagerank > 0 AND -1/log10(node.pagerank) > rand()
-            RETURN DISTINCT id(node)
+            RETURN DISTINCT node.julia_id
         `;
 
-        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(lcdQuery)}`;
+        const body = `database_name=${encodeURIComponent(getDatabaseName())}&query=${encodeURIComponent(lcdQuery)}`;
         const url = 'http://localhost:8000/execute-query/';
         try {
             const result = await sendPostRequest(url, body);
             if (result && result.length > 0) {
-                const nodeIdsS = result.map(item => item['id(node)']);  // Extract node IDs from the result
+                const nodeIdsS = result.map(item => item['node.julia_id']);  // Extract node IDs from the result
                 document.getElementById('nodeIdsS').value = nodeIdsS.join(", ");
                 visualizeNodes(nodeIdsS, nodeIdsR);  // Pass the IDs to visualizeNodes function
             } else {
@@ -201,45 +204,69 @@
         }
     }
 
-    async function dummyLocalCommunityDetection(nodeIdsR) {
-        const idListR = nodeIdsR.join(",");
-
-        const setAttributesQuery = `
-            MATCH (n)
-            WHERE id(n) IN [${idListR}]
-            WITH n
-            MATCH (n)-[r]->(m)
-            SET m.temp_is_r = 0,
-                n.temp_is_r = 1
-            WITH n, m
-            WITH collect(n) + collect(m) AS all_nodes
-            UNWIND all_nodes AS node
-            SET node.temp_is_s = CASE WHEN node.pagerank > 0 AND -log10(node.pagerank) > rand() THEN 1 ELSE 0 END
-            WITH node
-            WHERE node.temp_is_s = 1
-            RETURN DISTINCT id(node) AS node_id
-        `;
-
-        const body = `database_name=${encodeURIComponent(databaseName)}&query=${encodeURIComponent(setAttributesQuery)}`;
-        const url = 'http://localhost:8000/execute-query/';
+    async function handleGadsLocalCommunityDetection() {
+        ensureJuliaLoadSyncGraph();
+        var idsStringR = document.getElementById('nodeIdsR').value;
+        var nodeIdsR = idsStringR.split(", ").map(Number);
+        var weightMap = [2, 2, 0, 0, 0, 0, -1];  // Hardcoded weight map
+        const urlGADS = 'http://localhost:8000/solve-gads/';  // Endpoint URL
 
         try {
-            // Execute setting attributes using the server-side API
-            await sendPostRequest(url, body);
-            // Once attributes are set, call the visualization function
-            doVisualizeNodes(nodeIdsR);
+            const payload = JSON.stringify({R: nodeIdsR, weight_map: weightMap});
+            const gadsResponse = await fetch(urlGADS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: payload
+            });
+            if (!gadsResponse.ok) {
+                throw new Error('Failed to fetch from solve-gads endpoint: ', gadsResponse);
+            }
+
+            const nodeIdsS = await gadsResponse.json();  // Parse JSON response to get node IDs
+            const idListS = nodeIdsS.join(",");  // Convert array of node IDs to a string for Cypher query
+
+            if (idListS && idListS.length > 0) {
+                document.getElementById('nodeIdsS').value = nodeIdsS.join(", ");
+                visualizeNodes(nodeIdsS, nodeIdsR);  // Pass the IDs to visualizeNodes function
+            } else {
+                console.log('No nodes found or query error');
+            }
         } catch (error) {
-            console.error('Error setting attributes:', error.message);
+            console.error('Error in community detection or setting attributes:', error.message);
         }
     }
-    // TODO:
-    // Synchronized solution: ensure Julia loaded the "same" graph so it can only take R (and parameters) and return S
+
+    async function ensureJuliaLoadSyncGraph() {
+        const databaseName = getDatabaseName();
+        const loadGraphUrl = 'http://localhost:8000/load-graph-sync/';
+
+        try {
+            // Load graph before performing community detection
+            const loadGraphResponse = await fetch(loadGraphUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ dataname: databaseName })
+            });
+
+            if (!loadGraphResponse.ok) {
+                throw new Error('Failed to sync graph for julia: ', databaseName);
+            }
+        } catch (error) {
+            console.error('Error in community detection or setting attributes:', error.message);
+        }
+    }
 
 </script>
 
 <body onload="draw()">
     <div id="container">
         <div id="controls">
+            <label for="databaseName">Database Name:</label>
+            <input type="text" id="databaseName" name="databaseName" value="got"><hr>
             <label for="labelName">Label (optional):</label>
             <input type="text" id="labelName" name="labelName"><br><br>
             <label for="propertyName">Property Name:</label>
@@ -249,11 +276,16 @@
             <input type="checkbox" id="parseAsNumber" name="parseAsNumber" checked>
             <label for="parseAsNumber">As number</label><br><br>
             <button onclick="handleFilterNodes()">Filter Nodes</button><br><br>
-            <label for="nodeIdsR">ids of R:</label>
+            <label for="nodeIdsR">julia_id of R:</label>
             <textarea id="nodeIdsR" rows="4" cols="50" readonly></textarea><br><br>
-            <label for="nodeIdsS">ids of S:</label>
+            <label for="nodeIdsS">julia_id of S:</label>
             <textarea id="nodeIdsS" rows="4" cols="50" readonly></textarea><br><br>
             <button onclick="handleDummyLocalCommunityDetection()">Dummy LCD</button><br><br>
+            <label for="omega12">ω<sub>12</sub></label>
+            <input type="text" id="omega12" size=5 name="omega12" value="2">
+            <label for="omega24">ω<sub>24</sub></label>
+            <input type="text" id="omega24" size=5 name="omega24" value="-1">
+            <button onclick="handleGadsLocalCommunityDetection()">GADS</button><br><br>
         </div>
         <div id="viz"></div>
     </div>

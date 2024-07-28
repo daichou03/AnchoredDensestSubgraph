@@ -88,7 +88,7 @@ async def load_graph(filename: str = Body(...), dir: str = Body(...)):
         raise HTTPException(status_code=500, detail=str(e))
     
 @app.post("/load-graph-sync/")
-async def load_graph_sync(dataname: str = Body(..., embed=True)):
+async def load_graph_sync(dataname: str = Body(...)):
     try:
         response = httpx.post("http://localhost:8080", json={"action": "load-graph-sync", "dataname": dataname})
         response.raise_for_status()

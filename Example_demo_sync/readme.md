@@ -15,9 +15,17 @@ Aegon-Targaryen-(son-of-Rhaegar),4
 Aegon-V-Targaryen,5
 ```
 
+To initialize the graph database:
+```
+LOAD CSV WITH HEADERS FROM 'file:///got/raw.csv' AS row
+MERGE (source:Node {name: row.Source})
+MERGE (target:Node {name: row.Target})
+CREATE (source)-[:RELATES_TO {id: toInteger(row.id) + 1, weight: toInteger(row.weight)}]->(target);
+```
+
 Copy this file to import folder of the neo4j database, and run this query:
 ```cypher
-LOAD CSV WITH HEADERS FROM 'file:///julia_id.csv' AS row
+LOAD CSV WITH HEADERS FROM 'file:///got/julia_id.csv' AS row
 MATCH (n)
 WHERE n.name = row.name
 SET n.julia_id = toInteger(row.julia_id)

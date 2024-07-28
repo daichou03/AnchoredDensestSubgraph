@@ -50,7 +50,6 @@ function handle_request(request::HTTP.Request)
             return HTTP.Response(200, "Synchronized data $(dataname) loaded successfully")
         
         elseif action == "solve-gads"
-            println(data)
             R = Int64.(data["R"])
             weight_map = Float64.(data["weight_map"])
             result = DoSolveGADS(R, weight_map)

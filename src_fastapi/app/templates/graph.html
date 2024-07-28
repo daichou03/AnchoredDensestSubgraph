@@ -208,7 +208,7 @@
         ensureJuliaLoadSyncGraph();
         var idsStringR = document.getElementById('nodeIdsR').value;
         var nodeIdsR = idsStringR.split(", ").map(Number);
-        var weightMap = [2, 2, 0, 0, 0, 0, -1];  // Hardcoded weight map
+        var weightMap = [2, 2, 0, 0, 0, 0, -1];  // TODO
         const urlGADS = 'http://localhost:8000/solve-gads/';  // Endpoint URL
 
         try {

@@ -1,56 +1,94 @@
-README - Last update: 20240218
+README - Last update: 20241025
 
-# Generalized Anchored Densest Subgraph
+THIS IS THE RELEASE BRANCH FOR PAPER:
+# On Density-based Local Community Search
 
-------
+Depending on your objective, follow steps as below:
+```mermaid
+flowchart LR
+    A>"Getting Started"]
+    B>"(Optional) Change LP Solver"]
+    C1>"Run One Instance"]
+    C2>"Run Case Study"]
+    C3>"Run Experiment"]
+    A --> B
+    B --> C1
+    B --> C2
+    B --> C3
+```
 
-## Getting Started
+---
+```mermaid
+flowchart LR
+    A["Getting Started"]
+```
 
 ### Prerequisites
-(Linux) Install HDF5 if you don't already have it.
-
-### Install 64-bit Julia
+Julia
 
 ### Packages required
-In Julia:
+Installing packages in Julia for example:
 ```julia
 using Pkg
 Pkg.add("MatrixNetworks")
 Pkg.add("MAT")
 Pkg.add("StatsBase")
+Pkg.add("JuMP")
+Pkg.add("HiGHS")  # Skip if using other LP Solver
 ```
 
-### Run 1 instance
-Under `./src`, enter `julia`.
+### Working folder
+For all tasks, open cmd/bash, navigate to the repository's root directory, then enter the `./src` folder and run `julia`
 
-Import this to load the core algorithm:
+---
+```mermaid
+flowchart LR
+    B["(Optional) Change LP Solver"]
+```
+By default, the LP (Linear-Programming) solver `HiGHS` would be (installed and) used.
+If you want to use another LP solver, take `CPLEX` for example, you need to refer to:
+- Install [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/products/ilog-cplex-optimization-studio). You will need to have/obtain a license
+- Install [CPLEX for Julia](https://www.ibm.com/products/ilog-cplex-optimization-studio). Including `Pkg.add("CPLEX")`.
+- In the file `.\src\LP_load_solver.jl`, comment the blocks using HiGHS and uncomment the blocks using CPLEX.
+
+---
+```mermaid
+flowchart LR
+    C1["Run One Instance"]
+```
+
 ```julia
 include("LP_algorithm.jl")
 ```
 
-Read graph file:
-Some toy data graphs are in /Example_small/, for example:
+### Read/create a graph
+Load a toy graph in `./Example_small/` (there are some other toy graphs in the same folder for exploration):
 
 ```julia
 A = readIN("lobster.in", "../Example_small/")
 ```
 
-Loading this graph is equivalent to:
+This graph is same as:
 ```julia
 A = sparse([1,1,1,2,2,3,3,4,2,3,4,3,4,4,5,5], [2,3,4,3,4,4,5,5,1,1,1,2,2,3,3,4], ones(Float64, 16), 5, 5)
 ```
 
-Run GADS under graph `A` with `R = [1,2]`, x $(\omega_{12}) = 1$, y $(\omega_{24}) = -1$ (see Section 1.4):
+Run GADS under graph `A` with $R = [1,2], x (\omega_{12}) = 1, y (\omega_{24}) = -1$ (see Section 1.4):
 ```julia
 R = [1,2]
 x = 1
 y = -1
-# Each number in this array corresponds to a specific edge weight.
-# Due to the limitation of the LP algorithm, changing edge weights other than x and y does not (always) guarantee correctness.
-weight = [2,x,0,0,0,0,y]
+# 7 Numbers in weight corresponds to the Weight Configuration with 10 edge weights as Definition 1 (in paper)
+# minus 3 edge weights excluded by Definition 4-C2 (edge weights of edges between V_3 and V_4).
+# Note: GADS algorithm only guarantee to work on 0 <= x <= 2, y <= 0 and all other weights same as below.
+weight = [2,x,0,0,0,0,y]  # Weight Configuration Ω
 SolveLPAnchoredDensestSubgraphGeneric(A, R, weight)
 ```
-You have just run the LP algorithm introduced in the original paper!
+
+Say the output is `(densestSubgraph(1.2, [1, 2, 3, 4, 5]), 0.001)`, it means
+- $S^*_{\Omega, R} = [1, 2, 3, 4, 5]$, the Local Densest Graph of G under weight configuration $\Omega$ and seed set $R$;
+- $\rho^*_{\Omega, R} = 1.2$, the local density of the above graph;
+- Runtime is $0.001$ seconds.
 
 
 Some small (compared to other real-world data graphs), preprocessed real-world data graphs are in /Example_SCC/. For example:
@@ -105,5 +143,5 @@ A = readRaw("zebra.txt", 27, 111, "../Example_raw")
 ------
 #### Acknowledgments
 
-This project is a fork of [HypergraphFlowClustering](https://github.com/nveldt/HypergraphFlowClustering) by [Nate Veldt](https://github.com/nveldt). We are grateful for [Nate Veldt]'s contributions, such as:
+This code is a fork of [HypergraphFlowClustering](https://github.com/nveldt/HypergraphFlowClustering) by [Nate Veldt](https://github.com/nveldt). We are grateful for [Nate Veldt]'s contributions, such as:
 - `maxflow.jl` with modifications.

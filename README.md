@@ -168,8 +168,7 @@ y = -1
 weight = [2,x,0,0,0,0,y]
 test_name = "myTest"  # Change output folder
 seedset_size = 100  # Evaluate first seedset_size many seed sets of the aforementioned seed sets file. 0 means all in seed sets file.
-BulkProcessAndOutputAlgorithms(dataset_names, solvers, weight, test_name, seedset_size)
-ProcessAndOutputAlgorithms(data_name, anchorsType="Baseline", solvers, weight, test_name, seedset_size)
+ProcessAndOutputAlgorithms(data_name, seedset_folder, solvers, weight, test_name, seedset_size)
 ```
 The output files would appear under `.\LPCompResults\`. For example, the above test would produce these 2 files:
 - `csdblp-LPLAS-myRun.lpcompsets`: result set of each evaluation

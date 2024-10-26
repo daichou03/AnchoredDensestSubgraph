@@ -53,6 +53,7 @@ flowchart LR
     style B stroke-dasharray: 5 5
 ```
 By default, the LP (Linear-Programming) solver `HiGHS` would be (installed and) used.
+
 If you want to use another LP solver, take `CPLEX` for example, you need to refer to:
 - Install [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/products/ilog-cplex-optimization-studio). You will need to have/obtain a license
 - Install [CPLEX for Julia](https://www.ibm.com/products/ilog-cplex-optimization-studio). Including `Pkg.add("CPLEX")`.
@@ -104,6 +105,7 @@ flowchart LR
 - DBLP graph data `csdblp.in`
 - Test seed sets `csdblp.anchor`
 - Author names corresponding to ID `ent.author`
+
 Choose "Download all", extract the content to the root folder of the repository so it would look like
 ```
 .
@@ -146,6 +148,7 @@ flowchart LR
     C3["Experiment"]
 ```
 Not in the original paper, but you can perform bulk evaluation with a set of seed nodes.
+
 In this example, we use the same dataset for Case Study to show how to perform the experiment.
 
 ```julia
@@ -189,7 +192,8 @@ flowchart LR
     D["Accepted input graph file format by Utils_io.readIN()"]
 ```
 
-This algorithm can work on other data graphs you downloaded, for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!).  
+This algorithm can work on other data graphs you downloaded, for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!).
+
 All our experimental data graphs can be found at [SNAP](https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
 
 In our experiment, we preprocessed all the data graphs we used so that they can be loaded by `readIN()` (see above for syntax):  
@@ -217,7 +221,8 @@ Example of a legitimate .in file:
 This line is also a comment.
 ```
 
-Alternatively, a `readRaw()` does the same as `readIN()` but assumes the file does not have a header line for # vertices and # edges.  
+Alternatively, a `readRaw()` does the same as `readIN()` but assumes the file does not have a header line for # vertices and # edges.
+
 Instead, you pass the number of vertices and the number of edges as the parameters:
 
 ```julia

@@ -17,7 +17,7 @@ include("CS_generic.jl")
 
 FOLDER_CS_DBLP = "../CaseStudy/DBLP/"
 FOLDER_CS_DBLP_RAW = folderString(FOLDER_CS_DBLP, "Raw")
-FOLDER_CS_DBLP_IN = folderString("Example_SCC")
+FOLDER_CS_DBLP_IN = folderString("../Example_SCC")
 
 DBLP_NAME_FILE = "ent.author"
 DBLP_CI_FILE = "csdblp.in"

@@ -48,8 +48,8 @@ end
 
 println("Reading DBLP citation data...")
 B = readIN(DBLP_CI_FILE, FOLDER_CS_DBLP_IN)
-P = toTransitionGraph(B)
-BW = readMulti("out.dblp_coauthor", DBLP_AUTHOR_TOTAL, DBLP_COLLAB_MULTI_TOTAL, FOLDER_CS_DBLP_RAW)
+# P = toTransitionGraph(B)  # 20241026 Release: not needed for running what's in readme
+# BW = readMulti("out.dblp_coauthor", DBLP_AUTHOR_TOTAL, DBLP_COLLAB_MULTI_TOTAL, FOLDER_CS_DBLP_RAW)  # 20241026 Release: not needed for running what's in readme
 allNames = LoadDBLPNameAsArray()
 
 # V = 95485

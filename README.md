@@ -9,12 +9,13 @@ flowchart LR
     A>"Getting Started"]
     B>"(Optional) Change LP Solver"]
     C1>"Run One Instance"]
-    C2>"Run Case Study"]
-    C3>"Run Experiment"]
+    C2>"Replicate Case Study"]
+    C3>"Experiment"]
     A --> B
     B --> C1
     B --> C2
     B --> C3
+    style B stroke-dasharray: 5 5
 ```
 
 ---
@@ -35,6 +36,8 @@ Pkg.add("MAT")
 Pkg.add("StatsBase")
 Pkg.add("JuMP")
 Pkg.add("HiGHS")  # Skip if using other LP Solver
+Pkg.add("CSV")
+Pkg.add("DataFrames")
 ```
 
 ### Working folder
@@ -44,6 +47,7 @@ For all tasks, open cmd/bash, navigate to the repository's root directory, then 
 ```mermaid
 flowchart LR
     B["(Optional) Change LP Solver"]
+    style B stroke-dasharray: 5 5
 ```
 By default, the LP (Linear-Programming) solver `HiGHS` would be (installed and) used.
 If you want to use another LP solver, take `CPLEX` for example, you need to refer to:
@@ -82,29 +86,79 @@ y = -1
 # minus 3 edge weights excluded by Definition 4-C2 (edge weights of edges between V_3 and V_4).
 # Note: GADS algorithm only guarantee to work on 0 <= x <= 2, y <= 0 and all other weights same as below.
 weight = [2,x,0,0,0,0,y]  # Weight Configuration Ω
-SolveLPAnchoredDensestSubgraphGeneric(A, R, weight)
+ds = DoSolveLocalADS(SOLVER_LP_ADSS, A, R, false, false, DEFAULT_LP_SOLVER, weight)
+ds.alpha_star  # The Local Densest Graph of G under weight configuration Ω and seed set R
+ds.source_nodes  # The local density of this subgraph
 ```
 
-Say the output is `(densestSubgraph(1.2, [1, 2, 3, 4, 5]), 0.001)`, it means
-- $S^*_{\Omega, R} = [1, 2, 3, 4, 5]$, the Local Densest Graph of G under weight configuration $\Omega$ and seed set $R$;
-- $\rho^*_{\Omega, R} = 1.2$, the local density of the above graph;
-- Runtime is $0.001$ seconds.
-
-
-Some small (compared to other real-world data graphs), preprocessed real-world data graphs are in /Example_SCC/. For example:
+---
+```mermaid
+flowchart LR
+    C2["Replicate Case Study"]
+```
+To reproduce the query demonstrated in A.1 Case Study:
 
 ```julia
-A = readIN("eucore.in", "../Example_SCC/")
+include("LP_algorithm.jl")
+include("CS_DBLP.jl")  # Loading graph and author names, takes time. Variable B would be the dblp graph.
+queryID = 8  # The one used in Case Study
+dataName = "csdblp"
+R = readAnchors(dataName, "Baseline")[queryID]
+x = 2
+y = 0
+weight = [2,x,0,0,0,0,y]
+resultSet = DoSolveLocalADS(SOLVER_LP_ADSS, B, R, false, false, DEFAULT_LP_SOLVER, weight).source_nodes  # List of ID of authors of S_{2,0} in Case Study
+allNames[resultSet]  # Names of authors of S_{2,0} in Case Study
 ```
 
-The loaded data graph (`A`) is in `SparseMatrixCSC` format.
+---
+```mermaid
+flowchart LR
+    C3["Experiment"]
+```
+Not in the original paper, but you can perform bulk evaluation with a set of seed nodes.
 
-To look for codes that mass (re)produce the experimental results:
 ```julia
 include("LP_compare_test.jl")
+data_name = "csdblp"
+# Defines to find seed sets. "Baseline" is default.
+# Say your data graph file is .\Example_SCC\csdblp.in
+# Then the seed sets file should be prepared as .\AnchorNodes\Baseline\csdblp.anchor
+seedset_folder="Baseline"
+# For solvers:
+# Set the 1st entry to true to evaluate the flow network algorithm (FNLA) in paper "Anchored Densest Subgraph".
+# Set the 2nd entry to true to evaluate the linear programming based algorithm (LPLAS) in this paper with edge weights = weight.
+# Note that weight only affects LPLAS, as FNLA only works on one specific edge weights.
+solvers = [false, true]
+x = 1
+y = -1
+weight = [2,x,0,0,0,0,y]
+test_name = "myTest"  # Change output folder
+seedset_size = 100  # Evaluate first seedset_size many seed sets of the aforementioned seed sets file. 0 means all in seed sets file.
+BulkProcessAndOutputAlgorithms(dataset_names, solvers, weight, test_name, seedset_size)
+ProcessAndOutputAlgorithms(data_name, anchorsType="Baseline", solvers, weight, test_name, seedset_size)
+```
+The output files would appear under `.\LPCompResults\`. For example, the above test would produce these 2 files:
+- `csdblp-LPLAS-myRun.lpcompsets`: result set of each evaluation
+- `csdblp-LPLAS-myRun.lpcompstats`: stats:
+    - alpha: max local density
+    - ext_time: total time taken
+    - int_time: For LPLAS, (sum of) time taken reported by LP solver only. For FNLA equals to ext_time
+    - lnsize: Number of nodes in the last working graph (of the local algorithm)
+    - lmsize: Number of edges in the last working graph
+    - iters: number of iterative expansions
+    - ssize: cardinality of the result set
+
+
+
+
+
+------
+```mermaid
+flowchart LR
+    D["Accepted input graph file format by Utils_io.readIN()"]
 ```
 
-#### Accepted input graph by `readIN()`
 This algorithm can work on other data graphs you downloaded, for example, [uk2007](http://konect.cc/networks/dimacs10-uk-2007-05/) (large!).  
 All our experimental data graphs can be found at [SNAP](https://snap.stanford.edu/data/index.html), [KONECT](http://konect.cc/) and [Network Repository](https://networkrepository.com/networks.php).
 
@@ -141,7 +195,10 @@ A = readRaw("zebra.txt", 27, 111, "../Example_raw")
 ```
 
 ------
-#### Acknowledgments
+```mermaid
+flowchart LR
+    Acknowledgements
+```
 
 This code is a fork of [HypergraphFlowClustering](https://github.com/nveldt/HypergraphFlowClustering) by [Nate Veldt](https://github.com/nveldt). We are grateful for [Nate Veldt]'s contributions, such as:
 - `maxflow.jl` with modifications.

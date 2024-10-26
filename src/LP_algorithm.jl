@@ -78,7 +78,7 @@ end
 
 OPT_IGA = true # IGA optimization: Set overdensed node's value to 0
 OPT_MIP = false # MIP start optimization
-OPT_MAXIMAL, INIT_OPT_MAXIMAL = true, -1 # (LP only) binary search |S| to find maximal solution
+OPT_MAXIMAL, INIT_OPT_MAXIMAL = false, -1 # (LP only) binary search |S| to find maximal solution
 OPT_FEASIBILITY = false # Currently CPLEX only: Higher feasibility to match problem
 OPT_DUAL = false # Currently CPLEX only: Solve dual problem instead
 OPT_NOPRESOLVE = false # Currently CPLEX only: Do not presolve

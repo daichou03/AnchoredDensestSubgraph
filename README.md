@@ -9,13 +9,16 @@ flowchart LR
     A>"Getting Started"]
     B>"(Optional) Change LP Solver"]
     C1>"Run One Instance"]
+    C20>"Download Datasets for Case Study"]
     C2>"Replicate Case Study"]
     C3>"Experiment"]
     A --> B
     B --> C1
-    B --> C2
-    B --> C3
+    B --> C20
+    C20 --> C2
+    C20 --> C3
     style B stroke-dasharray: 5 5
+    style C20 stroke-dasharray: 5 5
 ```
 
 ---
@@ -94,9 +97,35 @@ ds.source_nodes  # The local density of this subgraph
 ---
 ```mermaid
 flowchart LR
+    C20["Download Datasets for Case Study"]
+    style C20 stroke-dasharray: 5 5
+```
+[Here](https://drive.google.com/drive/folders/1jqJQZS0DVaiTARj90CVJS9SZ8HWjvWto) for dataset used in case study, including:
+- DBLP graph data `csdblp.in`
+- Test seed sets `csdblp.anchor`
+- Author names corresponding to ID `ent.author`
+Choose "Download all", extract the content to the root folder of the repository so it would look like
+```
+.
+├── src/
+├── ...
+├── AnchorNodes/
+│   ├── Baseline/
+│   │   ├── csdblp.anchor
+├── CaseStudy/
+│   ├── DBLP/
+│   │   ├── Raw
+│   │   │   ├── ent.author
+├── Example_SCC/
+│   ├── csdblp.in
+```
+
+---
+```mermaid
+flowchart LR
     C2["Replicate Case Study"]
 ```
-To reproduce the query demonstrated in A.1 Case Study:
+To replicate the query demonstrated in A.1 Case Study:
 
 ```julia
 include("LP_algorithm.jl")
@@ -117,6 +146,7 @@ flowchart LR
     C3["Experiment"]
 ```
 Not in the original paper, but you can perform bulk evaluation with a set of seed nodes.
+In this example, we use the same dataset for Case Study to show how to perform the experiment.
 
 ```julia
 include("LP_compare_test.jl")

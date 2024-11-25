@@ -312,6 +312,7 @@ WEIGHT_IND_SXS = 5      # S x S
 WEIGHT_IND_SXR = 6      # S x R
 WEIGHT_IND_SXE = 7      # S x ∅
 WEIGHT_IND_COUNT = 7
+# Weight of R X R, R X ∅, ∅ X ∅ is always 0.
 
 WEIGHT_MAP_DS = [2,2,0,0,2,0,0] # (Global) Densest Subgraph. Runnable on LP, but not strongly local nor optimal on local algorithm.
 WEIGHT_MAP_ADS = [2,1,0,0,0,-1,-1] # Anchored Densest Subgraph for flow network. Note that LP algorithm won't work for this weight map.
@@ -323,13 +324,39 @@ WEIGHT_MAP_ADSFS = [2,2,0,0,0,0,0] # ADSF, but weight of R∩S x S is 2
 WEIGHT_MAP_ADSIS = [2,2,0,0,1,0,0] # ADSI, but weight of R∩S x S is 2
 
 function WeightIsADSFX(weightMap)
-    return all(x -> x > 0, weightMap[1:2]) && all(x -> almostEqual(x, 0), weightMap[3:7])
+    return weightMap[1] > 0 && weightMap[1] >= weightMap[2] >= 0 && all(x -> almostEqual(x, 0), weightMap[3:7])
 end
 
 function WeightIsADSIX(weightMap)
     return all(x -> x > 0, weightMap[[1,2,5]]) && all(x -> almostEqual(x, 0), weightMap[[3,4,6,7]])
 end
 
+function WeightIsADS(weightMap) # Anchored Densest Subgraph for flow network only
+    return all(i -> almostEqual(weightMap[i], WEIGHT_MAP_ADS[i]), 1:WEIGHT_IND_COUNT)
+end
+
+function CheckWeightMapLPSolvable(weightMap, eir)
+    weights = weightMap[findall(WEIGHT_FEATURE_EIR .== eir)]
+    # Check all weights same or 0 first
+    for i in eachindex(weights)
+        w1 = weights[i]
+        for j in i+1 : length(weights)
+            w2 = weights[j]
+            if w1 * w2 * (w1 - w2) != 0
+                return false
+            end
+        end
+    end
+    return true
+end
+
+function WeightIsADSGLP(weightMap) # Anchored Densest Subgraph that can be run with LP solution. Guarantee to yield correct solution iff the configuration is local
+    return all(eir -> CheckWeightMapLPSolvable(weightMap, eir), 0:2)
+end
+
+function WeightIsADSLP(weightMap) # Anchored Densest Subgraph that is local and has (correct) LP solution
+    return weightMap[1] > 0 && weightMap[1] >= weightMap[2] >= 0 && all(x -> almostEqual(x, 0), weightMap[3:6]) && weightMap[7] <= 0
+end
 
 # EIR_TYPE_X: X = |e∩R|.
 EIR_TYPE_ZERO = 0
@@ -338,20 +365,11 @@ EIR_TYPE_NEGATIVE = -1
 
 WEIGHT_FEATURE_EIR = [2,1,2,1,0,1,0] # Labels EIR type for each edge type, not an actual WEIGHT_MAP.
 
-
 # eir: The number of intersecting nodes of e with R, from 0-2.
 # Will check if weightMap for this eir is valid for LP solvability, see error message.
-function FindWeightMapEIRType(WeightMap, eir)
-    weights = WeightMap[findall(WEIGHT_FEATURE_EIR .== eir)]
-    # Check all weights same or 0 first
-    for i in eachindex(weights)
-        w1 = weights[i]
-        for j in i+1 : length(weights)
-            w2 = weights[j]
-            if w1 * w2 * (w1 - w2) != 0
-                throw(ArgumentError(string("Each 2 edge weights in WeightMap with same ", eir, " intersections with R must be either 0 or same")))
-            end
-        end
+function FindWeightMapEIRType(weightMap, eir)
+    if !CheckWeightMapLPSolvable(weightMap, eir)
+        throw(ArgumentError(string("Each 2 edge weights in weightMap with same ", eir, " intersections with R must be either 0 or same")))
     end
     if all(x -> x == 0, weights)
         return EIR_TYPE_ZERO

@@ -285,3 +285,17 @@ function DoSolveLocalADS(Solver::Int, B::SparseMatrixCSC, R::Vector{Int64}, More
     end
 end
 
+# Integrated version of GADS, choosing FN or LP algorithm or throw error depending on weightMap.
+function SolveLocalADS(B::SparseMatrixCSC, R::Vector{Int64}, weightMap = DEFAULT_WEIGHT_MAP, allowGLP::Bool=false, MoreStats::Bool=false, ShowTrace::Bool=false, lpSolver=DEFAULT_LP_SOLVER)
+    solver = SOLVER_LP_ADSS
+    if WeightIsADS(weightMap)
+        return DoSolveLocalADS(SOLVER_FN_ADS, B, R, MoreStats, ShowTrace)
+    elseif WeightIsADSLP(weightMap)
+        if allowGLP
+            return DoSolveLocalADS(SOLVER_LP_ADSS, B, R, MoreStats, ShowTrace, lpSolver, weightMap)
+        else
+            throw(ArgumentError(string("allowGLP is set to false while attempting to run weightMap ", weightMap, " that is not local")))
+    else
+        throw(ArgumentError(string("weightMap ", weightMap, " does not satisfy the LP formulation")))
+    end
+end

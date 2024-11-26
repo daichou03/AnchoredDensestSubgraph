@@ -371,6 +371,7 @@ function FindWeightMapEIRType(weightMap, eir)
     if !CheckWeightMapLPSolvable(weightMap, eir)
         throw(ArgumentError(string("Each 2 edge weights in weightMap with same ", eir, " intersections with R must be either 0 or same")))
     end
+    weights = weightMap[findall(WEIGHT_FEATURE_EIR .== eir)]
     if all(x -> x == 0, weights)
         return EIR_TYPE_ZERO
     elseif all(x -> x >= 0, weights)

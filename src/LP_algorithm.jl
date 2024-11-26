@@ -295,6 +295,7 @@ function SolveLocalADS(B::SparseMatrixCSC, R::Vector{Int64}, weightMap = DEFAULT
             return DoSolveLocalADS(SOLVER_LP_ADSS, B, R, MoreStats, ShowTrace, lpSolver, weightMap)
         else
             throw(ArgumentError(string("allowGLP is set to false while attempting to run weightMap ", weightMap, " that is not local")))
+        end
     else
         throw(ArgumentError(string("weightMap ", weightMap, " does not satisfy the LP formulation")))
     end

@@ -13,17 +13,16 @@ include("Utils_graph.jl")
 
 CS_AMAZON_FOLDER = "../CaseStudy/Amazon/"
 
-AMAZON_GRAPH_FILE = string(CS_AMAZON_FOLDER, "IN/com-amazon.ungraph.in")
-
 println("Reading Amazon data...")
-B = readIN(AMAZON_GRAPH_FILE)
+# B = readIN(string(CS_AMAZON_FOLDER, "IN/com-amazon.ungraph.in"))
+B = readIN("csamazon.in")
 P = toTransitionGraph(B)
 
 function ExportIndicesByDegree(Last::Int64=40)
     ios = Any[]
     for i = 1:(Last+1)
         append!(ios, 0)
-        ios[i] = open(string(CS_AMAZON_FOLDER,string("Helper-ind/",i,".txt")), "w")
+        ios[i] = open(string(CS_AMAZON_FOLDER, "Helper-ind/", i, ".txt"), "w")
     end
     for v in 1:size(B,1)
         deg = GetDegree(B, v)

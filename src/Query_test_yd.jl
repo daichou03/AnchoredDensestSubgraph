@@ -596,7 +596,7 @@ function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Test
     dataset = readIN(string(ds_name, ".in"))
     user_inputs = BulkGenerateUserInputSet(dataset, Tests, DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE)
     anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, DEFAULT_R_NODE_DEGREE_CAP)
-    writeAnchors(DatasetName::AbstractString, SubDirName::String, anchors)
+    writeAnchors(ds_name::AbstractString, OutputSubDirName::String, anchors)
 end
 
 function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)

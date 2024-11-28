@@ -117,8 +117,10 @@ end
 # Parameterized LP test #
 #########################
 
+TEST_WAC_RANGE = collect(0:0.2:2)
+TEST_WAD_RANGE = [0, -0.0001, -0.00031, -0.001, -0.0031, -0.01, -0.031, -0.1, -0.31, -1]
 # w_CC = 1 in parameterized LP tests.
-function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, wADRange = [0,-0.25,-0.5,-1,-2], anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+function ProcessAndOutputParameterizedLP(dataName::String; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType::String="Baseline", suffixName::String="", sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     anchors = readAnchors(dataName, anchorsType)
     if sampleSize > 0
@@ -127,7 +129,7 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, 
     for wAC in wACRange
         for wAD in wADRange
             println(string("wAC = ", wAC, ", wAD = ", wAD, ":"))
-            lpWeightMap = [1,wAC,0,0,0,0,wAD]
+            lpWeightMap = [2,wAC,0,0,0,0,wAD]
             statsAlgorithms = ProcessAlgorithms(B, anchors, LP_SOLVER_ONLY, lpWeightMap)
             OutputStatsAlgorithms(statsAlgorithms, dataName, join([wAC,abs(wAD),suffixName], "-"))
         end
@@ -135,7 +137,7 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = 0:0.25:1, 
 end
 
 
-function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = 0:0.25:1, wADRange = 0:-0.25:-2, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
         println(string(dataName, ":"))
         proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, anchorsType, suffixName, sampleSize)

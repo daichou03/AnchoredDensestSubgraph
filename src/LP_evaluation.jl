@@ -182,8 +182,7 @@ function OutputMultipleModelResultSets(dataNames::Array{String}, suffixNames::Ar
 end
 
 
-function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, EmptyIfNotFound::Bool=false, SubDirName::String="")
-    filename = string(folderString(FOLDER_LP_COMP_RESULTS, SubDirName), GetLPCompResultFileName(DataName, SolverID, SuffixName, RESULT_TYPE_SETS))
+function readCompsets(filename::String, EmptyIfNotFound::Bool=false)
     if EmptyIfNotFound && !isfile(filename)
         return [[]] # Returns a single S that is empty
     end
@@ -199,6 +198,11 @@ function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, Em
         end
     end
     return results
+end
+
+function readCompsets(DataName::AbstractString, SolverID, SuffixName::String, EmptyIfNotFound::Bool=false, SubDirName::String="")
+    filename = string(folderString(FOLDER_LP_COMP_RESULTS, SubDirName), GetLPCompResultFileName(DataName, SolverID, SuffixName, RESULT_TYPE_SETS))
+    readCompsets(filename)
 end
 
 

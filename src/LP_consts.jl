@@ -1,3 +1,4 @@
+using Glob
 # Solvers
 SOLVER_FN_ADS = 1
 SOLVER_LP_ADSS = 2
@@ -43,4 +44,8 @@ function GetLPEvalResultFileName(dataName::String, suffixName::String)
         name = string(name, "-", suffixName)
     end
     return name
+end
+
+function GetParameterizedLPResultFileNames(dataName::String, suffixName::String, resultType::Int)
+    return glob(string(FOLDER_LP_COMP_RESULTS, dataName, "-LPLAS-*-*-", suffixName, ".", RESULT_TYPE_NAMES[resultType]), ".")
 end

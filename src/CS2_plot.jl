@@ -6,7 +6,7 @@ include("LP_consts.jl")
 include("Utils_graph.jl")
 include("LP_evaluation.jl")
 
-# Takes the length of the LP results for each x (wAC) and y (wAD) value for specified anchor id.
+# Takes the length of the Parameterized LP results for each x (wAC) and y (wAD) value for specified anchor id.
 # LP results for example are files in: (root)\LPCompResults\dblp-LPLAS-1.0-0.0-mytest.lpcompsets
 function lpResultLengthTo2dCluster(dataName::String, suffixName::String, n::Int)
     # Initialize x, y, z arrays
@@ -15,7 +15,7 @@ function lpResultLengthTo2dCluster(dataName::String, suffixName::String, n::Int)
     z_vals = []
 
     # Use Glob to find files matching the pattern
-    files = glob(string(FOLDER_LP_COMP_RESULTS, dataName, "-LPLAS-*-*-", suffixName, ".lpcompsets"), ".")
+    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
 
     for file in files
         # Extract x and y values from the filename
@@ -84,7 +84,7 @@ function visualize_cluster((x_vals, y_vals, z_vals))
         marker_z = z_vals,  # Use z-values for color coding
         title = "2D Scatter Plot of result length",
         xlabel = "ω_{12}",
-        ylabel = "ω_{24}",
+        ylabel = "log10 of ω_{24}",
         #yticks = y_ticks,
         color = :rainbow,   # Colormap
         legend = false,

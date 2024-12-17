@@ -17,3 +17,5 @@ LPEvalResultsRSize/*
 !LPEvalResults/*.gp
 env/*
 src/LP_load_solver.jl
+
+**/.DS_Store

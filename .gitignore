@@ -9,6 +9,7 @@ PerformanceReportsIntegrated/unused/*
 PerformanceReportsIntegrated/temp/*
 AnchorNodes/*
 DataPoints/*
+DataGraphMeta/*
 CaseStudy/*
 CS_Competitors/*
 LPCompResults/*

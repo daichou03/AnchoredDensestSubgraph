@@ -1,3 +1,4 @@
+# This file explores properties of a result from a single case with the same R but different \w_12 and \w_24 (x and y).
 using Plots
 using Glob
 include("Utils.jl")
@@ -9,48 +10,11 @@ include("LP_evaluation.jl")
 Y_LOG_0_SMOOTH = 0.00001  # y-axis as log10. If y=0, to which value it is smoothed to for plotting.
 REGEX_LPXY = string("-", SOLVER_NAMES[SOLVER_LP_ADSS],"-([0-9.]+)-([0-9.]+)-")
 
-# Takes the length of the Parameterized LP results for each x (wAC) and y (wAD) value for specified anchor id.
-# LP results for example are files in: (root)\LPCompResults\dblp-LPLAS-1.0-0.0-mytest.lpcompsets
-# function lpResultLengthTo2dCluster(dataName::String, suffixName::String, n::Int, ylog0smooth = Y_LOG_0_SMOOTH)
-#     # Initialize x, y, z arrays
-#     x_vals = []
-#     y_vals = []
-#     z_vals = []
 
-#     # Use Glob to find files matching the pattern
-#     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
-
-#     for file in files
-#         # Extract x and y values from the filename
-#         matching = match(Regex(REGEX_LPXY), file)
-#         if matching !== nothing
-#             x = parse(Float64, matching.captures[1])
-#             y = parse(Float64, matching.captures[2])
-#             y = y == 0 ? 0.00001 : y
-
-#             # Read file content and get n-th row's integer count
-#             rows = readlines(file)
-#             if n <= length(rows)
-#                 integers = split(rows[n], ",")
-#                 z = length(integers)
-#             else
-#                 z = 0  # If the n-th row doesn't exist, default to 0
-#             end
-
-#             # Append x, y, z to the respective arrays
-#             push!(x_vals, x)
-#             push!(y_vals, y)
-#             push!(z_vals, z)
-#         end
-#     end
-#     return x_vals, y_vals, z_vals
-# end
-
+## Extract x, y, z values
 function extractLPResultFileData(files::Vector{String}, n::Int, extractZFunction::Function)
     # Initialize x, y, z arrays
-    x_vals = []
-    y_vals = []
-    z_vals = []
+    data = []
 
     for file in files
         # Extract x and y values from the filename
@@ -63,11 +27,17 @@ function extractLPResultFileData(files::Vector{String}, n::Int, extractZFunction
             z = extractZFunction(file, n)
 
             # Append x, y, z to the respective arrays
-            push!(x_vals, x)
-            push!(y_vals, y)
-            push!(z_vals, z)
+            push!(data, (x, y, z))
         end
     end
+
+    # Sort the data by (x, y) in ascending order
+    sorted_data = sort(data, by = x -> (x[1], x[2]))
+
+    # Extract x_vals, y_vals, and z_vals from sorted data
+    x_vals = [x[1] for x in sorted_data]
+    y_vals = [x[2] for x in sorted_data]
+    z_vals = [x[3] for x in sorted_data]
 
     return x_vals, y_vals, z_vals
 end
@@ -114,68 +84,78 @@ function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, 
 end
 
 
-function visualize_cluster((x_vals, y_vals, z_vals))
+## Plot x, y, z values
+function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma)
+    # Smooth y-values: Replace 0 with the specified smooth_y value
+    y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]
+
     # Convert to grid for surface plotting
     x_unique = unique(x_vals)
-    y_unique = unique(y_vals)
+    y_unique = unique(y_smoothed)
     z_matrix = [0.0 for _ in 1:length(x_unique), _ in 1:length(y_unique)]
 
     for i in 1:length(x_vals)
         x_idx = findfirst(==(x_vals[i]), x_unique)
-        y_idx = findfirst(==(y_vals[i]), y_unique)
+        y_idx = findfirst(==(y_smoothed[i]), y_unique)
         z_matrix[x_idx, y_idx] = z_vals[i]
     end
 
+    # Generate y-axis ticks that show the original y-values
+    y_ticks = (log10.(y_smoothed), [string(y) for y in y_vals])
+
+    # Scatter plot without explicit markers, and annotate the z values
     plt = scatter(
         x_vals,
-        log10.(y_vals),
-        marker_z = z_vals,  # Use z-values for color coding
+        log10.(y_smoothed),          # Log-scaled smoothed y-values
+        marker_z = z_vals,           # Use z-values for color coding
         title = "2D Scatter Plot of stats per x and y value",
         xlabel = "ω_{12}",
-        ylabel = "log10 of ω_{24}",
-        #yticks = y_ticks,
-        color = :rainbow,   # Colormap
+        ylabel = "ω_{24}",           # Show original y values
+        yticks = y_ticks,            # Map log10 values to original labels
+        color = palette,            # Colormap
         legend = false,
-        marker = (12, :circle),  # Marker size and style
+        markersize = 12               # Remove marker circles
     )
-    for (x, y, z) in zip(x_vals, log10.(y_vals), z_vals)
-        annotate!(x, y, text("$z", :white, 10))  # Add text annotation
+
+    # Annotate each point with z-values, formatted to 4 significant digits
+    for (x, y, z) in zip(x_vals, log10.(y_smoothed), z_vals)
+        annotate!(x, y, text(z, :white, 10))
     end
+
     return plt
 end
 
-# function visualize_cluster((x_vals, y_vals, z_vals))
-#     # Convert to grid for surface plotting
-#     x_unique = unique(x_vals)
-#     y_unique = unique(y_vals)
-#     z_matrix = [0.0 for _ in 1:length(x_unique), _ in 1:length(y_unique)]
 
-#     for i in 1:length(x_vals)
-#         x_idx = findfirst(==(x_vals[i]), x_unique)
-#         y_idx = findfirst(==(y_vals[i]), y_unique)
-#         z_matrix[x_idx, y_idx] = z_vals[i]
-#     end
+function visualize_contour((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma, log_z::Bool = false)
+    # Smooth y-values: Replace 0 with the specified smooth_y value
+    y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]
 
-#     # plot(
-#     #     x_unique,
-#     #     log10.(y_unique),
-#     #     z_matrix',
-#     #     st = :wireframe,  # :surface
-#     #     title = "Cluster Visualization",
-#     #     xlabel = "X-axis",
-#     #     ylabel = "Log10(Y-axis)",
-#     #     zlabel = "Z-axis",
-#     #     color = :rainbow
-#     # )
-#     # contour(
-#     #     x_unique,
-#     #     log10.(y_unique),
-#     #     z_matrix',
-#     #     title = "Cluster Contour Plot",
-#     #     xlabel = "X-axis",
-#     #     ylabel = "Log10(Y-axis)",
-#     #     color = :rainbow,  # Colormap for visualization
-#     #     clabels = true     # Show contour labels
-#     # )
-#     #y_ticks = [(val, "10^$(Int(round(log10(val), digits=0)))") for val in y_unique if val > 0]
-# end
+    # Apply log10 to z_vals if log_z is true
+    z_transformed = log_z ? log10.(z_vals) : z_vals
+
+    # Generate unique x and y coordinates
+    x_unique = unique(x_vals)
+    y_unique = unique(y_smoothed)
+
+    # Create a z-matrix for contour plotting
+    z_matrix = [NaN for _ in 1:length(x_unique), _ in 1:length(y_unique)]
+    for i in 1:length(x_vals)
+        x_idx = findfirst(==(x_vals[i]), x_unique)
+        y_idx = findfirst(==(y_smoothed[i]), y_unique)
+        z_matrix[x_idx, y_idx] = z_transformed[i]
+    end
+
+    # Plot the contour
+    contour(
+        x_unique,
+        log10.(y_unique),  # Log-scaled y-values for better visualization
+        z_matrix',
+        title = "Contour Plot of Time Elapsed",
+        xlabel = "ω_{12}",
+        ylabel = "log10(ω_{24})",
+        color = palette,  # Colormap for trends
+        fill = true,       # Filled contours
+        legend = :topright
+    )
+end
+

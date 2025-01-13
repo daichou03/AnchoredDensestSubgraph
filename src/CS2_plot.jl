@@ -84,6 +84,55 @@ function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, 
 end
 
 
+function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
+    # Load the original graph B if not provided
+    if B === nothing
+        B = readIN(string(dataName, ".in"))
+    end
+
+    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+
+    # Function to compute density for the n-th result set
+    function densityZ(file::String, n::Int)
+        # Read the n-th row of the result file as the result set S
+        rows = readlines(file)
+        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
+        
+        # Compute density: 2 * nnz(B[S, S]) / length(S)
+        submatrix = B[S, S]
+        num_edges = nnz(submatrix)
+        num_nodes = length(S)
+        return 2 * num_edges / num_nodes
+    end
+
+    return extractLPResultFileData(files, n, densityZ)
+end
+
+
+function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
+    # Load the original graph B if not provided
+    if B === nothing
+        B = readIN(string(dataName, ".in"))
+    end
+
+    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+
+    # Function to compute conductance for the n-th result set
+    function conductanceZ(file::String, n::Int)
+        # Read the n-th row of the result file as the result set S
+        rows = readlines(file)
+        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
+
+        # Compute conductance using GetVolume
+        volume_within = GetVolume(B[S, S])
+        volume_total = GetVolume(B, S)
+        return 1 - volume_within / volume_total
+    end
+
+    return extractLPResultFileData(files, n, conductanceZ)
+end
+
+
 ## Plot x, y, z values
 function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma)
     # Smooth y-values: Replace 0 with the specified smooth_y value
@@ -126,7 +175,7 @@ function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0
 end
 
 
-function visualize_contour((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma, log_z::Bool = false)
+function visualize_contour((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :viridis, log_z::Bool = false)
     # Smooth y-values: Replace 0 with the specified smooth_y value
     y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]
 
@@ -150,7 +199,7 @@ function visualize_contour((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0
         x_unique,
         log10.(y_unique),  # Log-scaled y-values for better visualization
         z_matrix',
-        title = "Contour Plot of Time Elapsed",
+        title = "Contour Plot",
         xlabel = "ω_{12}",
         ylabel = "log10(ω_{24})",
         color = palette,  # Colormap for trends

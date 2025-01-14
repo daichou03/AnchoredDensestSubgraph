@@ -133,6 +133,37 @@ function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n:
 end
 
 
+# Number of nodes in S beyond 1-hop of R.
+function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
+    # Load the original graph B if not provided
+    if B === nothing
+        B = readIN(string(dataName, ".in"))
+    end
+
+    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+
+    # Load the anchor set R
+    R = readAnchors(dataName, "Baseline")[n]
+
+    # Function to compute the external nodes count
+    function externalNodesZ(file::String, n::Int)
+        # Read the n-th row of the result file as the result set S
+        rows = readlines(file)
+        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
+
+        # Compute the 1-hop neighbors of R
+        R_neighbors = GetComponentAdjacency(B, R)
+
+        # Count nodes in S not in R or 1-hop neighbors of R
+        external_nodes = setdiff(S, R_neighbors)
+        return length(external_nodes)
+    end
+
+    return extractLPResultFileData(files, n, externalNodesZ)
+end
+
+
+
 ## Plot x, y, z values
 function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma)
     # Smooth y-values: Replace 0 with the specified smooth_y value

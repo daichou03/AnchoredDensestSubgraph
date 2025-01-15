@@ -42,6 +42,10 @@ function extractLPResultFileData(files::Vector{String}, n::Int, extractZFunction
     return x_vals, y_vals, z_vals
 end
 
+#########################
+# Extract single result #
+#########################
+
 function lpResultLengthTo2dCluster(dataName::String, suffixName::String, n::Int)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
 
@@ -84,12 +88,7 @@ function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, 
 end
 
 
-function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
-    # Load the original graph B if not provided
-    if B === nothing
-        B = readIN(string(dataName, ".in"))
-    end
-
+function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute density for the n-th result set
@@ -109,12 +108,7 @@ function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int
 end
 
 
-function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
-    # Load the original graph B if not provided
-    if B === nothing
-        B = readIN(string(dataName, ".in"))
-    end
-
+function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute conductance for the n-th result set
@@ -134,12 +128,7 @@ end
 
 
 # Number of nodes in S beyond 1-hop of R.
-function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::String, n::Int; B::Union{SparseMatrixCSC, Nothing} = nothing)
-    # Load the original graph B if not provided
-    if B === nothing
-        B = readIN(string(dataName, ".in"))
-    end
-
+function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
 
     # Load the anchor set R
@@ -163,8 +152,70 @@ function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::Strin
 end
 
 
+###########################
+# Extract aggregate reult #
+###########################
 
-## Plot x, y, z values
+# standardizeLPResultFunction as an interface for each different type of signature
+function standardizeLPResultFunction(lpResultFunction::Function, args...; kwargs...)
+    if haskey(kwargs, :B)
+        # If `B` is present, call the function with `B`
+        return lpResultFunction(args..., kwargs[:B])
+    elseif haskey(kwargs, :columnName)
+        # If `columnName` is present, call the function with `columnName`
+        return lpResultFunction(args..., kwargs[:columnName])
+    else
+        # If no special keywords are present, call the function directly
+        return lpResultFunction(args...)
+    end
+end
+
+
+# Note that any parameters of lpResult... functions OTHER THAN dataName, suffixName and n (as n_range)
+# Must be passed as kwargs, be it a kwarg in the original lpResult function or not.
+# For example: lpResultAggregateTo2dCluster(lp)
+function lpResultAggregateTo2dCluster(
+    lpResultFunction::Function,
+    dataName::String,
+    suffixName::String,
+    n_range::UnitRange{Int};
+    kwargs...
+)
+    # Initialize storage for aggregated data
+    aggregated_data = Dict{Tuple{Float64, Float64}, Vector{Float64}}()  #TODO 20250114: probably this one to fix.
+
+    # Loop over the range of n
+    for n in n_range
+        # Use the standardized interface to call the lpResultFunction
+        x_vals, y_vals, z_vals = standardizeLPResultFunction(lpResultFunction, dataName, suffixName, n; kwargs...)
+
+        # Aggregate z_vals for each (x, y) pair
+        for (x, y, z) in zip(x_vals, y_vals, z_vals)
+            key = (x, y)
+            if !haskey(aggregated_data, key)
+                aggregated_data[key] = []
+            end
+            push!(aggregated_data[key], z)
+        end
+    end
+
+    # Compute average z_vals for each (x, y) pair
+    x_vals, y_vals, z_vals = [], [], []
+    for ((x, y), zs) in aggregated_data
+        push!(x_vals, x)
+        push!(y_vals, y)
+        push!(z_vals, mean(zs))  # Compute average z-value
+    end
+
+    # Sort the data by (x, y) to maintain consistency
+    sorted_indices = sortperm(zip(x_vals, y_vals))
+    return x_vals[sorted_indices], y_vals[sorted_indices], z_vals[sorted_indices]
+end
+
+
+#######################
+# Plot x, y, z values #
+#######################
 function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma)
     # Smooth y-values: Replace 0 with the specified smooth_y value
     y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]

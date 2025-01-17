@@ -76,6 +76,28 @@ function lpResultDistinctTo2dCluster(dataName::String, suffixName::String, n::In
 end
 
 
+# Binary, 1 if result same as when x = 0, y = 0
+function lpResultMatchTo2dCluster(dataName::String, suffixName::String, n::Int)
+    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+
+    # Extract the reference set S_ref (when x = 0, y = 0)
+    ref_file_index = findfirst(f -> occursin("-LPLAS-0.0-0.0-", f), files)
+    if ref_file_index === nothing
+        error("No file found for x = 0 and y = 0")
+    end
+    ref_file = files[ref_file_index]  # Get the actual filename
+    S_ref = parse.(Int, split(readlines(ref_file)[n], ","))  # Convert to integers
+
+    # Function to compute z-value (1 if S matches S_ref, 0 otherwise)
+    function matchZ(file::String, n::Int)
+        S = parse.(Int, split(readlines(file)[n], ","))  # Convert result set to integers
+        return S == S_ref ? 1 : 0  # Compare sets
+    end
+
+    return extractLPResultFileData(files, n, matchZ)
+end
+
+
 function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, columnName::String)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_STATS)
 

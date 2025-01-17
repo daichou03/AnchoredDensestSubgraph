@@ -208,8 +208,12 @@ function lpResultAggregateTo2dCluster(
     end
 
     # Sort the data by (x, y) to maintain consistency
-    sorted_indices = sortperm(zip(x_vals, y_vals))
-    return x_vals[sorted_indices], y_vals[sorted_indices], z_vals[sorted_indices]
+    data_tuples = [(x, y, z) for (x, y, z) in zip(x_vals, y_vals, z_vals)]
+    sorted_data = sort(data_tuples, by = t -> (t[1], t[2]))
+    x_vals = [t[1] for t in sorted_data]
+    y_vals = [t[2] for t in sorted_data]
+    z_vals = [t[3] for t in sorted_data]
+    return x_vals, y_vals, z_vals
 end
 
 

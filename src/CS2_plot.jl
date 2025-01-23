@@ -100,7 +100,7 @@ end
 
 
 function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, columnName::String)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_STATS)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_STATS)
 
     # Function to extract z-value (column value for the n-th row)
     function columnValueZ(file::String, n::Int)

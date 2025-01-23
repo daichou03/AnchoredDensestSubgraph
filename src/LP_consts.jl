@@ -46,6 +46,6 @@ function GetLPEvalResultFileName(dataName::String, suffixName::String)
     return name
 end
 
-function GetParameterizedLPResultFileNames(dataName::String, suffixName::String, resultType::Int)
-    return glob(string(FOLDER_LP_COMP_RESULTS, dataName, "-LPLAS-*-*-", suffixName, ".", RESULT_TYPE_NAMES[resultType]), ".")
+function GetParameterizedLPResultFileNames(dataName::String, solverID::Int64, suffixName::String, resultType::Int)
+    return glob(string(FOLDER_LP_COMP_RESULTS, dataName, "-", SOLVER_NAMES[solverID], "-*-*-", suffixName, ".", RESULT_TYPE_NAMES[resultType]), ".")
 end

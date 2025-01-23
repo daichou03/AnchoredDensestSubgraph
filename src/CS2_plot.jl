@@ -7,18 +7,19 @@ include("LP_consts.jl")
 include("Utils_graph.jl")
 include("LP_evaluation.jl")
 
+
+X_LOG_0_SMOOTH = 0.00001
 Y_LOG_0_SMOOTH = 0.00001  # y-axis as log10. If y=0, to which value it is smoothed to for plotting.
-REGEX_LPXY = string("-", SOLVER_NAMES[SOLVER_LP_ADSS],"-([0-9.]+)-([0-9.]+)-")
 
 
 ## Extract x, y, z values
-function extractLPResultFileData(files::Vector{String}, n::Int, extractZFunction::Function)
+function extractLPResultFileData(files::Vector{String}, solverID::Int, n::Int, extractZFunction::Function)
     # Initialize x, y, z arrays
     data = []
 
     for file in files
         # Extract x and y values from the filename
-        matching = match(Regex(REGEX_LPXY), file)
+        matching = match(Regex(string("-", SOLVER_NAMES[solverID],"-([0-9.]+)-([0-9.]+)-")), file)
         if matching !== nothing
             x = parse(Float64, matching.captures[1])
             y = parse(Float64, matching.captures[2])
@@ -46,20 +47,20 @@ end
 # Extract single result #
 #########################
 
-function lpResultLengthTo2dCluster(dataName::String, suffixName::String, n::Int)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultLengthTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to extract z-value (length of integers in the n-th row)
     function rowLengthZ(file::String, n::Int)
         return length(split(readlines(file)[n], ","))
     end
 
-    return extractLPResultFileData(files, n, rowLengthZ)
+    return extractLPResultFileData(files, solverID, n, rowLengthZ)
 end
 
 
-function lpResultDistinctTo2dCluster(dataName::String, suffixName::String, n::Int)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultDistinctTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
     unique_rows = Dict{String, Int}()
 
     function distinctRowZ(file::String, n::Int)
@@ -72,13 +73,13 @@ function lpResultDistinctTo2dCluster(dataName::String, suffixName::String, n::In
         return unique_rows[row_key]
     end
 
-    return extractLPResultFileData(files, n, distinctRowZ)
+    return extractLPResultFileData(files, solverID, n, distinctRowZ)
 end
 
 
 # Binary, 1 if result same as when x = 0, y = 0
-function lpResultMatchTo2dCluster(dataName::String, suffixName::String, n::Int)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Extract the reference set S_ref (when x = 0, y = 0)
     ref_file_index = findfirst(f -> occursin("-LPLAS-0.0-0.0-", f), files)
@@ -94,11 +95,11 @@ function lpResultMatchTo2dCluster(dataName::String, suffixName::String, n::Int)
         return S == S_ref ? 1 : 0  # Compare sets
     end
 
-    return extractLPResultFileData(files, n, matchZ)
+    return extractLPResultFileData(files, solverID, n, matchZ)
 end
 
 
-function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, columnName::String)
+function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, columnName::String)
     files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_STATS)
 
     # Function to extract z-value (column value for the n-th row)
@@ -106,12 +107,12 @@ function lpResultStatsTo2dCluster(dataName::String, suffixName::String, n::Int, 
         return CSV.read(file, DataFrame)[n, columnName]  # natural exception if fails
     end
 
-    return extractLPResultFileData(files, n, columnValueZ)
+    return extractLPResultFileData(files, solverID, n, columnValueZ)
 end
 
 
-function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultDensityTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute density for the n-th result set
     function densityZ(file::String, n::Int)
@@ -126,12 +127,12 @@ function lpResultDensityTo2dCluster(dataName::String, suffixName::String, n::Int
         return 2 * num_edges / num_nodes
     end
 
-    return extractLPResultFileData(files, n, densityZ)
+    return extractLPResultFileData(files, solverID, n, densityZ)
 end
 
 
-function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultConductanceTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute conductance for the n-th result set
     function conductanceZ(file::String, n::Int)
@@ -145,13 +146,13 @@ function lpResultConductanceTo2dCluster(dataName::String, suffixName::String, n:
         return 1 - volume_within / volume_total
     end
 
-    return extractLPResultFileData(files, n, conductanceZ)
+    return extractLPResultFileData(files, solverID, n, conductanceZ)
 end
 
 
 # Number of nodes in S beyond 1-hop of R.
-function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::String, n::Int, B::SparseMatrixCSC)
-    files = GetParameterizedLPResultFileNames(dataName, suffixName, RESULT_TYPE_SETS)
+function lpResultLengthBeyond1HopTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Load the anchor set R
     R = readAnchors(dataName, "Baseline")[n]
@@ -170,7 +171,7 @@ function lpResultLengthBeyond1HopTo2dCluster(dataName::String, suffixName::Strin
         return length(external_nodes)
     end
 
-    return extractLPResultFileData(files, n, externalNodesZ)
+    return extractLPResultFileData(files, solverID, n, externalNodesZ)
 end
 
 
@@ -199,6 +200,7 @@ end
 function lpResultAggregateTo2dCluster(
     lpResultFunction::Function,
     dataName::String,
+    solverID::Int64,
     suffixName::String,
     n_range::UnitRange{Int};
     kwargs...
@@ -209,7 +211,7 @@ function lpResultAggregateTo2dCluster(
     # Loop over the range of n
     for n in n_range
         # Use the standardized interface to call the lpResultFunction
-        x_vals, y_vals, z_vals = standardizeLPResultFunction(lpResultFunction, dataName, suffixName, n; kwargs...)
+        x_vals, y_vals, z_vals = standardizeLPResultFunction(lpResultFunction, dataName, solverID, suffixName, n; kwargs...)
 
         # Aggregate z_vals for each (x, y) pair
         for (x, y, z) in zip(x_vals, y_vals, z_vals)
@@ -242,40 +244,49 @@ end
 #######################
 # Plot x, y, z values #
 #######################
-function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :magma)
+function visualize_cluster((x_vals, y_vals, z_vals);
+    log_x::Bool = false, log_y::Bool = true,
+    smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
+    palette = :magma)
     # Smooth y-values: Replace 0 with the specified smooth_y value
-    y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]
+    x_smoothed = [x == 0 && log_x ? smooth_x : x for x in x_vals]
+    y_smoothed = [y == 0 && log_y ? smooth_y : y for y in y_vals]
 
     # Convert to grid for surface plotting
-    x_unique = unique(x_vals)
+    x_unique = unique(x_smoothed)
     y_unique = unique(y_smoothed)
     z_matrix = [0.0 for _ in 1:length(x_unique), _ in 1:length(y_unique)]
 
-    for i in 1:length(x_vals)
-        x_idx = findfirst(==(x_vals[i]), x_unique)
+    for i in 1:length(x_smoothed)
+        x_idx = findfirst(==(x_smoothed[i]), x_unique)
         y_idx = findfirst(==(y_smoothed[i]), y_unique)
         z_matrix[x_idx, y_idx] = z_vals[i]
     end
 
+    x_scaled = log_x ? log10.(x_smoothed) : x_smoothed
+    y_scaled = log_y ? log10.(y_smoothed) : y_smoothed
+
     # Generate y-axis ticks that show the original y-values
-    y_ticks = (log10.(y_smoothed), [string(y) for y in y_vals])
+    x_ticks = (x_scaled, [string(x) for x in x_vals])
+    y_ticks = (y_scaled, [string(y) for y in y_vals])
 
     # Scatter plot without explicit markers, and annotate the z values
     plt = scatter(
-        x_vals,
-        log10.(y_smoothed),          # Log-scaled smoothed y-values
+        x_scaled,
+        y_scaled,
         marker_z = z_vals,           # Use z-values for color coding
         title = "2D Scatter Plot of stats per x and y value",
         xlabel = "ω_{12}",
-        ylabel = "ω_{24}",           # Show original y values
-        yticks = y_ticks,            # Map log10 values to original labels
+        ylabel = "ω_{24}",
+        xticks = x_ticks,
+        yticks = y_ticks,
         color = palette,            # Colormap
         legend = false,
         markersize = 12               # Remove marker circles
     )
 
     # Annotate each point with z-values, formatted to 4 significant digits
-    for (x, y, z) in zip(x_vals, log10.(y_smoothed), z_vals)
+    for (x, y, z) in zip(x_scaled, y_scaled, z_vals)
         annotate!(x, y, text(z, :white, 10))
     end
 
@@ -283,36 +294,53 @@ function visualize_cluster((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0
 end
 
 
-function visualize_contour((x_vals, y_vals, z_vals); smooth_y::Float64 = Y_LOG_0_SMOOTH, palette = :viridis, log_z::Bool = false)
+function visualize_contour((x_vals, y_vals, z_vals);
+    log_x::Bool = false, log_y::Bool = true,
+    smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
+    palette = :viridis, log_z::Bool = false)
     # Smooth y-values: Replace 0 with the specified smooth_y value
-    y_smoothed = [y == 0 ? smooth_y : y for y in y_vals]
+    x_smoothed = [x == 0 && log_x ? smooth_x : x for x in x_vals]
+    y_smoothed = [y == 0 && log_y ? smooth_y : y for y in y_vals]
 
     # Apply log10 to z_vals if log_z is true
     z_transformed = log_z ? log10.(z_vals) : z_vals
-
-    # Generate unique x and y coordinates
-    x_unique = unique(x_vals)
+    x_unique = unique(x_smoothed)
     y_unique = unique(y_smoothed)
 
     # Create a z-matrix for contour plotting
     z_matrix = [NaN for _ in 1:length(x_unique), _ in 1:length(y_unique)]
-    for i in 1:length(x_vals)
-        x_idx = findfirst(==(x_vals[i]), x_unique)
+    for i in 1:length(x_smoothed)
+        x_idx = findfirst(==(x_smoothed[i]), x_unique)
         y_idx = findfirst(==(y_smoothed[i]), y_unique)
         z_matrix[x_idx, y_idx] = z_transformed[i]
     end
 
+    x_scaled = log_x ? log10.(x_smoothed) : x_smoothed
+    y_scaled = log_y ? log10.(y_smoothed) : y_smoothed
+
+    # Generate y-axis ticks that show the original y-values
+    x_ticks = (x_scaled, [string(x) for x in x_vals])
+    y_ticks = (y_scaled, [string(y) for y in y_vals])
+    x_unique_scaled = unique(x_scaled)
+    y_unique_scaled = unique(y_scaled)
+
     # Plot the contour
     contour(
-        x_unique,
-        log10.(y_unique),  # Log-scaled y-values for better visualization
+        x_unique_scaled,
+        y_unique_scaled,
         z_matrix',
         title = "Contour Plot",
         xlabel = "ω_{12}",
-        ylabel = "log10(ω_{24})",
+        ylabel = "ω_{24}",
+        xticks = x_ticks,
+        yticks = y_ticks,
         color = palette,  # Colormap for trends
         fill = true,       # Filled contours
         legend = :topright
     )
 end
 
+# TODO:
+# Handle FNLA
+# both log
+# visualize_contour((lpResultAggregateTo2dCluster(lpResultStatsTo2dCluster, dataname, suffix, 1:100, columnName="ext_time")), palette=:viridis)

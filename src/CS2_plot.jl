@@ -13,22 +13,27 @@ Y_LOG_0_SMOOTH = 0.00001  # y-axis as log10. If y=0, to which value it is smooth
 
 
 ## Extract x, y, z values
-function extractLPResultFileData(files::Vector{String}, solverID::Int, n::Int, extractZFunction::Function)
+function extractLPResultFileData(files::Vector{String}, solverID::Int, n_range::UnitRange{Int}, extractZFunction::Function)
     # Initialize x, y, z arrays
     data = []
 
     for file in files
         # Extract x and y values from the filename
-        matching = match(Regex(string("-", SOLVER_NAMES[solverID],"-([0-9.]+)-([0-9.]+)-")), file)
+        matching = match(Regex(string("-", SOLVER_NAMES[solverID], "-([0-9.]+)-([0-9.]+)-")), file)
         if matching !== nothing
             x = parse(Float64, matching.captures[1])
             y = parse(Float64, matching.captures[2])
 
-            # Compute z value using the provided function
-            z = extractZFunction(file, n)
+            # Read the entire file once
+            rows = readlines(file)
 
-            # Append x, y, z to the respective arrays
-            push!(data, (x, y, z))
+            # Compute z values for all rows in n_range
+            for n in n_range
+                if n <= length(rows)
+                    z = extractZFunction(rows, n)  # Pass pre-read rows to the function
+                    push!(data, (x, y, z))
+                end
+            end
         end
     end
 
@@ -43,28 +48,29 @@ function extractLPResultFileData(files::Vector{String}, solverID::Int, n::Int, e
     return x_vals, y_vals, z_vals
 end
 
+
 #########################
 # Extract single result #
 #########################
 
-function lpResultLengthTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+function lpResultLengthTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to extract z-value (length of integers in the n-th row)
-    function rowLengthZ(file::String, n::Int)
-        return length(split(readlines(file)[n], ","))
+    function rowLengthZ(rows::Vector{String}, n::Int)
+        return length(split(rows[n], ","))
     end
 
-    return extractLPResultFileData(files, solverID, n, rowLengthZ)
+    return extractLPResultFileData(files, solverID, n_range, rowLengthZ)
 end
 
 
-function lpResultDistinctTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+function lpResultDistinctTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
     unique_rows = Dict{String, Int}()
 
-    function distinctRowZ(file::String, n::Int)
-        rows = readlines(file)
+    # Function to compute z-value for a single n
+    function distinctRowZ(rows::Vector{String}, n::Int)
         row_data = split(rows[n], ",")
         row_key = join(sort(row_data))  # Canonicalize row data
         if !haskey(unique_rows, row_key)
@@ -73,12 +79,12 @@ function lpResultDistinctTo2dCluster(dataName::String, solverID::Int64, suffixNa
         return unique_rows[row_key]
     end
 
-    return extractLPResultFileData(files, solverID, n, distinctRowZ)
+    return extractLPResultFileData(files, solverID, n_range, distinctRowZ)
 end
 
 
 # Binary, 1 if result same as when x = 0, y = 0
-function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int)
+function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Extract the reference set S_ref (when x = 0, y = 0)
@@ -86,92 +92,79 @@ function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName:
     if ref_file_index === nothing
         error("No file found for x = 0 and y = 0")
     end
-    ref_file = files[ref_file_index]  # Get the actual filename
-    S_ref = parse.(Int, split(readlines(ref_file)[n], ","))  # Convert to integers
+    ref_file = files[ref_file_index]
+    rows_ref = readlines(ref_file)
 
-    # Function to compute z-value (1 if S matches S_ref, 0 otherwise)
-    function matchZ(file::String, n::Int)
-        S = parse.(Int, split(readlines(file)[n], ","))  # Convert result set to integers
-        return S == S_ref ? 1 : 0  # Compare sets
+    # Function to compute z-value for a single n
+    function matchZ(rows::Vector{String}, n::Int)
+        S_ref = parse.(Int, split(rows_ref[n], ","))
+        S = parse.(Int, split(rows[n], ","))
+        return S == S_ref ? 1 : 0
     end
 
-    return extractLPResultFileData(files, solverID, n, matchZ)
+    return extractLPResultFileData(files, solverID, n_range, matchZ)
 end
 
 
-function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, columnName::String)
+function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, columnName::String)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_STATS)
 
-    # Function to extract z-value (column value for the n-th row)
+    # Function to compute z-value for a single n
     function columnValueZ(file::String, n::Int)
-        return CSV.read(file, DataFrame)[n, columnName]  # natural exception if fails
+        df = CSV.read(file, DataFrame)
+        return df[n, columnName]  # Get the value from the specified column
     end
 
-    return extractLPResultFileData(files, solverID, n, columnValueZ)
+    return extractLPResultFileData(files, solverID, n_range, columnValueZ)
 end
 
 
-function lpResultDensityTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+function lpResultDensityTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
-    # Function to compute density for the n-th result set
-    function densityZ(file::String, n::Int)
-        # Read the n-th row of the result file as the result set S
-        rows = readlines(file)
-        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
-        
-        # Compute density: 2 * nnz(B[S, S]) / length(S)
+    # Function to compute z-value for a single n
+    function densityZ(rows::Vector{String}, n::Int)
+        S = parse.(Int, split(rows[n], ","))
         submatrix = B[S, S]
         num_edges = nnz(submatrix)
         num_nodes = length(S)
         return 2 * num_edges / num_nodes
     end
 
-    return extractLPResultFileData(files, solverID, n, densityZ)
+    return extractLPResultFileData(files, solverID, n_range, densityZ)
 end
 
 
-function lpResultConductanceTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+function lpResultConductanceTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
-    # Function to compute conductance for the n-th result set
-    function conductanceZ(file::String, n::Int)
-        # Read the n-th row of the result file as the result set S
-        rows = readlines(file)
-        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
-
-        # Compute conductance using GetVolume
+    # Function to compute z-value for a single n
+    function conductanceZ(rows::Vector{String}, n::Int)
+        S = parse.(Int, split(rows[n], ","))
         volume_within = GetVolume(B[S, S])
         volume_total = GetVolume(B, S)
         return 1 - volume_within / volume_total
     end
 
-    return extractLPResultFileData(files, solverID, n, conductanceZ)
+    return extractLPResultFileData(files, solverID, n_range, conductanceZ)
 end
 
 
 # Number of nodes in S beyond 1-hop of R.
-function lpResultLengthBeyond1HopTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n::Int, B::SparseMatrixCSC)
+function lpResultLengthBeyond1HopTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
+    anchor_sets = readAnchors(dataName, "Baseline")
 
-    # Load the anchor set R
-    R = readAnchors(dataName, "Baseline")[n]
-
-    # Function to compute the external nodes count
-    function externalNodesZ(file::String, n::Int)
-        # Read the n-th row of the result file as the result set S
-        rows = readlines(file)
-        S = parse.(Int, split(rows[n], ","))  # Convert result set to integers
-
-        # Compute the 1-hop neighbors of R
+    # Function to compute z-value for a single n
+    function externalNodesZ(rows::Vector{String}, n::Int)
+        R = anchor_sets[n]
+        S = parse.(Int, split(rows[n], ","))
         R_neighbors = GetComponentAdjacency(B, R)
-
-        # Count nodes in S not in R or 1-hop neighbors of R
         external_nodes = setdiff(S, R_neighbors)
         return length(external_nodes)
     end
 
-    return extractLPResultFileData(files, solverID, n, externalNodesZ)
+    return extractLPResultFileData(files, solverID, n_range, externalNodesZ)
 end
 
 
@@ -205,33 +198,28 @@ function lpResultAggregateTo2dCluster(
     n_range::UnitRange{Int};
     kwargs...
 )
-    # Initialize storage for aggregated data
-    aggregated_data = Dict{Tuple{Float64, Float64}, Vector{Float64}}()  #TODO 20250114: probably this one to fix.
+    # Use the standardized interface to call the lpResultFunction
+    x_vals, y_vals, z_vals = standardizeLPResultFunction(lpResultFunction, dataName, solverID, suffixName, n_range; kwargs...)
 
-    # Loop over the range of n
-    for n in n_range
-        # Use the standardized interface to call the lpResultFunction
-        x_vals, y_vals, z_vals = standardizeLPResultFunction(lpResultFunction, dataName, solverID, suffixName, n; kwargs...)
-
-        # Aggregate z_vals for each (x, y) pair
-        for (x, y, z) in zip(x_vals, y_vals, z_vals)
-            key = (x, y)
-            if !haskey(aggregated_data, key)
-                aggregated_data[key] = []
-            end
-            push!(aggregated_data[key], z)
+    # Aggregate z_vals for each (x, y) pair
+    aggregated_data = Dict{Tuple{Float64, Float64}, Vector{Float64}}()
+    for (x, y, z) in zip(x_vals, y_vals, z_vals)
+        key = (x, y)
+        if !haskey(aggregated_data, key)
+            aggregated_data[key] = []
         end
+        push!(aggregated_data[key], z)
     end
 
     # Compute average z_vals for each (x, y) pair
-    x_vals, y_vals, z_vals = [], [], []
+    x_vals, y_vals, z_vals = Float64[], Float64[], Float64[]
     for ((x, y), zs) in aggregated_data
         push!(x_vals, x)
         push!(y_vals, y)
         push!(z_vals, mean(zs))  # Compute average z-value
     end
 
-    # Sort the data by (x, y) to maintain consistency
+    # Sort the data by (x, y)
     data_tuples = [(x, y, z) for (x, y, z) in zip(x_vals, y_vals, z_vals)]
     sorted_data = sort(data_tuples, by = t -> (t[1], t[2]))
     x_vals = [t[1] for t in sorted_data]

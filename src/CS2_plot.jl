@@ -53,7 +53,7 @@ end
 # Extract single result #
 #########################
 
-function lpResultLengthTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
+function lpResultLength(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to extract z-value (length of integers in the n-th row)
@@ -65,7 +65,7 @@ function lpResultLengthTo2dCluster(dataName::String, solverID::Int64, suffixName
 end
 
 
-function lpResultDistinctTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
+function lpResultDistinct(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
     unique_rows = Dict{String, Int}()
 
@@ -84,7 +84,7 @@ end
 
 
 # Binary, 1 if result same as when x = 0, y = 0
-function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
+function lpResultMatch(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Extract the reference set S_ref (when x = 0, y = 0)
@@ -106,7 +106,7 @@ function lpResultMatchTo2dCluster(dataName::String, solverID::Int64, suffixName:
 end
 
 
-function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, columnName::String)
+function lpResultStats(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, columnName::String)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_STATS)
 
     # Function to compute z-value for a single n
@@ -119,7 +119,7 @@ function lpResultStatsTo2dCluster(dataName::String, solverID::Int64, suffixName:
 end
 
 
-function lpResultDensityTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
+function lpResultDensity(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute z-value for a single n
@@ -135,7 +135,7 @@ function lpResultDensityTo2dCluster(dataName::String, solverID::Int64, suffixNam
 end
 
 
-function lpResultConductanceTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
+function lpResultConductance(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
 
     # Function to compute z-value for a single n
@@ -151,7 +151,7 @@ end
 
 
 # Number of nodes in S beyond 1-hop of R.
-function lpResultLengthBeyond1HopTo2dCluster(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
+function lpResultLengthBeyond1Hop(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int}, B::SparseMatrixCSC)
     files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
     anchor_sets = readAnchors(dataName, "Baseline")
 
@@ -189,8 +189,8 @@ end
 
 # Note that any parameters of lpResult... functions OTHER THAN dataName, suffixName and n (as n_range)
 # Must be passed as kwargs, be it a kwarg in the original lpResult function or not.
-# For example: lpResultAggregateTo2dCluster(lp)
-function lpResultAggregateTo2dCluster(
+# For example: lpResultAggregate(lp)
+function lpResultAggregate(
     lpResultFunction::Function,
     dataName::String,
     solverID::Int64,
@@ -331,4 +331,4 @@ end
 # TODO:
 # Handle FNLA
 # both log
-# visualize_contour((lpResultAggregateTo2dCluster(lpResultStatsTo2dCluster, dataname, suffix, 1:100, columnName="ext_time")), palette=:viridis)
+# visualize_contour((lpResultAggregate(lpResultStats, dataname, suffix, 1:100, columnName="ext_time")), palette=:viridis)

@@ -331,4 +331,131 @@ end
 # TODO:
 # Handle FNLA
 # both log
-# visualize_contour((lpResultAggregate(lpResultStats, dataname, suffix, 1:100, columnName="ext_time")), palette=:viridis)
+
+function crossTableScatterPlot(
+    result1::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
+    result2::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
+    xlabel::String = "Metric 1",
+    ylabel::String = "Metric 2",
+    title::String = "Cross Table Scatter Plot"
+)
+    # Unpack results
+    x_vals1, y_vals1, z_vals1 = result1
+    x_vals2, y_vals2, z_vals2 = result2
+
+    # Map (x, y) -> z for both result sets
+    z_map1 = Dict(zip(zip(x_vals1, y_vals1), z_vals1))
+    z_map2 = Dict(zip(zip(x_vals2, y_vals2), z_vals2))
+
+    # Find common (x, y) pairs
+    common_keys = intersect(keys(z_map1), keys(z_map2))
+
+    # Extract matched z-values
+    z1 = [z_map1[key] for key in common_keys]
+    z2 = [z_map2[key] for key in common_keys]
+
+    # Plot scatter plot
+    scatter(
+        z1, z2,
+        xlabel = xlabel,
+        ylabel = ylabel,
+        title = title,
+        marker = (:circle, 6, :blue),
+        legend = false
+    )
+end
+
+
+function computeParetoSkyline(points::Vector{Any})
+    # Sort by density descending, then conductance ascending
+    sorted_points = sort(points, by = x -> (-x[1], x[2]))
+
+    # Compute Pareto frontier
+    pareto_front = []
+    current_best_c = Inf  # Track the best (minimum) conductance
+
+    for (d, c) in sorted_points
+        if c < current_best_c  # Strictly better conductance
+            push!(pareto_front, (d, c))
+            current_best_c = c
+        end
+    end
+
+    return pareto_front
+end
+
+
+function compareCrossTableScatterPlots(
+    result_pairs::Vector{Tuple{
+        Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
+        Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}
+    }},
+    labels::Vector{String},
+    xlabel::String = "Density",
+    ylabel::String = "Conductance",
+    title::String = "Cross Table Comparison with Skyline"
+)
+    # Define a color palette for different result pairs
+    palette = distinguishable_colors(length(result_pairs))
+
+    # Initialize plot
+    plt = scatter(
+        xlabel = xlabel,
+        ylabel = ylabel,
+        title = title,
+        legend = :topright
+    )
+
+    all_pareto_points = []  # Store all Pareto-optimal points
+
+    # Iterate over result pairs and plot them
+    for (i, (result1, result2)) in enumerate(result_pairs)
+        # Unpack results
+        x_vals1, y_vals1, z_vals1 = result1
+        x_vals2, y_vals2, z_vals2 = result2
+
+        # Map (x, y) -> z for both result sets
+        z_map1 = Dict(zip(zip(x_vals1, y_vals1), z_vals1))
+        z_map2 = Dict(zip(zip(x_vals2, y_vals2), z_vals2))
+
+        # Find common (x, y) pairs
+        common_keys = intersect(keys(z_map1), keys(z_map2))
+
+        # Extract matched z-values
+        z1 = [z_map1[key] for key in common_keys]  # Density
+        z2 = [z_map2[key] for key in common_keys]  # Conductance
+
+        # Collect all points for Pareto frontier computation
+        pareto_points = [(d, c) for (d, c) in zip(z1, z2)]
+        append!(all_pareto_points, pareto_points)
+
+        # Add points to the scatter plot with a unique color
+        scatter!(
+            z1,
+            z2,
+            marker = (:circle, 6, palette[i]),
+            label = labels[i]
+        )
+    end
+
+    # Compute and plot Pareto skyline
+    if !isempty(all_pareto_points)
+        pareto_front = computeParetoSkyline(collect(Tuple{Float64, Float64}, all_pareto_points))
+
+        # Extract sorted Pareto-optimal points for plotting
+        skyline_x = [p[1] for p in pareto_front]
+        skyline_y = [p[2] for p in pareto_front]
+
+        # Overlay Pareto frontier
+        plot!(
+            skyline_x,
+            skyline_y,
+            linewidth = 2,
+            linecolor = :red,
+            label = "Pareto Skyline"
+        )
+    end
+
+    return plt
+end
+

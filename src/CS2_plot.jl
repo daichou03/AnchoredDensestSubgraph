@@ -168,6 +168,33 @@ function lpResultLengthBeyond1Hop(dataName::String, solverID::Int64, suffixName:
 end
 
 
+function lpResultF1Score(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
+    anchor_sets = readAnchors(dataName, "Baseline")
+
+    # Function to compute F1-score for a single n
+    function computeF1Score(rows::Vector{String}, n::Int)
+        R = anchor_sets[n]  # Anchor set (ground truth)
+        S = parse.(Int, split(rows[n], ","))  # Extract result set
+
+        # Compute precision, recall, and F1-score
+        true_positives = length(intersect(S, R))
+        precision = true_positives / length(S)  # TP / (TP + FP)
+        recall = true_positives / length(R)  # TP / (TP + FN)
+
+        # Handle cases where precision or recall are zero
+        if precision + recall == 0
+            return 0.0  # F1-score is 0 when both are 0
+        end
+
+        f1_score = 2 * (precision * recall) / (precision + recall)
+        return f1_score
+    end
+
+    return extractLPResultFileData(files, solverID, n_range, computeF1Score)
+end
+
+
 ###########################
 # Extract aggregate reult #
 ###########################

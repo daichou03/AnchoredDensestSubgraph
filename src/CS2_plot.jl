@@ -328,10 +328,10 @@ function visualize_contour((x_vals, y_vals, z_vals);
     )
 end
 
-# TODO:
-# Handle FNLA
-# both log
 
+###################
+# Plot crosstable #
+###################
 function crossTableScatterPlot(
     result1::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
     result2::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
@@ -366,7 +366,7 @@ function crossTableScatterPlot(
 end
 
 
-function computeParetoSkyline(points::Vector{Any})
+function computeParetoSkyline(points::Vector{Tuple{Float64, Float64}})
     # Sort by density descending, then conductance ascending
     sorted_points = sort(points, by = x -> (-x[1], x[2]))
 
@@ -382,6 +382,34 @@ function computeParetoSkyline(points::Vector{Any})
     end
 
     return pareto_front
+end
+
+
+function findParetoOptimalXY(
+    density_results::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}},
+    conductance_results::Tuple{Vector{Float64}, Vector{Float64}, Vector{Float64}}
+)
+    # Unpack results
+    x_vals_dens, y_vals_dens, z_vals_dens = density_results
+    x_vals_cond, y_vals_cond, z_vals_cond = conductance_results
+
+    # Map (x, y) -> z for both result sets
+    z_map_dens = Dict(zip(zip(x_vals_dens, y_vals_dens), z_vals_dens))
+    z_map_cond = Dict(zip(zip(x_vals_cond, y_vals_cond), z_vals_cond))
+
+    # Find common (x, y) pairs
+    common_keys = intersect(keys(z_map_dens), keys(z_map_cond))
+
+    # Extract matched (x, y) pairs with their (density, conductance) values
+    pareto_candidates = [(key[1], key[2], z_map_dens[key], z_map_cond[key]) for key in common_keys]
+
+    # Compute Pareto frontier
+    pareto_front = computeParetoSkyline(collect(Tuple{Float64, Float64}, (d, c) for (_, _, d, c) in pareto_candidates))
+
+    # Find (x, y) pairs corresponding to Pareto-optimal points
+    pareto_xy = [(x, y) for (x, y, d, c) in pareto_candidates if (d, c) in pareto_front]
+
+    return pareto_xy
 end
 
 

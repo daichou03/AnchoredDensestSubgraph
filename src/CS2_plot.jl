@@ -1,6 +1,7 @@
 # This file explores properties of a result from a single case with the same R but different \w_12 and \w_24 (x and y).
 using Plots
 using Glob
+using LaTeXStrings
 include("Utils.jl")
 include("Utils_io.jl")
 include("LP_consts.jl")
@@ -262,7 +263,8 @@ end
 function visualize_cluster((x_vals, y_vals, z_vals);
     log_x::Bool = false, log_y::Bool = true,
     smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
-    palette = :magma)
+    palette = :magma, 
+    xlabel = L"ω_{12}", ylabel = L"-ω_{24}")
     # Smooth y-values: Replace 0 with the specified smooth_y value
     x_smoothed = [x == 0 && log_x ? smooth_x : x for x in x_vals]
     y_smoothed = [y == 0 && log_y ? smooth_y : y for y in y_vals]
@@ -291,8 +293,8 @@ function visualize_cluster((x_vals, y_vals, z_vals);
         y_scaled,
         marker_z = z_vals,           # Use z-values for color coding
         title = "2D Scatter Plot of stats per x and y value",
-        xlabel = "ω_{12}",
-        ylabel = "ω_{24}",
+        xlabel = xlabel,
+        ylabel = ylabel,
         xticks = x_ticks,
         yticks = y_ticks,
         color = palette,            # Colormap
@@ -312,7 +314,8 @@ end
 function visualize_contour((x_vals, y_vals, z_vals);
     log_x::Bool = false, log_y::Bool = true,
     smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
-    palette = :viridis, log_z::Bool = false)
+    palette = :viridis, log_z::Bool = false,
+    xlabel = L"ω_{12}", ylabel = L"-ω_{24}")
     # Smooth y-values: Replace 0 with the specified smooth_y value
     x_smoothed = [x == 0 && log_x ? smooth_x : x for x in x_vals]
     y_smoothed = [y == 0 && log_y ? smooth_y : y for y in y_vals]
@@ -345,8 +348,8 @@ function visualize_contour((x_vals, y_vals, z_vals);
         y_unique_scaled,
         z_matrix',
         title = "Contour Plot",
-        xlabel = "ω_{12}",
-        ylabel = "ω_{24}",
+        xlabel = xlabel,
+        ylabel = ylabel,
         xticks = x_ticks,
         yticks = y_ticks,
         color = palette,  # Colormap for trends

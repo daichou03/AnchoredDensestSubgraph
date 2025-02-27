@@ -9,7 +9,7 @@ include("Utils_graph.jl")
 include("LP_evaluation.jl")
 
 
-X_LOG_0_SMOOTH = 0.00001
+X_LOG_0_SMOOTH = 0.001
 Y_LOG_0_SMOOTH = 0.00001  # y-axis as log10. If y=0, to which value it is smoothed to for plotting.
 
 
@@ -196,6 +196,32 @@ function lpResultF1Score(dataName::String, solverID::Int64, suffixName::String, 
 end
 
 
+function lpResultJaccardSimilarity(dataName::String, solverID::Int64, suffixName::String, n_range::UnitRange{Int})
+    files = GetParameterizedLPResultFileNames(dataName, solverID, suffixName, RESULT_TYPE_SETS)
+    anchor_sets = readAnchors(dataName, "Baseline")
+
+    # Function to compute Jaccard similarity for a single n
+    function computeJaccard(rows::Vector{String}, n::Int)
+        R = anchor_sets[n]  # Anchor set (ground truth)
+        S = parse.(Int, split(rows[n], ","))  # Extract result set
+
+        # Compute Jaccard similarity: |S ∩ R| / |S ∪ R|
+        intersection_size = length(intersect(S, R))
+        union_size = length(union(S, R))
+
+        # Handle empty union case
+        if union_size == 0
+            return 0.0
+        end
+
+        jaccard_index = intersection_size / union_size
+        return jaccard_index
+    end
+
+    return extractLPResultFileData(files, solverID, n_range, computeJaccard)
+end
+
+
 ###########################
 # Extract aggregate reult #
 ###########################
@@ -260,6 +286,16 @@ end
 #######################
 # Plot x, y, z values #
 #######################
+# smooth_value is before log, so likely you want 0.0001 rather than -4.
+function smooth_and_scale(values::Vector{Float64}, log_scale::Bool, smooth_value::Float64)
+    # Replace zeros if log scaling is enabled
+    smoothed_values = [v == 0 && log_scale ? smooth_value : v for v in values]
+    
+    # Apply log transformation if required
+    return log_scale ? log10.(smoothed_values) : smoothed_values
+end
+
+
 function visualize_cluster((x_vals, y_vals, z_vals);
     log_x::Bool = false, log_y::Bool = true,
     smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
@@ -315,46 +351,59 @@ function visualize_contour((x_vals, y_vals, z_vals);
     log_x::Bool = false, log_y::Bool = true,
     smooth_x::Float64 = X_LOG_0_SMOOTH, smooth_y::Float64 = Y_LOG_0_SMOOTH,
     palette = :viridis, log_z::Bool = false,
-    xlabel = L"ω_{12}", ylabel = L"-ω_{24}")
-    # Smooth y-values: Replace 0 with the specified smooth_y value
-    x_smoothed = [x == 0 && log_x ? smooth_x : x for x in x_vals]
-    y_smoothed = [y == 0 && log_y ? smooth_y : y for y in y_vals]
+    xlabel = L"ω_{12}", ylabel = L"-ω_{24}",
+    custom_xticks::Union{Nothing, Vector{Float64}} = nothing,
+    custom_yticks::Union{Nothing, Vector{Float64}} = nothing
+)
+    # Apply smoothing and scaling in one step
+    x_scaled = smooth_and_scale(x_vals, log_x, smooth_x)
+    y_scaled = smooth_and_scale(y_vals, log_y, smooth_y)
 
-    # Apply log10 to z_vals if log_z is true
+    # Apply log10 transformation to z_vals if log_z is true
     z_transformed = log_z ? log10.(z_vals) : z_vals
-    x_unique = unique(x_smoothed)
-    y_unique = unique(y_smoothed)
+
+    # Extract unique x and y values **after** both smoothing and scaling
+    x_unique = unique(x_scaled)
+    y_unique = unique(y_scaled)
 
     # Create a z-matrix for contour plotting
     z_matrix = [NaN for _ in 1:length(x_unique), _ in 1:length(y_unique)]
-    for i in 1:length(x_smoothed)
-        x_idx = findfirst(==(x_smoothed[i]), x_unique)
-        y_idx = findfirst(==(y_smoothed[i]), y_unique)
+    for i in 1:length(x_scaled)
+        x_idx = findfirst(==(x_scaled[i]), x_unique)
+        y_idx = findfirst(==(y_scaled[i]), y_unique)
         z_matrix[x_idx, y_idx] = z_transformed[i]
     end
 
-    x_scaled = log_x ? log10.(x_smoothed) : x_smoothed
-    y_scaled = log_y ? log10.(y_smoothed) : y_smoothed
-
-    # Generate y-axis ticks that show the original y-values
-    x_ticks = (x_scaled, [string(x) for x in x_vals])
-    y_ticks = (y_scaled, [string(y) for y in y_vals])
-    x_unique_scaled = unique(x_scaled)
-    y_unique_scaled = unique(y_scaled)
+    # Generate custom x and y ticks if specified
+    x_ticks = if custom_xticks === nothing
+        (x_unique, [x == round(x) ? string(Int(x)) : string(x) for x in unique(x_vals)])
+    else
+        xticks_transformed = smooth_and_scale(custom_xticks, log_x, smooth_x)
+        (xticks_transformed, [x == round(x) ? string(Int(x)) : string(x) for x in custom_xticks])
+    end
+    
+    y_ticks = if custom_yticks === nothing
+        (y_unique, [y == round(y) ? string(Int(y)) : string(y) for y in unique(y_vals)])
+    else
+        yticks_transformed = smooth_and_scale(custom_yticks, log_y, smooth_y)
+        (yticks_transformed, [y == round(y) ? string(Int(y)) : string(y) for y in custom_yticks])
+    end
 
     # Plot the contour
     contour(
-        x_unique_scaled,
-        y_unique_scaled,
+        x_unique,
+        y_unique,
         z_matrix',
-        title = "Contour Plot",
         xlabel = xlabel,
         ylabel = ylabel,
         xticks = x_ticks,
         yticks = y_ticks,
         color = palette,  # Colormap for trends
         fill = true,       # Filled contours
-        legend = :topright
+        legend = :topright,
+        tickfontsize = 16,
+        guidefontsize = 20,
+        right_margin = 15 * Plots.mm,
     )
 end
 

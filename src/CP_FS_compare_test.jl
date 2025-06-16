@@ -68,3 +68,12 @@ function ProcessAndOutputParameterizedGLC(dataName::String; prRange = TEST_GLC_P
         end
     end
 end
+
+
+function BulkProcessAndOutputParameterizedGLC(dataset_names; prRange = TEST_GLC_PENALTY_R, epsRange = TEST_GLC_EPSILON, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+    for dataName in dataset_names
+        println(string(dataName, ":"))
+        proc = @timed ProcessAndOutputParameterizedGLC(dataName; prRange, epsRange, anchorsType, suffixName, sampleSize)
+        println(proc.time)
+    end
+end

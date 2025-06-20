@@ -145,6 +145,18 @@ function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = TEST_WAC_
     end
 end
 
+
+# Halved graphs only ("amazon-H1.in" etc.)
+function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", iteration = 5, sampleSize::Int=0)
+    halved_dataset_names = String[]
+    for dataname in dataset_names
+        for i in 1:iteration
+            push!(halved_dataset_names, string(dataname, "-H", i))
+        end
+    end
+    BulkProcessAndOutputParameterizedLP(halved_dataset_names; wACRange, wADRange, anchorsType, suffixName, sampleSize)
+end
+
 # -------
 
 warmed_up_solver = false

@@ -3,7 +3,7 @@ using MAT
 using MatrixNetworks
 using LinearAlgebra
 include("Utils.jl")
-include("Utils_graph.jl")  # cycular ref
+# include("Utils_graph.jl")  # cycular ref
 
 # read "IN" format.
 # Based on MatrixNetworks::readSMAT.

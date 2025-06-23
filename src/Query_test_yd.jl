@@ -605,6 +605,31 @@ function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDi
     end
 end
 
+function GenerateAnchorNodesFileHalfGraph(ds_name::String, OutputSubDirName::String, Tests::Int64)
+    i = 1
+    while true
+        filename = string(ds_name, "-H", i, ".in")
+        try
+            B = readIN(filename)
+        catch e
+            if isa(e, SystemError) || isa(e, IOError)
+                break  # File does not exist; stop the loop
+            else
+                rethrow(e)  # Rethrow unexpected errors
+            end
+        end
+        println("Generating anchor nodes for: ", filename)
+        GenerateAnchorNodesFile(B, OutputSubDirName, Tests)
+        i += 1
+    end
+end
+
+function BulkGenerateAnchorNodesFileHalfGraph(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
+    for ds_name in dataset_names
+        GenerateAnchorNodesFileHalfGraph(ds_name, OutputSubDirName, Tests)
+    end
+end
+
 # -----------------------------
 # Retrieve specific stats of LA
 # -----------------------------

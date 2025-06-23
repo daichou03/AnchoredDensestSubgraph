@@ -131,22 +131,30 @@ function exportGephiEdgelist(B::SparseMatrixCSC, FileName::String, Directory::St
     close(io)
 end
 
-# Generate multiple graphs, each one has half edge as the previous.
-function ExportHalfEdgeGraphs(GraphName::String, Iteration::Integer=5)
-    println(string("Graph: ",GraphName))
-    iter = 0
-    while iter < Iteration
-        iter += 1
-        println(string("Iteration: ", iter))
-        g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
-        # println(string("Subgraph size = ", size(g, 1), ", now exporting..."))
-        exportIN(g, string(GraphName, "-H", iter, ".in"))
+# Generate edge-sampled graphs from original, each one has half edge as the previous.
+# Up to log2(m / n).
+function ExportHalfEdgeGraphs(GraphName::String)
+    # Read the first line to get number of nodes and edges
+    open(string(GraphName, ".in"), "r") do file
+        firstline = readline(file)
+        n, m = parse.(Int, split(firstline))
+        avg_deg = 2 * m / n
+        max_iter = floor(Int, log2(avg_deg))  # Compute max iteration based on density
+        println("Graph: $GraphName")
+        println("Nodes = $n, Edges = $m, Avg degree = $(round(avg_deg, digits=2)), Max Iteration = $max_iter")
+
+        for iter in 1:max_iter
+            println("Iteration: $iter")
+            g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
+            exportIN(g, string(GraphName, "-H", iter, ".in"))
+        end
     end
 end
 
-function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1}, Iteration::Integer=5)
+
+function BulkExportHalfEdgeGraphs(dataset_names::Array{String,1})
     for ds_name in dataset_names
-        ExportHalfEdgeGraphs(ds_name, Iteration)
+        ExportHalfEdgeGraphs(ds_name)
     end
 end
 

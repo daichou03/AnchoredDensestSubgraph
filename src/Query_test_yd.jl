@@ -608,18 +608,18 @@ end
 function GenerateAnchorNodesFileHalfGraph(ds_name::String, OutputSubDirName::String, Tests::Int64)
     i = 1
     while true
-        filename = string(ds_name, "-H", i, ".in")
+        half_ds_name = string(ds_name, "-H", i)
         try
-            B = readIN(filename)
+            readIN(string(half_ds_name, ".in"), nmonly=true)
         catch e
             if isa(e, SystemError) || isa(e, IOError)
                 break  # File does not exist; stop the loop
             else
-                rethrow(e)  # Rethrow unexpected errors
+                rethrow(e)
             end
         end
-        println("Generating anchor nodes for: ", filename)
-        GenerateAnchorNodesFile(B, OutputSubDirName, Tests)
+        println("Generating anchor nodes for: ", half_ds_name)
+        GenerateAnchorNodesFile(half_ds_name, OutputSubDirName, Tests)
         i += 1
     end
 end

@@ -34,11 +34,14 @@ function readRaw(FileName::AbstractString, N::Int, M::Int, Directory::String=DIR
     return readRaw(FileName, N, M, 1.0, Directory)
 end
 
-function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC)
+function readIN(FileName::AbstractString, Chance::Float64=1.0, Directory::String=DIR_EXAMPLE_SCC; nmonly::Bool=false)
     f = open(string(folderString(Directory),FileName))
     header = split(readline(f))
     n = parse(Int,header[1])
     m = parse(Int,header[2])
+    if nmonly
+        return n,m
+    end
     return doReadIN(f, n, m, Chance, false, false)
 end
 
@@ -135,19 +138,16 @@ end
 # Up to log2(m / n).
 function ExportHalfEdgeGraphs(GraphName::String)
     # Read the first line to get number of nodes and edges
-    open(string(GraphName, ".in"), "r") do file
-        firstline = readline(file)
-        n, m = parse.(Int, split(firstline))
-        avg_deg = 2 * m / n
-        max_iter = floor(Int, log2(avg_deg))  # Compute max iteration based on density
-        println("Graph: $GraphName")
-        println("Nodes = $n, Edges = $m, Avg degree = $(round(avg_deg, digits=2)), Max Iteration = $max_iter")
+    n, m = readIN(string(GraphName, ".in"), nmonly=true)
+    avg_deg = 2 * m / n
+    max_iter = floor(Int, log2(avg_deg))  # Compute max iteration based on density
+    println("Graph: $GraphName")
+    println("Nodes = $n, Edges = $m, Avg degree = $(round(avg_deg, digits=2)), Max Iteration = $max_iter")
 
-        for iter in 1:max_iter
-            println("Iteration: $iter")
-            g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
-            exportIN(g, string(GraphName, "-H", iter, ".in"))
-        end
+    for iter in 1:max_iter
+        println("Iteration: $iter")
+        g = RetrieveLargestConnectedComponent(readIN(string(GraphName, ".in"), 0.5^iter))
+        exportIN(g, string(GraphName, "-H", iter, ".in"))
     end
 end
 

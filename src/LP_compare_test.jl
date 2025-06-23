@@ -147,11 +147,23 @@ end
 
 
 # Halved graphs only ("amazon-H1.in" etc.)
-function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", iteration = 5, sampleSize::Int=0)
+function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
     halved_dataset_names = String[]
     for dataname in dataset_names
-        for i in 1:iteration
-            push!(halved_dataset_names, string(dataname, "-H", i))
+        i = 1
+        while true
+            half_ds_name = string(dataname, "-H", i)
+            try
+                readIN(string(half_ds_name, ".in"), nmonly=true)
+            catch e
+                if isa(e, SystemError) || isa(e, IOError)
+                    break  # File does not exist; stop the loop
+                else
+                    rethrow(e)
+                end
+            end
+            push!(halved_dataset_names, half_ds_name)
+            i += 1
         end
     end
     BulkProcessAndOutputParameterizedLP(halved_dataset_names; wACRange, wADRange, anchorsType, suffixName, sampleSize)

@@ -29,6 +29,13 @@ RESULT_TYPE_SETS = 2
 RESULT_TYPE_NAMES = ["lpcompstats", "lpcompsets"]
 FOLDER_LP_COMP_RESULTS = "../LPCompResults/"
 
+# Sensitivity tests
+TARGET_SIZES = [8,16,32,64,128,256,512]
+function GetAnchorSizeSubFolderName(rsize::Int64)
+    return string("fix-", rsize)
+end
+
+
 function GetLPCompResultFileName(dataName::String, solverID::Int, suffixName::String, resultType::Int)
     name = string(dataName, "-", SOLVER_NAMES[solverID == SOLVER_FN_ADS ? SOLVER_FN_ADS : SOLVER_LP_ADSS])
     if length(suffixName) > 0

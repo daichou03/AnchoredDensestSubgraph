@@ -99,16 +99,15 @@ end
 # Sensitivity Test: R-Size #
 ############################
 
-TARGET_SIZES = [8,16,32,64,128,256,512]
 function ProcessAndOutputLPFixedSizes(dataName::String, sizes, sampleSize::Int=0)
     B = readIN(string(dataName, ".in"))
     for rsize in sizes
-        anchors = readAnchors(dataName, string("fix-", rsize))
+        anchors = readAnchors(dataName, GetAnchorSizeSubFolderName(rsize))
         if sampleSize > 0
             anchors = anchors[1:sampleSize]
         end
         statsAlgorithms = ProcessAlgorithms(B, anchors, LP_SOLVER_ONLY)
-        OutputStatsAlgorithms(statsAlgorithms, dataName, string("fix-", rsize))
+        OutputStatsAlgorithms(statsAlgorithms, dataName, GetAnchorSizeSubFolderName(rsize))
     end
 end
 
@@ -167,6 +166,19 @@ function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = 
         end
     end
     BulkProcessAndOutputParameterizedLP(halved_dataset_names; wACRange, wADRange, anchorsType, suffixName, sampleSize)
+end
+
+
+TARGET_SIZES = [8,16,32,64,128,256,512]
+function BulkProcessAndOutputParameterizedLPTargetSizes(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, rSizes = TARGET_SIZES, suffixName::String="", sampleSize::Int=0)
+    for dataName in dataset_names
+        for rsize in rSizes
+            println(string(dataName, ", R size = ", rsize, ":"))
+            fullSuffix = join(["rsize", rsize, suffixName], "-")
+            proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, GetAnchorSizeSubFolderName(rsize), fullSuffix, sampleSize)
+            println(proc.time)
+        end
+    end
 end
 
 # -------

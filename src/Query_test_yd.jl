@@ -1,10 +1,10 @@
-# This file contains the main functions to produce the experimental results.
+# This file contains the main functions to produce the experimental results (for 2022 ADS paper)
 
 using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
-using StatsBase # TODO: To install
+using StatsBase
 using Random
 using Base
 include("maxflow.jl")
@@ -13,6 +13,7 @@ include("Utils_graph.jl")
 include("Core_algorithm_yd.jl")
 include("Utils_warmup.jl")
 include("Utils.jl")
+include("LP_consts.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
 
@@ -192,21 +193,67 @@ function GenerateReferenceSetMultipleSize(B::SparseMatrixCSC, user_inputs::Array
     return anchors
 end
 
-TARGET_SIZES = [8,16,32,64,128,256,512]
-function GenerateReferenceSetTargetSizeAnchorsFile(dataName::String, TargetSizes, SameUserInput=false, Tests=100)
+# ------------------------------------------
+# Generate user set + reference set + export
+# ------------------------------------------
+# Format of anchor node files:
+
+# The first line is the data graph name.
+# The second line is the number of anchor sets.
+# The following lines are the anchor sets.
+
+function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
+    dataset = readIN(string(ds_name, ".in"))
+    user_inputs = BulkGenerateUserInputSet(dataset, Tests, DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE)
+    anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, DEFAULT_R_NODE_DEGREE_CAP)
+    writeAnchors(ds_name::AbstractString, OutputSubDirName::String, anchors)
+end
+
+function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
+    for ds_name in dataset_names
+        GenerateAnchorNodesFile(ds_name, OutputSubDirName, Tests)
+    end
+end
+
+function GenerateAnchorNodesHalfGraphFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
+    i = 1
+    while true
+        half_ds_name = string(ds_name, "-H", i)
+        try
+            readIN(string(half_ds_name, ".in"), nmonly=true)
+        catch e
+            if isa(e, SystemError) || isa(e, IOError)
+                break  # File does not exist; stop the loop
+            else
+                rethrow(e)
+            end
+        end
+        println("Generating anchor nodes for: ", half_ds_name)
+        GenerateAnchorNodesFile(half_ds_name, OutputSubDirName, Tests)
+        i += 1
+    end
+end
+
+function BulkGenerateAnchorNodesHalfGraphFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
+    for ds_name in dataset_names
+        GenerateAnchorNodesHalfGraphFile(ds_name, OutputSubDirName, Tests)
+    end
+end
+
+function GenerateReferenceSetTargetSizeAnchorsFile(dataName::String, TargetSizes=TARGET_SIZES, SameUserInput=false, Tests=100)
     B = readIN(string(dataName,".in"))
     user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
-    for targetSize in TargetSizes
+    for rsize in TargetSizes
         if !SameUserInput
             user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
         end
-        anchors = GenerateReferenceSetMultipleSize(B, user_inputs, targetSize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
-        subDirName = string("fix-",targetSize)
+        anchors = GenerateReferenceSetMultipleSize(B, user_inputs, rsize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
+        subDirName = GetAnchorSizeSubFolderName(rsize)
         writeAnchors(dataName, subDirName, anchors)
     end
 end
 
-function BulkGenerateReferenceSetTargetSizeAnchorsFile(dataset_names::Array{String,1}, TargetSizes, SameUserInput=false, Tests::Int64=100)
+function BulkGenerateReferenceSetTargetSizeAnchorsFile(dataset_names::Array{String,1}, TargetSizes=TARGET_SIZES, SameUserInput=false, Tests::Int64=100)
     for ds_name in dataset_names
         GenerateReferenceSetTargetSizeAnchorsFile(ds_name, TargetSizes, SameUserInput, Tests)
     end
@@ -549,90 +596,6 @@ function BatchPerformHalfEdgeTest(ds_name::String, Tests::Int64, LoadHalfEdge::B
             PerformQueryAllAlgorithms(B, Tests, string(ds_name, "-H", iter), LA_ONLY)
             println(string(size(B, 1), "|", div(length(B.nzval), 2)))
         end
-    end
-end
-
-# Just easy to find
-# https://www.asciiart.eu/computers/joysticks
-#             ..                          ..
-#          .''..''.      .--~~--.      .``..``.
-#         .:''     `----'        `----'     ``:.
-#         |       .    ( * )  ( * )    .       |
-#        .' ....   `.  L1/L2  R1/R2  .'     _  `.
-#       : .;\  /;.  :  ( * )  ( * )  :   _ (B) _ :
-#      :  :) () (:   :              :   (A) _ (D) :
-#       : `:/  \:'  :       B        :     (C)   :
-#        :  ''''   .'   A ( * ) D    `.         :
-#       .'        '   ( * ) C ( * )    `        `.
-#      .'        .''.     ( * )      .``.        `.
-#    .'        .'   `. (o)      (o) .'   `.        `.
-#   .'       .'      `.   1(* )2   .'      `.       `.
-# .'       .'         `............'         `.       `.
-# `.      .' 4 BUTTON FLIGHT  YOKE W/THROTTLE `.      .'
-#   `....'   Lester                       AMC   `....'
-
-
-# Copy paste below to the console.
-# The idea is if something is wrong, still have the loaded data graph in the memory as B ->
-# ds_name = "flickr"
-# include("Query_test_yd.jl")
-# using Laplacians
-# using Laplacians
-# B = 0
-# @time B = readIN(string(ds_name, ".in"))
-# BatchPerformAllTests(B, ds_name, 100, length(B.nzval)>150000000)
-
-
-# Generate AnchorNodes file.
-
-# Format:
-# The first line is the data graph name.
-# The second line is the number of anchor sets.
-# The following lines are the anchor sets.
-
-# Example:
-
-# eucore
-# 1000
-# 1,2,3,4,5,6
-# 7,8,9,10,11,12
-# ......
-
-function GenerateAnchorNodesFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
-    dataset = readIN(string(ds_name, ".in"))
-    user_inputs = BulkGenerateUserInputSet(dataset, Tests, DEF_USER_MAX_HOPS, DEF_USER_TARGET_SIZE)
-    anchors = BulkGenerateReferenceSetFixedWalks(dataset, user_inputs, DEF_ANCHOR_REPEATS, DEF_AHCHOR_STEPS, DEFAULT_R_NODE_DEGREE_CAP)
-    writeAnchors(ds_name::AbstractString, OutputSubDirName::String, anchors)
-end
-
-function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
-    for ds_name in dataset_names
-        GenerateAnchorNodesFile(ds_name, OutputSubDirName, Tests)
-    end
-end
-
-function GenerateAnchorNodesHalfGraphFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
-    i = 1
-    while true
-        half_ds_name = string(ds_name, "-H", i)
-        try
-            readIN(string(half_ds_name, ".in"), nmonly=true)
-        catch e
-            if isa(e, SystemError) || isa(e, IOError)
-                break  # File does not exist; stop the loop
-            else
-                rethrow(e)
-            end
-        end
-        println("Generating anchor nodes for: ", half_ds_name)
-        GenerateAnchorNodesFile(half_ds_name, OutputSubDirName, Tests)
-        i += 1
-    end
-end
-
-function BulkGenerateAnchorNodesHalfGraphFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
-    for ds_name in dataset_names
-        GenerateAnchorNodesHalfGraphFile(ds_name, OutputSubDirName, Tests)
     end
 end
 

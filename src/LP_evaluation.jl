@@ -378,9 +378,9 @@ function RSizeExtendResults(dataName::String, sizes, solverID::Int64=SOLVER_LP_A
     mkpath(FOLDER_LP_EVAL_RESULTS_RSIZE)
     B = readIN(string(dataName, ".in"))
     for rsize in sizes
-        anchors = readAnchors(dataName, string("fix-", rsize))
-        stats = readCompstats(dataName, solverID, string("fix-", rsize), false)
-        results = readCompsets(dataName, solverID, string("fix-", rsize), true)
+        anchors = readAnchors(dataName, GetAnchorSizeSubFolderName(rsize))
+        stats = readCompstats(dataName, solverID, GetAnchorSizeSubFolderName(rsize), false)
+        results = readCompsets(dataName, solverID, GetAnchorSizeSubFolderName(rsize), true)
         l = length(anchors)
         density, ER, EL0 = Vector{Float64}(undef, l), Vector{Int64}(undef, l), Vector{Int64}(undef, l)
         for i in 1:l
@@ -394,7 +394,7 @@ function RSizeExtendResults(dataName::String, sizes, solverID::Int64=SOLVER_LP_A
         stats = hcat(stats, DataFrame(:density => density))
         stats = hcat(stats, DataFrame(:er => ER))
         stats = hcat(stats, DataFrame(:el0 => EL0))
-        filename = GetLPCompResultFileName(dataName, solverID, string("fix-", rsize), RESULT_TYPE_STATS)
+        filename = GetLPCompResultFileName(dataName, solverID, GetAnchorSizeSubFolderName(rsize), RESULT_TYPE_STATS)
         CSV.write(string(folderString(FOLDER_LP_EVAL_RESULTS_RSIZE), filename), stats)
     end   
 end

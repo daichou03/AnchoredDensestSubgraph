@@ -136,7 +136,7 @@ function ProcessAndOutputParameterizedLP(dataName::String; wACRange = TEST_WAC_R
 end
 
 
-function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+function BulkProcessAndOutputParameterizedLP(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType::String="Baseline", suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
         println(string(dataName, ":"))
         proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, anchorsType, suffixName, sampleSize)
@@ -146,7 +146,7 @@ end
 
 
 # Halved graphs only ("amazon-H1.in" etc.)
-function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType="Baseline", suffixName::String="", sampleSize::Int=0)
+function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, anchorsType::String="Baseline", suffixName::String="", sampleSize::Int=0)
     halved_dataset_names = String[]
     for dataname in dataset_names
         i = 1
@@ -173,8 +173,9 @@ function BulkProcessAndOutputParameterizedLPTargetSizes(dataset_names; wACRange 
     for dataName in dataset_names
         for rsize in rSizes
             println(string(dataName, ", R size = ", rsize, ":"))
+            anchorSubFolder = GetAnchorSizeSubFolderName(rsize)
             fullSuffix = join(["rsize", rsize, suffixName], "-")
-            proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, GetAnchorSizeSubFolderName(rsize), fullSuffix, sampleSize)
+            proc = @timed ProcessAndOutputParameterizedLP(dataName; wACRange, wADRange, anchorsType=anchorSubFolder, suffixName=fullSuffix, sampleSize)
             println(proc.time)
         end
     end

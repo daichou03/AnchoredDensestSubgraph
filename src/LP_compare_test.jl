@@ -169,7 +169,6 @@ function BulkProcessAndOutputParameterizedLPHalfGraph(dataset_names; wACRange = 
 end
 
 
-TARGET_SIZES = [8,16,32,64,128,256,512]
 function BulkProcessAndOutputParameterizedLPTargetSizes(dataset_names; wACRange = TEST_WAC_RANGE, wADRange = TEST_WAD_RANGE, rSizes = TARGET_SIZES, suffixName::String="", sampleSize::Int=0)
     for dataName in dataset_names
         for rsize in rSizes

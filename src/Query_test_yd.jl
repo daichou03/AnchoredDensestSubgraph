@@ -182,7 +182,7 @@ function GenerateReferenceSetTargetSize(B::SparseMatrixCSC, C::Vector{Int64}, Ta
     return r
 end
 
-function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Array{Any,1}, TargetSize::Int64, MaxStep::Int64,
+function GenerateReferenceSetMultipleSize(B::SparseMatrixCSC, user_inputs::Array{Any,1}, TargetSize::Int64, MaxStep::Int64,
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     anchors = Any[]
     for i = 1:length(user_inputs)
@@ -193,16 +193,22 @@ function BulkGenerateReferenceSetTargetSize(B::SparseMatrixCSC, user_inputs::Arr
 end
 
 TARGET_SIZES = [8,16,32,64,128,256,512]
-function GenerateReferenceSetTargetSizeAnchors(dataName::String, TargetSizes, SameUserInput=false, Tests=100)
+function GenerateReferenceSetTargetSizeAnchorsFile(dataName::String, TargetSizes, SameUserInput=false, Tests=100)
     B = readIN(string(dataName,".in"))
     user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
     for targetSize in TargetSizes
         if !SameUserInput
             user_inputs = BulkGenerateUserInputSet(B, Tests, 2, 2)
         end
-        anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, targetSize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
+        anchors = GenerateReferenceSetMultipleSize(B, user_inputs, targetSize, 2, DEFAULT_R_NODE_DEGREE_CAP, 5)
         subDirName = string("fix-",targetSize)
         writeAnchors(dataName, subDirName, anchors)
+    end
+end
+
+function BulkGenerateReferenceSetTargetSizeAnchorsFile(dataset_names::Array{String,1}, TargetSizes, SameUserInput=false, Tests::Int64=100)
+    for ds_name in dataset_names
+        GenerateReferenceSetTargetSizeAnchorsFile(ds_name, TargetSizes, SameUserInput, Tests)
     end
 end
 
@@ -364,7 +370,7 @@ function PerformQueryAnchorSizeTest(B::SparseMatrixCSC, Tests::Int64, DatasetNam
         AlgorithmMask::Vector{Bool}=LA_ONLY, FileNameSuffix::String="-AnchorSizeTest",
         RNodeDegreeCap::rNodeDegreeCap=DEFAULT_R_NODE_DEGREE_CAP, MaxRetriesMultiplier::Int64=5)
     user_inputs = BulkGenerateUserInputSet(B, Tests, MaxHops, UserTargetSize)
-    anchors = BulkGenerateReferenceSetTargetSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
+    anchors = GenerateReferenceSetMultipleSize(B, user_inputs, AnchorTargetSize, Steps, RNodeDegreeCap, MaxRetriesMultiplier)
     (performances, inducedDS_set, globalDegree, orderByDegreeIndices) = DoProcessAlgorithms(B, anchors, AlgorithmMask)
     filename = string(DatasetName, "-", Tests, "-", MaxHops, "-", UserTargetSize, "-", AnchorTargetSize, "-", Steps, FileNameSuffix)
     return DoOutputPerformanceReports(filename, Tests, AlgorithmMask, performances, anchors, inducedDS_set, globalDegree, orderByDegreeIndices)
@@ -605,7 +611,7 @@ function BulkGenerateAnchorNodesFile(dataset_names::Array{String,1}, OutputSubDi
     end
 end
 
-function GenerateAnchorNodesFileHalfGraph(ds_name::String, OutputSubDirName::String, Tests::Int64)
+function GenerateAnchorNodesHalfGraphFile(ds_name::String, OutputSubDirName::String, Tests::Int64)
     i = 1
     while true
         half_ds_name = string(ds_name, "-H", i)
@@ -624,9 +630,9 @@ function GenerateAnchorNodesFileHalfGraph(ds_name::String, OutputSubDirName::Str
     end
 end
 
-function BulkGenerateAnchorNodesFileHalfGraph(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
+function BulkGenerateAnchorNodesHalfGraphFile(dataset_names::Array{String,1}, OutputSubDirName::String, Tests::Int64)
     for ds_name in dataset_names
-        GenerateAnchorNodesFileHalfGraph(ds_name, OutputSubDirName, Tests)
+        GenerateAnchorNodesHalfGraphFile(ds_name, OutputSubDirName, Tests)
     end
 end
 

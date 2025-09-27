@@ -13,7 +13,7 @@ include("../../Utils_graph.jl")
 include("../algorithms.jl")
 include("../../Utils_warmup.jl")
 include("../../Utils.jl")
-include("../../LP_consts.jl")
+include("../../GADS/lp_consts.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
 

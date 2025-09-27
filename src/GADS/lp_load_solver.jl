@@ -1,8 +1,8 @@
 using JuMP
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Utils.jl")
-include("LP_consts.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../Utils.jl")
+include("lp_consts.jl")
 
 # Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi, CPLEX
 # Set DEFAULT_LP_SOLVER to change a solver.

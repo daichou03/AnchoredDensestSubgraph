@@ -1,6 +1,5 @@
 name = "AnchoredDensestSubgraph"
 uuid = "ff215083-2585-4c5b-86d7-a06ffe212df7"
-authors = ["Research Team <research@example.com>"]
 version = "0.1.0"
 
 [deps]

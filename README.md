@@ -30,21 +30,22 @@ flowchart LR
 ### Prerequisites
 Julia
 
-### Packages required
-Installing packages in Julia for example:
+### Installation
+Install the package and its dependencies:
 ```julia
 using Pkg
-Pkg.add("MatrixNetworks")
-Pkg.add("MAT")
-Pkg.add("StatsBase")
-Pkg.add("JuMP")
-Pkg.add("HiGHS")  # Skip if using other LP Solver
-Pkg.add("CSV")
-Pkg.add("DataFrames")
+Pkg.add("AnchoredDensestSubgraph")
+```
+
+Or clone the repository and activate the project:
+```julia
+using Pkg
+Pkg.activate("path/to/AnchoredDensestSubgraph")
+Pkg.instantiate()
 ```
 
 ### Working folder
-For all tasks, open cmd/bash, navigate to the repository's root directory, then enter the `./src` folder and run `julia`
+For all tasks, open cmd/bash, navigate to the repository's root directory and run `julia`
 
 ---
 ```mermaid
@@ -57,7 +58,7 @@ By default, the LP (Linear-Programming) solver `HiGHS` would be (installed and) 
 If you want to use another LP solver, take `CPLEX` for example, you need to refer to:
 - Install [IBM ILOG CPLEX Optimization Studio](https://www.ibm.com/products/ilog-cplex-optimization-studio). You will need to have/obtain a license
 - Install [CPLEX for Julia](https://www.ibm.com/products/ilog-cplex-optimization-studio). Including `Pkg.add("CPLEX")`.
-- In the file `.\src\LP_load_solver.jl`, comment the blocks using HiGHS and uncomment the blocks using CPLEX.
+- In the file `.\src\GADS\lp_load_solver.jl`, comment the blocks using HiGHS and uncomment the blocks using CPLEX.
 
 ---
 ```mermaid
@@ -66,14 +67,14 @@ flowchart LR
 ```
 
 ```julia
-include("LP_algorithm.jl")
+using AnchoredDensestSubgraph
 ```
 
 ### Read/create a graph
 Load a toy graph in `./Example_small/` (there are some other toy graphs in the same folder for exploration):
 
 ```julia
-A = readIN("lobster.in", "../Example_small/")
+A = readIN("lobster.in", "Example_small/")
 ```
 
 This graph is same as:
@@ -225,7 +226,7 @@ Alternatively, a `readRaw()` does the same as `readIN()` but assumes the file do
 Instead, you pass the number of vertices and the number of edges as the parameters:
 
 ```julia
-A = readRaw("zebra.txt", 27, 111, "../Example_raw")
+A = readRaw("zebra.txt", 27, 111, "Example_raw")
 ```
 
 ------
@@ -235,4 +236,4 @@ flowchart LR
 ```
 
 This code is a fork of [HypergraphFlowClustering](https://github.com/nveldt/HypergraphFlowClustering) by [Nate Veldt](https://github.com/nveldt). We are grateful for [Nate Veldt]'s contributions, such as:
-- `maxflow.jl` with modifications.
+- `src/ADS/flow_network.jl` with modifications.

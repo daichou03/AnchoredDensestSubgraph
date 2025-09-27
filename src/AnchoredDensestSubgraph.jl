@@ -67,10 +67,7 @@ include("case_studies/CaseStudies.jl")
 export ExportSimpleRs, ImportSimpleRs, ProcessCaseStudy
 
 # Include competitor algorithms
-include("CP_MRW.jl")
-include("CP_GreedyL.jl") 
-include("CP_FlowSeed.jl")
-include("CX_FlowSeed.jl")
+include("competitors/Competitors.jl")
 
 # Export competitor functions
 export MRW, GreedyL, FlowSeed

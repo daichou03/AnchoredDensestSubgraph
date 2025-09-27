@@ -5,19 +5,19 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_generic.jl")
-include("CS_DBLP.jl")
-include("CP_MRW.jl")
-include("CP_FlowSeed.jl")
-include("Test_degeneracy_yd.jl")
-include("CS_generic_LA.jl")
-include("CS_Evaluation_Simple.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("generic.jl")
+include("dblp.jl")
+include("../competitors/home_coded/mrw.jl")
+include("../competitors/home_coded/flowseed.jl")
+include("../ADS/experiments/degeneracy_tests.jl")
+include("generic_la.jl")
+include("evaluation_simple.jl")
 
 V_JW = 16028
 N_JW = GetAdjacency(B, V_JW, true)

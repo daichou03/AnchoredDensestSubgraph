@@ -5,18 +5,18 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_generic.jl")
-include("CS_Amazon.jl")
-include("CP_MRW.jl")
-include("CP_flowseed.jl")
-include("Test_degeneracy_yd.jl")
-include("CS_generic_LA.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("generic.jl")
+include("amazon.jl")
+include("../competitors/home_coded/mrw.jl")
+include("../competitors/home_coded/flowseed.jl")
+include("../ADS/experiments/degeneracy_tests.jl")
+include("generic_la.jl")
 
 # Old stratified test (Amazon only)
 

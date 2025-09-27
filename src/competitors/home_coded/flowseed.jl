@@ -1,7 +1,7 @@
 # Credit: FlowSeed: https://github.com/nveldt/FlowSeed
 
 using MAT
-include("CX_FlowSeed.jl")
+include("../external/flowseed.jl")
 
 # PenalityR: Penalty for not including R. 1.0 is their default, but 0.0 is closer to our anchored density definition.
 # StrongR: flowseed can specify nodes that MUST be included.

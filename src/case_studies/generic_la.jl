@@ -12,7 +12,7 @@ include("../ADS/algorithms.jl")
 include("../Utils_warmup.jl")
 include("../Utils.jl")
 include("generic.jl")
-include("../CP_MRW.jl")
+include("../competitors/home_coded/mrw.jl")
 include("../ADS/experiments/degeneracy_tests.jl")
 include("evaluation_single.jl")
 

@@ -11,7 +11,7 @@ include("../Utils_graph.jl")
 include("../ADS/algorithms.jl")
 include("../Utils_warmup.jl")
 include("../Utils.jl")
-#include("../CP_GreedyL.jl")
+#include("../competitors/home_coded/greedyl.jl")
 include("amazon.jl")
 
 # 20211023: Old integration of startified amazon only tests. May not work without fixing.

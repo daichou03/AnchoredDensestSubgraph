@@ -6,13 +6,9 @@ using StatsBase
 using Random
 using Base
 include("../ADS/flow_network.jl")
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
+include("../utils/Utils.jl")
 include("../ADS/algorithms.jl")
-include("../Utils_warmup.jl")
-include("../Utils.jl")
 include("simple.jl")
-include("../Collect_results.jl")
 
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0

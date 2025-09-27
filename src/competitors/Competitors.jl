@@ -29,9 +29,7 @@ using Random
 using Base
 
 # Include utility functions
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 
 # Include home-coded competitors
 include("home_coded/flowseed.jl")

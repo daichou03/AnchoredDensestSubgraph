@@ -29,10 +29,7 @@ using LinearAlgebra
 using Base
 
 # Include utility functions
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
-include("../Memory_tracker.jl")
+include("../utils/Utils.jl")
 
 # Include ADS algorithms
 include("algorithms.jl")

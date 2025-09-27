@@ -9,9 +9,7 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("../../Utils_io.jl")
-include("../../Utils_graph.jl")
-include("../../Utils.jl")
+include("../../utils/Utils.jl")
 
 # TODO: can have an increment version to improve performance.
 function LinScore(G::SparseMatrixCSC, D::Vector{Int64})

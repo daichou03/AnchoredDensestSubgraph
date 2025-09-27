@@ -35,9 +35,7 @@ using DataFrames
 using StatsBase
 
 # Include utility functions
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 
 # Include GADS algorithms
 include("lp_consts.jl")

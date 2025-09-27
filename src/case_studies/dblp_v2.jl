@@ -1,10 +1,8 @@
 using CSV
 using DataFrames
 using StatsBase
-include("../Utils.jl")
-include("../Utils_io.jl")
+include("../utils/Utils.jl")
 include("../GADS/lp_consts.jl")
-include("../Utils_graph.jl")
 include("../GADS/lp_evaluation.jl")
 include("generic_v2.jl")
 include("dblp.jl")

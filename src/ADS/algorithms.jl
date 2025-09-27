@@ -3,11 +3,8 @@ using MAT
 using MatrixNetworks
 using LinearAlgebra
 using Base
-include("../Memory_tracker.jl")
+include("../utils/Utils.jl")
 include("flow_network.jl") # TODO: Credit
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
 
 # For undirected and unweighted graph.
 

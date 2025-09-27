@@ -6,10 +6,7 @@ using StatsBase
 using Random
 using Base
 include("../ADS/flow_network.jl")
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils_warmup.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 
 #############
 # For Gephi #

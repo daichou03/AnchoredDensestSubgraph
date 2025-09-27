@@ -4,9 +4,7 @@ using MatrixNetworks
 using LinearAlgebra
 using Base
 using JuMP
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 include("../ADS/algorithms.jl")
 include("lp_consts.jl")
 include("lp_load_solver.jl")

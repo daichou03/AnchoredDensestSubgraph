@@ -33,11 +33,7 @@ using Printf
 export SparseMatrixCSC, sparse, nnz, size, length
 
 # Include and export utility functions
-include("Utils.jl")
-include("Utils_io.jl") 
-include("Utils_graph.jl")
-include("Utils_warmup.jl")
-include("Memory_tracker.jl")
+include("utils/Utils.jl")
 
 # Export utility functions
 export readIN, readRaw, GetDegree, GetComponentAdjacency, GetOrderByDegreeGraphIndices
@@ -73,7 +69,7 @@ include("competitors/Competitors.jl")
 export MRW, GreedyL, FlowSeed
 
 # Include experimental code (moved to respective modules)
-include("Collect_results.jl")
+# Collect_results.jl is now included in utils/Utils.jl
 
 # Export experimental functions
 export ProcessAlgorithms, DoProcessAlgorithms, GenerateUserInputSet

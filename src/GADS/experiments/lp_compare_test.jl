@@ -4,10 +4,7 @@ using MatrixNetworks
 using LinearAlgebra
 using Random
 using Base
-include("../../Utils_io.jl")
-include("../../Utils_graph.jl")
-include("../../Utils_warmup.jl")
-include("../../Utils.jl")
+include("../../utils/Utils.jl")
 include("../../ADS/flow_network.jl")
 include("../../ADS/algorithms.jl")
 include("../lp_consts.jl")

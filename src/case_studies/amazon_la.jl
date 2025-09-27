@@ -5,17 +5,14 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_generic.jl")
-include("CS_Amazon.jl")
-include("CS_Evaluation_Amazon.jl")
-include("Test_degeneracy_yd.jl")
-include("CS_generic_LA.jl")
+include("../ADS/flow_network.jl")
+include("../utils/Utils.jl")
+include("../ADS/algorithms.jl")
+include("generic.jl")
+include("amazon.jl")
+include("evaluation_amazon.jl")
+include("../ADS/experiments/degeneracy_tests.jl")
+include("generic_la.jl")
 
 println("Reading Amazon product info...")
 AMAZON_META_FILE = string(CS_AMAZON_FOLDER, "Raw/amazon-meta.txt")

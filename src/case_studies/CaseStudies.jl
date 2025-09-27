@@ -31,9 +31,7 @@ using CSV
 using DataFrames
 
 # Include utility functions
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 
 # Include case study implementations
 include("amazon.jl")

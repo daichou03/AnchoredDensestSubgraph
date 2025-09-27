@@ -1,7 +1,5 @@
 using JuMP
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
-include("../Utils.jl")
+include("../utils/Utils.jl")
 include("lp_consts.jl")
 
 # Currently support these LP solvers: HiGHS, GLPK, Clp, CDDLib, Gurobi, CPLEX

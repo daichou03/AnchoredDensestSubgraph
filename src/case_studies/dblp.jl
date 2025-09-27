@@ -6,10 +6,8 @@ using StatsBase
 using Random
 using Base
 include("../ADS/flow_network.jl")
-include("../Utils_io.jl")
-include("../Utils_graph.jl")
+include("../utils/Utils.jl")
 include("../ADS/algorithms.jl")
-include("../Utils.jl")
 include("generic.jl")
 
 # Was 0 indexed, convert to 1-indexed.

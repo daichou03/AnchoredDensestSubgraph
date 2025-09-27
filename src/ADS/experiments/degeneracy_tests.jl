@@ -6,11 +6,8 @@ using StatsBase # TODO: To install
 using Random
 using Base
 include("../flow_network.jl")
-include("../../Utils_io.jl")
-include("../../Utils_graph.jl")
+include("../../utils/Utils.jl")
 include("../algorithms.jl")
-include("../../Utils_warmup.jl")
-include("../../Utils.jl")
 
 mutable struct rSeed
     seed::Int64

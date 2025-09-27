@@ -9,10 +9,7 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("../../Utils_io.jl")
-include("../../Utils_graph.jl")
-include("../../Utils.jl")
-include("../../Memory_tracker.jl")
+include("../../utils/Utils.jl")
 
 
 MRW_ALPHA = 0.1

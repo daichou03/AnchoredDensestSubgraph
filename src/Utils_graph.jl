@@ -5,7 +5,7 @@ using LinearAlgebra
 using StatsBase # TODO: To install
 using Random
 using Base
-include("maxflow.jl")
+include("ADS/flow_network.jl")
 include("Utils_io.jl")
 
 #------------

@@ -44,8 +44,7 @@ export readIN, readRaw, GetDegree, GetComponentAdjacency, GetOrderByDegreeGraphI
 export RegisterFunctionStamp, RegisterMemoryItem, Memory_item_GDS, Memory_item_GA, Memory_item_IGA, Memory_item_LA
 
 # Include ADS algorithms (Paper 1)
-include("Core_algorithm_yd.jl")
-include("maxflow.jl")
+include("ADS/ADS.jl")
 
 # Export ADS functions
 export GlobalDensestSubgraph, LocalAnchoredDensestSubgraph, ImprovedGlobalAnchoredDensestSubgraph
@@ -83,9 +82,7 @@ include("CX_FlowSeed.jl")
 # Export competitor functions
 export MRW, GreedyL, FlowSeed
 
-# Include experimental code
-include("Query_test_yd.jl")
-include("Test_degeneracy_yd.jl")
+# Include experimental code (moved to ADS module)
 include("LP_compare_test.jl")
 include("Collect_results.jl")
 

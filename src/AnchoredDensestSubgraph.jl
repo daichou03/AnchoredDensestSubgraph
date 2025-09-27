@@ -6,6 +6,13 @@ This module provides access to both ADS (Anchored Densest Subgraph) and
 GADS (Generalized Anchored Densest Subgraph) algorithms, along with 
 supporting utilities and competitor algorithms.
 
+# Credits
+This project is based on research from two academic papers and incorporates
+code from the HypergraphFlowClustering project by Nate Veldt.
+- Flow network implementation: Based on HypergraphFlowClustering by Nate Veldt
+- Laplacians utilities: Based on Laplacians.jl by Daniel Spielman
+- FlowSeed competitor: Based on FlowSeed by Nate Veldt, Christine Klymko, and David Gleich
+
 # Usage
 ```julia
 using AnchoredDensestSubgraph

@@ -4,7 +4,7 @@ using MatrixNetworks
 using LinearAlgebra
 using Base
 include("../utils/Utils.jl")
-include("flow_network.jl") # TODO: Credit
+include("flow_network.jl") # Credit: Based on HypergraphFlowClustering by Nate Veldt
 
 # For undirected and unweighted graph.
 

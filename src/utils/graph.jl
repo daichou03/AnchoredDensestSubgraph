@@ -2,7 +2,7 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
-using StatsBase # TODO: To install
+using StatsBase
 using Random
 using Base
 include("io.jl")
@@ -21,7 +21,7 @@ EMPTY_DENSEST_SUBGRAPH = densestSubgraph(0.0, [])
 # ----------------------------------
 # Laplacians package functions start
 # ----------------------------------
-# Credit:
+# Credit: Based on Laplacians.jl by Daniel Spielman
 # https://github.com/danspielman/Laplacians.jl/blob/master/src/graphUtils.jl
 # Too heavy to load the entire package, copy the specific function here instead.
 

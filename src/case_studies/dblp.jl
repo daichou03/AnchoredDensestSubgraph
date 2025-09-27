@@ -23,8 +23,7 @@ DBLP_AUTHOR_TOTAL = 1824701
 DBLP_COLLAB_TOTAL = 8344615
 DBLP_COLLAB_MULTI_TOTAL = 29487744
 
-# TODO:
-# Read raw to make an array of all nodes so that can index -> article title.
+# TODO: Read raw to make an array of all nodes so that can index -> article title.
 
 function LoadDBLPNameAsArray(reformat = true)
     io_read = open(string(FOLDER_CS_DBLP_RAW,DBLP_NAME_FILE))

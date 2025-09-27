@@ -2,7 +2,7 @@ using SparseArrays
 using MAT
 using MatrixNetworks
 using LinearAlgebra
-using StatsBase # TODO: To install
+using StatsBase
 using Random
 using Base
 include("../ADS/flow_network.jl")

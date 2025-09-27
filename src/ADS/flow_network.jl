@@ -1,7 +1,6 @@
 # Credit: https://github.com/nveldt/HypergraphFlowClustering
 # With changes and renames (add _HFC when conflict)
 
-using MatrixNetworks
 using SparseArrays
 
 include("../utils/Utils.jl")

@@ -1,6 +1,5 @@
 using SparseArrays
 using MAT
-using MatrixNetworks
 using LinearAlgebra
 include("core.jl")
 # include("graph.jl")  # cycular ref

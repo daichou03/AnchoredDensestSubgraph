@@ -24,7 +24,6 @@ module ADS
 # Core dependencies
 using SparseArrays
 using MAT
-using MatrixNetworks
 using LinearAlgebra
 using Base
 

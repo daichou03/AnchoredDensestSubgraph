@@ -30,7 +30,6 @@ module Utils
 # Core dependencies
 using SparseArrays
 using MAT
-using MatrixNetworks
 using LinearAlgebra
 using StatsBase
 using Random

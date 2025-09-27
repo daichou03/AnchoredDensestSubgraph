@@ -1,6 +1,5 @@
 using SparseArrays
 using MAT
-using MatrixNetworks
 using LinearAlgebra
 using Base
 using JuMP

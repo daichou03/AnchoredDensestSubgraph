@@ -5,9 +5,9 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("Utils_io.jl")
-include("Utils.jl")
-include("Utils_graph.jl")
+include("../Utils_io.jl")
+include("../Utils.jl")
+include("../Utils_graph.jl")
 
 # This part of the code should be made safe to be included by both our algorithm and any external baseline algorithms that may not be compatiable with our algorithms.
 

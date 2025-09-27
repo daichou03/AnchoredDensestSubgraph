@@ -5,14 +5,14 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-#include("CP_GreedyL.jl")
-include("CS_Amazon.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+#include("../CP_GreedyL.jl")
+include("amazon.jl")
 
 # 20211023: Old integration of startified amazon only tests. May not work without fixing.
 # Amazon Stratified tests

@@ -1,13 +1,13 @@
 using CSV
 using DataFrames
 using StatsBase
-include("Utils.jl")
-include("Utils_io.jl")
-include("LP_consts.jl")
-include("Utils_graph.jl")
-include("CS_DBLP.jl")
-include("CS2_generic.jl")
-include("LP_algorithm.jl")
+include("../Utils.jl")
+include("../Utils_io.jl")
+include("../GADS/lp_consts.jl")
+include("../Utils_graph.jl")
+include("dblp.jl")
+include("generic_v2.jl")
+include("../GADS/algorithms.jl")
 
 dataName = "csdblp"
 FOLDER_CS_DBLP_CANDIDATE_LP = folderString(FOLDER_CS_DBLP, "candidate", "LP")

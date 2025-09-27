@@ -5,9 +5,9 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("Utils_io.jl")
-include("Utils.jl")
-include("Utils_graph.jl")
+include("../Utils_io.jl")
+include("../Utils.jl")
+include("../Utils_graph.jl")
 
 # This part of the code should be made safe to be included by both our algorithm and any competitor algorithms.
 
@@ -15,7 +15,7 @@ CS_AMAZON_FOLDER = "../CaseStudy/Amazon/"
 
 println("Reading Amazon data...")
 # B = readIN(string(CS_AMAZON_FOLDER, "IN/com-amazon.ungraph.in"))
-B = readIN("csamazon.in")
+B = readIN("../../Example_SCC/csamazon.in")
 P = toTransitionGraph(B)
 
 function ExportIndicesByDegree(Last::Int64=40)

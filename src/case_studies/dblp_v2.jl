@@ -1,13 +1,13 @@
 using CSV
 using DataFrames
 using StatsBase
-include("Utils.jl")
-include("Utils_io.jl")
-include("LP_consts.jl")
-include("Utils_graph.jl")
-include("LP_evaluation.jl")
-include("CS2_generic.jl")
-include("CS_DBLP.jl")
+include("../Utils.jl")
+include("../Utils_io.jl")
+include("../GADS/lp_consts.jl")
+include("../Utils_graph.jl")
+include("../GADS/lp_evaluation.jl")
+include("generic_v2.jl")
+include("dblp.jl")
 
 DATA_NAME = "csdblp"
 suffixNames = ["FNcsdblp","ADSLcsdblp","ADSFcsdblp","ADSIcsdblp","ADSLScsdblp","ADSFScsdblp","ADSIScsdblp"]

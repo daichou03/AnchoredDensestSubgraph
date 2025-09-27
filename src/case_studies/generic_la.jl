@@ -5,16 +5,16 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_generic.jl")
-include("CP_MRW.jl")
-include("Test_degeneracy_yd.jl")
-include("CS_Evaluation_single.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("generic.jl")
+include("../CP_MRW.jl")
+include("../ADS/experiments/degeneracy_tests.jl")
+include("evaluation_single.jl")
 
 # Can't ensure we get expansive (non-degenerate) result every time, so for case study retry until we get an expansive example.
 function SearchNonDegRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, DegreeCap::Union{Int64, rNodeDegreeCap}=NULL_R_NODE_DEGREE_CAP, MaxRetry::Int64=100)

@@ -5,13 +5,13 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("Query_test_yd.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("../ADS/experiments/query_tests.jl")
 
 # From C
 function GetRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, Info::Array{String, 1}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)

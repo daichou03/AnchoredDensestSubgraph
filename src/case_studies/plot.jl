@@ -2,11 +2,11 @@
 using Plots
 using Glob
 using LaTeXStrings
-include("Utils.jl")
-include("Utils_io.jl")
-include("LP_consts.jl")
-include("Utils_graph.jl")
-include("LP_evaluation.jl")
+include("../Utils.jl")
+include("../Utils_io.jl")
+include("../GADS/lp_consts.jl")
+include("../Utils_graph.jl")
+include("../GADS/lp_evaluation.jl")
 
 
 X_LOG_0_SMOOTH = 0.001

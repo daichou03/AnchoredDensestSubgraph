@@ -5,14 +5,14 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_Simple.jl")
-include("Collect_results.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("simple.jl")
+include("../Collect_results.jl")
 
 FS_PENALTY_R = 0.0
 FS_EPSILON = 1.0

@@ -61,11 +61,7 @@ export SetupLPSolver, DEFAULT_LP_SOLVER, SOLVER_LP_ADSS
 export CompareResultSets, ProcessAndOutputAlgorithms
 
 # Include case studies (Universal)
-include("CS_Simple.jl")
-include("CS_DBLP.jl") 
-include("CS_Amazon.jl")
-include("CS_generic.jl")
-include("CS_generic_LA.jl")
+include("case_studies/CaseStudies.jl")
 
 # Export case study functions
 export ExportSimpleRs, ImportSimpleRs, ProcessCaseStudy

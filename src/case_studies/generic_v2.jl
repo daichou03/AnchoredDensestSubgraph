@@ -1,11 +1,11 @@
 using CSV
 using DataFrames
 using StatsBase
-include("Utils.jl")
-include("Utils_io.jl")
-include("LP_consts.jl")
-include("Utils_graph.jl")
-include("LP_evaluation.jl")
+include("../Utils.jl")
+include("../Utils_io.jl")
+include("../GADS/lp_consts.jl")
+include("../Utils_graph.jl")
+include("../GADS/lp_evaluation.jl")
 
 # CS2 is for producing (2) .csv files (one for nodes, one for edges) for Gephi.
 # Requires existing bulk experiment results over a data graph

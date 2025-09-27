@@ -5,18 +5,18 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("CS_generic.jl")
-include("CS_Simple.jl")
-include("CP_MRW.jl")
-include("CP_FlowSeed.jl")
-include("CS_Evaluation_Simple.jl")
-include("Test_degeneracy_yd.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils_warmup.jl")
+include("../Utils.jl")
+include("generic.jl")
+include("simple.jl")
+include("../CP_MRW.jl")
+include("../CP_FlowSeed.jl")
+include("evaluation_simple.jl")
+include("../ADS/experiments/degeneracy_tests.jl")
 
 # This part of the code will run our algorithm or any reimplemented baseline algorithms.
 

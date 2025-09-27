@@ -5,12 +5,12 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("maxflow.jl")
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Core_algorithm_yd.jl")
-include("Utils.jl")
-include("CS_generic.jl")
+include("../ADS/flow_network.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../ADS/algorithms.jl")
+include("../Utils.jl")
+include("generic.jl")
 
 # Was 0 indexed, convert to 1-indexed.
 # Remove any self-loops.

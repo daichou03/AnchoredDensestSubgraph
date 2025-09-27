@@ -1,10 +1,10 @@
 using CSV
 using DataFrames
 using StatsBase
-include("Utils.jl")
-include("Utils_io.jl")
-include("LP_consts.jl")
-include("Utils_graph.jl")
+include("../Utils.jl")
+include("../Utils_io.jl")
+include("lp_consts.jl")
+include("../Utils_graph.jl")
 
 EVAL_DATA_NAME = 1
 EVAL_DATA_INDEX = 2

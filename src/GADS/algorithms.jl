@@ -4,12 +4,12 @@ using MatrixNetworks
 using LinearAlgebra
 using Base
 using JuMP
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Utils.jl")
-include("Core_algorithm_yd.jl")
-include("LP_consts.jl")
-include("LP_load_solver.jl")
+include("../Utils_io.jl")
+include("../Utils_graph.jl")
+include("../Utils.jl")
+include("../ADS/algorithms.jl")
+include("lp_consts.jl")
+include("lp_load_solver.jl")
 
 
 # Returns:

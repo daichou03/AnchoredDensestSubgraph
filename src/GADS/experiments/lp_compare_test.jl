@@ -4,14 +4,14 @@ using MatrixNetworks
 using LinearAlgebra
 using Random
 using Base
-include("Utils_io.jl")
-include("Utils_graph.jl")
-include("Utils_warmup.jl")
-include("Utils.jl")
-include("maxflow.jl")
-include("Core_algorithm_yd.jl")
-include("LP_consts.jl")
-include("LP_algorithm.jl")
+include("../../Utils_io.jl")
+include("../../Utils_graph.jl")
+include("../../Utils_warmup.jl")
+include("../../Utils.jl")
+include("../../ADS/flow_network.jl")
+include("../../ADS/algorithms.jl")
+include("../lp_consts.jl")
+include("../algorithms.jl")
 
 
 ############################

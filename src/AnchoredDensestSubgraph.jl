@@ -53,10 +53,7 @@ export ProcessImprovedGlobalAnchoredDensestSubgraph, ProcessLocalAnchoredDensest
 export FlowNetAlpha, densestSubgraph
 
 # Include GADS algorithms (Paper 2)  
-include("LP_consts.jl")
-include("LP_load_solver.jl")
-include("LP_algorithm.jl")
-include("LP_evaluation.jl")
+include("GADS/GADS.jl")
 
 # Export GADS functions
 export SolveLPDensestSubgraph, DoSolveLocalADS, SolveLPDensestSubgraphLocal
@@ -82,8 +79,7 @@ include("CX_FlowSeed.jl")
 # Export competitor functions
 export MRW, GreedyL, FlowSeed
 
-# Include experimental code (moved to ADS module)
-include("LP_compare_test.jl")
+# Include experimental code (moved to respective modules)
 include("Collect_results.jl")
 
 # Export experimental functions

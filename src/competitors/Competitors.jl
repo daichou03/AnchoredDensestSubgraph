@@ -35,7 +35,7 @@ include("../utils/Utils.jl")
 include("home_coded/flowseed.jl")
 include("home_coded/greedyl.jl")
 include("home_coded/mrw.jl")
-include("home_coded/flowseed_compare_test.jl")
+include("../experiments/flowseed_compare_test.jl")
 
 # Include external competitors
 include("external/flowseed.jl")

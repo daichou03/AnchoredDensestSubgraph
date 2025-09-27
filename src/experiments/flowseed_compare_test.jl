@@ -1,7 +1,7 @@
 using MAT
-include("../../GADS/lp_consts.jl")
-include("../../utils/Utils.jl")
-include("flowseed.jl")
+include("../GADS/lp_consts.jl")
+include("../utils/Utils.jl")
+include("../competitors/home_coded/flowseed.jl")
 ##########################
 # Parameterized GLC test #
 ##########################

@@ -5,9 +5,9 @@ using LinearAlgebra
 using StatsBase # TODO: To install
 using Random
 using Base
-include("../flow_network.jl")
-include("../../utils/Utils.jl")
-include("../algorithms.jl")
+include("../ADS/flow_network.jl")
+include("../utils/Utils.jl")
+include("../ADS/algorithms.jl")
 
 mutable struct rSeed
     seed::Int64

@@ -36,8 +36,8 @@ include("algorithms.jl")
 include("flow_network.jl")
 
 # Include experiments
-include("experiments/query_tests.jl")
-include("experiments/degeneracy_tests.jl")
+include("../experiments/ads_query_tests.jl")
+include("../experiments/ads_degeneracy_tests.jl")
 
 # Export ADS functions
 export GlobalDensestSubgraph, LocalAnchoredDensestSubgraph, ImprovedGlobalAnchoredDensestSubgraph

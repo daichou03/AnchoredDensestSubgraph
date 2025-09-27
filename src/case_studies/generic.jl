@@ -8,7 +8,7 @@ using Base
 include("../ADS/flow_network.jl")
 include("../utils/Utils.jl")
 include("../ADS/algorithms.jl")
-include("../ADS/experiments/query_tests.jl")
+include("../experiments/ads_query_tests.jl")
 
 # From C
 function GetRefinedSet(B::SparseMatrixCSC, C::Vector{Int64}, Info::Array{String, 1}, Repeats::Int64=DEF_ANCHOR_REPEATS, Steps::Int64=DEF_AHCHOR_STEPS)

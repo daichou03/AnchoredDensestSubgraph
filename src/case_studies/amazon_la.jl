@@ -11,7 +11,7 @@ include("../ADS/algorithms.jl")
 include("generic.jl")
 include("amazon.jl")
 include("evaluation_amazon.jl")
-include("../ADS/experiments/degeneracy_tests.jl")
+include("../experiments/ads_degeneracy_tests.jl")
 include("generic_la.jl")
 
 println("Reading Amazon product info...")

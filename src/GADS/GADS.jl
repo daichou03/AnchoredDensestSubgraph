@@ -44,7 +44,7 @@ include("algorithms.jl")
 include("lp_evaluation.jl")
 
 # Include experiments
-include("experiments/lp_compare_test.jl")
+include("../experiments/gads_lp_compare_test.jl")
 
 # Export GADS functions
 export SolveLPDensestSubgraph, DoSolveLocalADS, SolveLPDensestSubgraphLocal

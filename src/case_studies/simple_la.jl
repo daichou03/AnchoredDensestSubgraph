@@ -13,7 +13,7 @@ include("simple.jl")
 include("../competitors/home_coded/mrw.jl")
 include("../competitors/home_coded/flowseed.jl")
 include("evaluation_simple.jl")
-include("../ADS/experiments/degeneracy_tests.jl")
+include("../experiments/ads_degeneracy_tests.jl")
 
 # This part of the code will run our algorithm or any reimplemented baseline algorithms.
 

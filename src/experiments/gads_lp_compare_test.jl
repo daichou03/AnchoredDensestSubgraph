@@ -4,11 +4,11 @@ using MatrixNetworks
 using LinearAlgebra
 using Random
 using Base
-include("../../utils/Utils.jl")
-include("../../ADS/flow_network.jl")
-include("../../ADS/algorithms.jl")
-include("../lp_consts.jl")
-include("../algorithms.jl")
+include("../utils/Utils.jl")
+include("../ADS/flow_network.jl")
+include("../ADS/algorithms.jl")
+include("../GADS/lp_consts.jl")
+include("../GADS/algorithms.jl")
 
 
 ############################

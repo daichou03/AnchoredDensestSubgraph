@@ -12,7 +12,7 @@ include("generic.jl")
 include("dblp.jl")
 include("../competitors/home_coded/mrw.jl")
 include("../competitors/home_coded/flowseed.jl")
-include("../ADS/experiments/degeneracy_tests.jl")
+include("../experiments/ads_degeneracy_tests.jl")
 include("generic_la.jl")
 include("evaluation_simple.jl")
 

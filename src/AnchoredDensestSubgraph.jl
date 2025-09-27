@@ -65,11 +65,11 @@ export ExportSimpleRs, ImportSimpleRs, ProcessCaseStudy
 # Include competitor algorithms
 include("competitors/Competitors.jl")
 
+# Include experimental code
+include("experiments/Experiments.jl")
+
 # Export competitor functions
 export MRW, GreedyL, FlowSeed
-
-# Include experimental code (moved to respective modules)
-# Collect_results.jl is now included in utils/Utils.jl
 
 # Export experimental functions
 export ProcessAlgorithms, DoProcessAlgorithms, GenerateUserInputSet

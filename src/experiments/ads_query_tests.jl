@@ -7,10 +7,10 @@ using LinearAlgebra
 using StatsBase
 using Random
 using Base
-include("../flow_network.jl")
-include("../../utils/Utils.jl")
-include("../algorithms.jl")
-include("../../GADS/lp_consts.jl")
+include("../ADS/flow_network.jl")
+include("../utils/Utils.jl")
+include("../ADS/algorithms.jl")
+include("../GADS/lp_consts.jl")
 
 PERFORMANCE_REPORTS_DIR = "../PerformanceReports/" # Collect_results.jl uses the same constant
 

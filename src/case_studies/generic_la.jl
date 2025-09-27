@@ -10,7 +10,7 @@ include("../utils/Utils.jl")
 include("../ADS/algorithms.jl")
 include("generic.jl")
 include("../competitors/home_coded/mrw.jl")
-include("../ADS/experiments/degeneracy_tests.jl")
+include("../experiments/ads_degeneracy_tests.jl")
 include("evaluation_single.jl")
 
 # Can't ensure we get expansive (non-degenerate) result every time, so for case study retry until we get an expansive example.
